@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight Duel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>♞ Knight Duel</h1>
+            <p class="subtitle">Two knights enter, one knight leaves</p>
+        </div>
+
+        <div id="gameStatus" class="game-status">
+            <span id="currentPlayer">Current Turn: Player 1</span>
+        </div>
+
+        <div id="winnerMessage" class="winner-message hidden">
+            🏆 <span id="winnerText"></span>
+        </div>
+
+        <div id="chessboard" class="chessboard"></div>
+
+        <div class="controls">
+            <button id="resetBtn" class="btn btn-primary">New Game</button>
+            <button id="settingsBtn" class="btn btn-secondary">Settings</button>
+        </div>
+
+        <div id="settingsPanel" class="settings-panel hidden">
+            <h3>Settings</h3>
+            
+            <div class="setting-group">
+                <label>Board Color Scheme</label>
+                <div class="color-schemes">
+                    <button class="color-scheme-btn" data-scheme="0">
+                        <span>Classic</span>
+                        <div class="color-preview">
+                            <div style="background: #F0D9B5"></div>
+                            <div style="background: #B58863"></div>
+                        </div>
+                    </button>
+                    <button class="color-scheme-btn" data-scheme="1">
+                        <span>Blue</span>
+                        <div class="color-preview">
+                            <div style="background: #E0E7FF"></div>
+                            <div style="background: #4F46E5"></div>
+                        </div>
+                    </button>
+                    <button class="color-scheme-btn" data-scheme="2">
+                        <span>Green</span>
+                        <div class="color-preview">
+                            <div style="background: #DCFCE7"></div>
+                            <div style="background: #16A34A"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Board Size</label>
+                <select id="boardSizeSelect" class="select">
+                    <option value="5">5x5</option>
+                    <option value="6">6x6</option>
+                    <option value="7">7x7</option>
+                    <option value="8" selected>8x8</option>
+                    <option value="9">9x9</option>
+                    <option value="10">10x10</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="allowCaptureCheck" checked>
+                    Allow Capturing
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <label>CPU Players</label>
+                <label>
+                    <input type="checkbox" id="player1CPUCheck">
+                    Player 1 is CPU
+                </label>
+                <label>
+                    <input type="checkbox" id="player2CPUCheck">
+                    Player 2 is CPU
+                </label>
+            </div>
+
+            <button id="closeSettingsBtn" class="btn btn-primary">Close Settings (Start New Game)</button>
+        </div>
+
+        <div class="rules">
+            <h3>Rules</h3>
+            <ul>
+                <li>Click your knight to select it</li>
+                <li>Click a highlighted square to move</li>
+                <li>Squares burn after being vacated</li>
+                <li>Win by capturing opponent or trapping them</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
