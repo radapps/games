@@ -289,14 +289,20 @@ class KnightDuelGame {
                 
                 if (square.burned) {
                     squareEl.classList.add('burned');
-                    squareEl.innerHTML = '🔥';
+                    const img = document.createElement('img');
+                    img.src = 'assets/flame.png';
+                    img.alt = 'Burned';
+                    squareEl.appendChild(img);
                 } else if (square.piece === 1) {
-                    squareEl.innerHTML = '♞';
-                    squareEl.style.color = '#000';
+                    const img = document.createElement('img');
+                    img.src = 'assets/knight-black.png';
+                    img.alt = 'Player 1 Knight';
+                    squareEl.appendChild(img);
                 } else if (square.piece === 2) {
-                    squareEl.innerHTML = '♞';
-                    squareEl.style.color = '#fff';
-                    squareEl.style.textShadow = '0 0 3px #000, 0 0 3px #000, 0 0 3px #000';
+                    const img = document.createElement('img');
+                    img.src = 'assets/knight-white.png';
+                    img.alt = 'Player 2 Knight';
+                    squareEl.appendChild(img);
                 }
                 
                 squareEl.addEventListener('click', () => this.handleSquareClick(row, col));
