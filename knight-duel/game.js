@@ -295,12 +295,12 @@ class KnightDuelGame {
                     squareEl.appendChild(img);
                 } else if (square.piece === 1) {
                     const img = document.createElement('img');
-                    img.src = 'assets/knight-black.png';
+                    img.src = 'assets/knight_black.png';
                     img.alt = 'Player 1 Knight';
                     squareEl.appendChild(img);
                 } else if (square.piece === 2) {
                     const img = document.createElement('img');
-                    img.src = 'assets/knight-white.png';
+                    img.src = 'assets/knight_white.png';
                     img.alt = 'Player 2 Knight';
                     squareEl.appendChild(img);
                 }
