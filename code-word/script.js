@@ -5,68 +5,95 @@ let gameOver = false;
 
 const gameBoard = document.getElementById("gameBoard");
 const guessInput = document.getElementById("guessInput");
-const message = document.getElementById("message");
+const gameStatus = document.getElementById("gameStatus");
+const winnerMessage = document.getElementById("winnerMessage");
+const winnerText = document.getElementById("winnerText");
 
-document.getElementById("newGameBtn").addEventListener("click", () => {
-  startNewGame();
-  guessInput.focus();
-});
+const wordLengthSelect = document.getElementById("wordLength");
+const newGameBtn = document.getElementById("newGameBtn");
+const submitGuessBtn = document.getElementById("submitGuessBtn");
 
-// When game is won:
-document.getElementById("winnerMessage").classList.remove("hidden");
-document.getElementById("winnerText").textContent = "You cracked the code!";
-
-document.getElementById("submitGuessBtn").addEventListener("click", submitGuess);
-document.getElementById("wordLength").addEventListener("change", (e) => {
+// Event listeners
+newGameBtn.addEventListener("click", startNewGame);
+submitGuessBtn.addEventListener("click", submitGuess);
+wordLengthSelect.addEventListener("change", (e) => {
   wordLength = parseInt(e.target.value);
   guessInput.maxLength = wordLength;
 });
 
+// Allow pressing Enter key to submit
+guessInput.addEventListener("keypress", function(e) {
+  if (e.key === "Enter") submitGuess();
+});
+
+// Start first game automatically
 startNewGame();
 
+// --- Functions ---
 async function startNewGame() {
   gameOver = false;
+  secretWord = "";
   gameBoard.innerHTML = "";
-  message.textContent = "";
-  wordLength = parseInt(document.getElementById("wordLength").value);
+  winnerMessage.classList.add("hidden");
+  gameStatus.textContent = "Select word length and start guessing...";
   guessInput.value = "";
   guessInput.maxLength = wordLength;
+  guessInput.disabled = false;
+  guessInput.focus();
 
-  const response = await fetch(`words${wordLength}.json`);
-  const data = await response.json();
-  words = data.words;
+  // Load word list
+  try {
+    const response = await fetch(`words${wordLength}.json`);
+    const data = await response.json();
+    words = data.words;
+  } catch (err) {
+    console.error("Error loading word list:", err);
+    gameStatus.textContent = "Failed to load words.";
+    return;
+  }
 
-  secretWord = words[Math.floor(Math.random() * words.length)];
-  console.log("Secret:", secretWord); // remove later
+  // Pick secret word
+  secretWord = words[Math.floor(Math.random() * words.length)].toUpperCase();
+  console.log("Secret word (dev only):", secretWord); // remove for production
 }
 
 function submitGuess() {
   if (gameOver) return;
 
-  let guess = guessInput.value.toUpperCase();
+  let guess = guessInput.value.toUpperCase().trim();
 
   if (guess.length !== wordLength) {
-    message.textContent = `Guess must be ${wordLength} letters.`;
+    gameStatus.textContent = `Guess must be ${wordLength} letters.`;
     return;
   }
 
   if (!/^[A-Z]+$/.test(guess)) {
-    message.textContent = "Only letters allowed.";
+    gameStatus.textContent = "Only letters allowed.";
     return;
   }
 
+  // Evaluate guess
   const result = evaluateGuess(guess, secretWord);
+
+  // Display result on board
   displayResult(guess, result);
 
+  // Check win
   if (result.black === wordLength) {
-    message.textContent = "🎉 You cracked the code!";
+    gameStatus.textContent = "🎉 You cracked the code!";
+    winnerText.textContent = "You cracked the code!";
+    winnerMessage.classList.remove("hidden");
+    guessInput.disabled = true;
     gameOver = true;
+  } else {
+    gameStatus.textContent = `Black pegs: ${result.black}, White pegs: ${result.white}`;
   }
 
   guessInput.value = "";
   guessInput.focus();
 }
 
+// --- Core peg evaluation ---
 function evaluateGuess(guess, secret) {
   let black = 0;
   let white = 0;
@@ -77,7 +104,7 @@ function evaluateGuess(guess, secret) {
   const usedSecret = Array(wordLength).fill(false);
   const usedGuess = Array(wordLength).fill(false);
 
-  // Black pegs
+  // Black pegs: correct letter + correct position
   for (let i = 0; i < wordLength; i++) {
     if (guessArr[i] === secretArr[i]) {
       black++;
@@ -86,7 +113,7 @@ function evaluateGuess(guess, secret) {
     }
   }
 
-  // White pegs
+  // White pegs: correct letter, wrong position
   for (let i = 0; i < wordLength; i++) {
     if (usedGuess[i]) continue;
 
@@ -102,9 +129,10 @@ function evaluateGuess(guess, secret) {
   return { black, white };
 }
 
+// --- Display guess row ---
 function displayResult(guess, result) {
   const row = document.createElement("div");
-  row.className = "row"; // KD has .row styles
+  row.className = "row";
 
   const guessDiv = document.createElement("div");
   guessDiv.className = "guess";
@@ -118,6 +146,6 @@ function displayResult(guess, result) {
   row.appendChild(guessDiv);
   row.appendChild(pegDiv);
 
-  document.getElementById("gameBoard").appendChild(row);
+  gameBoard.appendChild(row);
+  row.scrollIntoView({ behavior: "smooth" }); // auto scroll if mobile
 }
-
