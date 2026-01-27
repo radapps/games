@@ -1,0 +1,32 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+#gameBoard {
+  margin-top: 20px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+  margin-bottom: 5px;
+}
+
+.guess {
+  font-family: monospace;
+}
+
+.pegs {
+  width: 80px;
+}
+
+.black {
+  color: black;
+  font-weight: bold;
+}
+
+.white {
+  color: gray;
+}
