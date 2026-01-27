@@ -7,7 +7,11 @@ const gameBoard = document.getElementById("gameBoard");
 const guessInput = document.getElementById("guessInput");
 const message = document.getElementById("message");
 
-document.getElementById("newGameBtn").addEventListener("click", startNewGame);
+document.getElementById("newGameBtn").addEventListener("click", () => {
+  startNewGame();
+  guessInput.focus();
+});
+
 document.getElementById("submitGuessBtn").addEventListener("click", submitGuess);
 document.getElementById("wordLength").addEventListener("change", (e) => {
   wordLength = parseInt(e.target.value);
@@ -56,6 +60,7 @@ function submitGuess() {
   }
 
   guessInput.value = "";
+  guessInput.focus();
 }
 
 function evaluateGuess(guess, secret) {
