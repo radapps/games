@@ -1,52 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code Word</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Word</title>
+<style>
+/* Reset and basic box-sizing */
+* {margin:0; padding:0; box-sizing:border-box;}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: white;
+}
+.container { max-width: 800px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 20px; }
+h1 { font-size: 2.5em; margin-bottom: 10px; }
+.subtitle { color: #cbd5e1; font-size: 1em; }
+
+/* Messages */
+.game-status { background:#334155; padding:15px; border-radius:8px; text-align:center; font-size:1.2em; margin-bottom:20px; }
+.winner-message { background:#fbbf24; color:#1e293b; padding:20px; border-radius:8px; text-align:center; font-size:1.5em; font-weight:bold; margin-bottom:20px; }
+.hidden { display:none; }
+
+/* Controls */
+.controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:20px; }
+.btn { padding:12px 24px; border:none; border-radius:8px; font-size:1em; font-weight:600; cursor:pointer; transition: all 0.2s; }
+.btn-primary { background:#3b82f6; color:white; }
+.btn-primary:hover { background:#2563eb; }
+.btn-secondary { background:#6b7280; color:white; }
+.btn-secondary:hover { background:#4b5563; }
+.select { width:100%; max-width:200px; padding:10px; border-radius:6px; border:1px solid #475569; background:#1e293b; color:white; font-size:1em; }
+
+/* Game board */
+#gameBoard { display:flex; flex-direction:column; gap:10px; align-items:center; margin-top:20px; width:100%; }
+.row { display:flex; justify-content:space-between; width:100%; max-width:400px; background:#334155; padding:10px 15px; border-radius:8px; font-family: monospace; font-size:1.2em; }
+.guess { letter-spacing:2px; }
+.pegs { display:flex; gap:5px; font-size:1.2em; }
+.black { color:#000000; }
+.white { color:#ffffff; }
+
+/* Letter boxes */
+.letter-boxes { display:flex; justify-content:center; gap:8px; margin-top:20px; }
+.letter-box { width:48px; height:48px; border:2px solid #cbd5e1; border-radius:6px; text-align:center; font-size:1.5em; font-weight:bold; line-height:48px; background:#1e293b; color:white; }
+
+/* Keyboard */
+.keyboard { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:20px; }
+.keyboard button { width:36px; height:48px; border:none; border-radius:6px; background:#334155; color:white; font-weight:bold; cursor:pointer; font-size:1em; transition: all 0.2s; }
+.keyboard button:hover { background:#475569; }
+</style>
 </head>
 <body>
-  <div class="container">
+<div class="container">
 
     <!-- Header -->
     <div class="header">
-      <h1>🔠 Code Word</h1>
-      <p class="subtitle">Mastermind with words! Guess the secret code.</p>
+        <h1>🔠 Code Word</h1>
+        <p class="subtitle">Mastermind with words! Guess the secret code.</p>
     </div>
 
     <!-- Game Status -->
     <div id="gameStatus" class="game-status">
-      Select word length and start a new game
+        Select word length and start a new game
     </div>
 
     <!-- Winner Message -->
     <div id="winnerMessage" class="winner-message hidden">
-      🎉 <span id="winnerText">You cracked the code!</span>
+        🎉 <span id="winnerText"></span>
     </div>
 
     <!-- Controls -->
     <div class="controls">
-      <select class="select" id="wordLength">
-        <option value="4">4 letters</option>
-        <option value="5" selected>5 letters</option>
-        <option value="6">6 letters</option>
-        <option value="7">7 letters</option>
-      </select>
-      <button class="btn btn-primary" id="newGameBtn">New Game</button>
+        <select class="select" id="wordLength">
+            <option value="4">4 letters</option>
+            <option value="5" selected>5 letters</option>
+            <option value="6">6 letters</option>
+            <option value="7">7 letters</option>
+        </select>
+        <button class="btn btn-primary" id="newGameBtn">New Game</button>
     </div>
 
-    <!-- Game Board -->
+    <!-- Letter Boxes -->
+    <div id="letterBoxes" class="letter-boxes"></div>
+
+    <!-- On-screen keyboard -->
+    <div id="keyboard" class="keyboard"></div>
+
+    <!-- Feedback message -->
+    <div id="feedbackMessage" style="color:#f87171; margin-top:10px; min-height:1.2em;"></div>
+
+    <!-- Game board -->
     <div id="gameBoard"></div>
 
-    <!-- Guess Input -->
-    <div class="controls" style="margin-top: 20px;">
-      <input type="text" id="guessInput" class="select" placeholder="Enter your guess">
-      <button class="btn btn-secondary" id="submitGuessBtn">Guess</button>
-    </div>
+</div>
 
-  </div>
+<script>
+// ==== JS Logic ====
+let secretWord = "";
+let wordLength = 5;
+let words = []; // You will load JSON like: { "words": ["APPLE", "HOUSE", ...] }
+let usedWords = [];
+let gameOver = false;
+let currentGuess = [];
 
-  <script src="script.js"></script>
+const gameBoard = document.getElementById("gameBoard");
+const gameStatus = document.getElementById("gameStatus");
+const winnerMessage = document.getElementById("winnerMessage");
+const winnerText = document.getElementById("winnerText");
+const feedbackMessage = document.getElementById("feedbackMessage");
+const letterBoxes = document.getElementById("letterBoxes");
+const keyboardDiv = document.getElementById("keyboard");
+
+const wordLengthSelect = document.getElementById("wordLength");
+const newGameBtn = document.getElementById("newGameBtn");
+
+wordLengthSelect.addEventListener("change", (e) => {
+    wordLength = parseInt(e.target.value);
+});
+
+newGameBtn.addEventListener("click", startNewGame);
+
+// Sample word lists (replace with JSON fetch if desired)
+const sampleWords = {
+    4: ["WORD","GAME","CODE","PLAY","MIND"],
+    5: ["APPLE","HOUSE","PLANT","RADIO","LIGHT"],
+    6: ["PUZZLE","BRIDGE","GUITAR","PLANET","ORANGE"],
+    7: ["BALANCE","JOURNAL","MACHINE","ELEMENT","NETWORK"]
+};
+
+// ==== Start New Game ====
+function startNewGame() {
+    gameOver = false;
+    gameBoard.innerHTML = "";
+    winnerMessage.classList.add("hidden");
+    feedbackMessage.textContent = "";
+    currentGuess = [];
+    createLetterBoxes();
+    createKeyboard();
+
+    // Load words
+    words = sampleWords[wordLength].map(w => w.toUpperCase());
+
+    // Filter used words
+    const availableWords = words.filter(w => !usedWords.includes(w));
+    if (availableWords.length === 0) {
+        feedbackMessage.textContent = "No more words left!";
+        return;
+    }
+
+    secretWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+    console.log("Secret word (dev only):", secretWord);
+}
+
+// ==== Letter Boxes ====
+function createLetterBoxes() {
+    letterBoxes.innerHTML = "";
+    currentGuess = [];
+    for (let i = 0; i < wordLength; i++) {
+        const box = document.createElement("div");
+        box.className = "letter-box";
+        box.textContent = "";
+        letterBoxes.appendChild(box);
+    }
+}
+
+// ==== Keyboard ====
+const letters = "QWERTYUIOPASDFGHJKLZXCVBNM";
+function createKeyboard() {
+    keyboardDiv.innerHTML = "";
+    for (const l of letters) {
+        const btn = document.createElement("button");
+        btn.textContent = l;
+        btn.addEventListener("click", () => addLetter(l));
+        keyboardDiv.appendChild(btn);
+    }
+    const enterBtn = document.createElement("button");
+    enterBtn.textContent = "ENTER";
+    enterBtn.style.width = "80px";
+    enterBtn.addEventListener("click", submitGuess);
+    keyboardDiv.appendChild(enterBtn);
+
+    const backBtn = document.createElement("button");
+    backBtn.textContent = "⌫";
+    backBtn.style.width = "80px";
+    backBtn.addEventListener("click", removeLetter);
+    keyboardDiv.appendChild(backBtn);
+}
+
+// ==== Add/Remove Letters ====
+function addLetter(letter) {
+    if (gameOver) return;
+    if (currentGuess.length < wordLength) {
+        currentGuess.push(letter);
+        updateBoxes();
+    }
+}
+
+function removeLetter() {
+    if (gameOver) return;
+    currentGuess.pop();
+    updateBoxes();
+}
+
+function updateBoxes() {
+    const boxes = letterBoxes.querySelectorAll(".letter-box");
+    boxes.forEach((box, i) => box.textContent = currentGuess[i] || "");
+}
+
+// ==== Submit Guess ====
+function submitGuess() {
+    if (gameOver) return;
+    let guess = currentGuess.join("");
+    feedbackMessage.textContent = "";
+
+    if (guess.length !== wordLength) {
+        feedbackMessage.textContent = `Guess must be ${wordLength} letters.`;
+        return;
+    }
+    if (!/^[A-Z]+$/.test(guess)) {
+        feedbackMessage.textContent = "Only letters allowed.";
+        return;
+    }
+
+    const result = evaluateGuess(guess, secretWord);
+    displayResult(guess, result);
+
+    if (result.black === wordLength) {
+        winnerText.textContent = "You cracked the code!";
+        winnerMessage.classList.remove("hidden");
+        gameOver = true;
+        usedWords.push(secretWord);
+        return;
+    }
+
+    currentGuess = [];
+    updateBoxes();
+}
+
+// ==== Evaluate Pegs ====
+function evaluateGuess(guess, secret) {
+    let black = 0, white = 0;
+    const secretArr = secret.split("");
+    const guessArr = guess.split("");
+    const usedSecret = Array(wordLength).fill(false);
+    const usedGuess = Array(wordLength).fill(false);
+
+    // Black pegs
+    for (let i = 0; i < wordLength; i++) {
+        if (guessArr[i] === secretArr[i]) {
+            black++;
+            usedSecret[i] = true;
+            usedGuess[i] = true;
+        }
+    }
+    // White pegs
+    for (let i = 0; i < wordLength; i++) {
+        if (usedGuess[i]) continue;
+        for (let j = 0; j < wordLength; j++) {
+            if (!usedSecret[j] && guessArr[i] === secretArr[j]) {
+                white++;
+                usedSecret[j] = true;
+                break;
+            }
+        }
+    }
+    return {black, white};
+}
+
+// ==== Display Result Row ====
+function displayResult(guess, result) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const guessDiv = document.createElement("div");
+    guessDiv.className = "guess";
+    guessDiv.textContent = guess;
+    const pegDiv = document.createElement("div");
+    pegDiv.className = "pegs";
+    pegDiv.textContent = "⚫".repeat(result.black) + "⚪".repeat(result.white);
+    row.appendChild(guessDiv);
+    row.appendChild(pegDiv);
+    gameBoard.appendChild(row);
+    row.scrollIntoView({behavior:"smooth"});
+}
+
+// ==== Initialize first game ====
+startNewGame();
+</script>
 </body>
 </html>
