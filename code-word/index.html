@@ -12,7 +12,7 @@
     <!-- Header -->
     <div class="header">
       <h1>🔠 Code Word</h1>
-      <p class="subtitle">Mastermind with words! Guess the secret word.</p>
+      <p class="subtitle">Mastermind with words! Guess the secret code.</p>
     </div>
 
     <!-- Game Status -->
@@ -22,7 +22,7 @@
 
     <!-- Winner Message -->
     <div id="winnerMessage" class="winner-message hidden">
-      🎉 <span id="winnerText"></span>
+      🎉 <span id="winnerText">You cracked the code!</span>
     </div>
 
     <!-- Controls -->
@@ -41,4 +41,12 @@
 
     <!-- Guess Input -->
     <div class="controls" style="margin-top: 20px;">
-      <input type="tex
+      <input type="text" id="guessInput" class="select" placeholder="Enter your guess">
+      <button class="btn btn-secondary" id="submitGuessBtn">Guess</button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
