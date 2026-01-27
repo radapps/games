@@ -12,6 +12,10 @@ document.getElementById("newGameBtn").addEventListener("click", () => {
   guessInput.focus();
 });
 
+// When game is won:
+document.getElementById("winnerMessage").classList.remove("hidden");
+document.getElementById("winnerText").textContent = "You cracked the code!";
+
 document.getElementById("submitGuessBtn").addEventListener("click", submitGuess);
 document.getElementById("wordLength").addEventListener("change", (e) => {
   wordLength = parseInt(e.target.value);
@@ -100,7 +104,7 @@ function evaluateGuess(guess, secret) {
 
 function displayResult(guess, result) {
   const row = document.createElement("div");
-  row.className = "row";
+  row.className = "row"; // KD has .row styles
 
   const guessDiv = document.createElement("div");
   guessDiv.className = "guess";
@@ -109,12 +113,11 @@ function displayResult(guess, result) {
   const pegDiv = document.createElement("div");
   pegDiv.className = "pegs";
 
-  pegDiv.innerHTML =
-    "⚫".repeat(result.black) +
-    "⚪".repeat(result.white);
+  pegDiv.textContent = "⚫".repeat(result.black) + "⚪".repeat(result.white);
 
   row.appendChild(guessDiv);
   row.appendChild(pegDiv);
 
-  gameBoard.appendChild(row);
+  document.getElementById("gameBoard").appendChild(row);
 }
+
