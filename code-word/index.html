@@ -1,46 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Code Word</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Word</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="container">
 
-<div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🔠 Code Word</h1>
+      <p class="subtitle">Mastermind with words! Guess the secret word.</p>
+    </div>
 
-  <div class="header">
-    <h1>Code Word</h1>
-    <div class="subtitle">Mastermind with words! Guess the secret word.</div>
-  </div>
+    <!-- Game Status -->
+    <div id="gameStatus" class="game-status">
+      Select word length and start a new game
+    </div>
 
-  <div class="game-status" id="gameStatus">
-    Select word length and start a new game
-  </div>
+    <!-- Winner Message -->
+    <div id="winnerMessage" class="winner-message hidden">
+      🎉 <span id="winnerText"></span>
+    </div>
 
-  <div class="controls">
-    <select class="select" id="wordLength">
-      <option value="4">4 letters</option>
-      <option value="5" selected>5 letters</option>
-      <option value="6">6 letters</option>
-      <option value="7">7 letters</option>
-    </select>
-    <button class="btn btn-primary" id="newGameBtn">New Game</button>
-  </div>
+    <!-- Controls -->
+    <div class="controls">
+      <select class="select" id="wordLength">
+        <option value="4">4 letters</option>
+        <option value="5" selected>5 letters</option>
+        <option value="6">6 letters</option>
+        <option value="7">7 letters</option>
+      </select>
+      <button class="btn btn-primary" id="newGameBtn">New Game</button>
+    </div>
 
-  <div id="gameBoard"></div>
+    <!-- Game Board -->
+    <div id="gameBoard"></div>
 
-  <div class="controls" style="margin-top: 20px;">
-    <input type="text" id="guessInput" class="select" placeholder="Enter your guess">
-    <button class="btn btn-secondary" id="submitGuessBtn">Guess</button>
-  </div>
-
-  <div id="winnerMessage" class="winner-message" style="display: none;">
-    🎉 You cracked the code!
-  </div>
-
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+    <!-- Guess Input -->
+    <div class="controls" style="margin-top: 20px;">
+      <input type="tex
