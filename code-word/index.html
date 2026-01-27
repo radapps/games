@@ -1,33 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Code Word</title>
+  <title>WordMind</title>
   <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<h1>Code Word</h1>
+<div class="container">
 
-<label>Word Length:</label>
-<select id="wordLength">
-  <option value="4">4</option>
-  <option value="5" selected>5</option>
-  <option value="6">6</option>
-  <option value="7">7</option>
-</select>
+  <div class="header">
+    <h1>WordMind</h1>
+    <div class="subtitle">Mastermind with words! Guess the secret word.</div>
+  </div>
 
-<button id="newGameBtn">New Game</button>
+  <div class="game-status" id="gameStatus">
+    Select word length and start a new game
+  </div>
 
-<hr>
+  <div class="controls">
+    <select class="select" id="wordLength">
+      <option value="4">4 letters</option>
+      <option value="5" selected>5 letters</option>
+      <option value="6">6 letters</option>
+      <option value="7">7 letters</option>
+    </select>
+    <button class="btn btn-primary" id="newGameBtn">New Game</button>
+  </div>
 
-<div id="gameBoard"></div>
+  <div id="gameBoard"></div>
 
-<br>
+  <div class="controls" style="margin-top: 20px;">
+    <input type="text" id="guessInput" class="select" placeholder="Enter your guess">
+    <button class="btn btn-secondary" id="submitGuessBtn">Guess</button>
+  </div>
 
-<input type="text" id="guessInput" maxlength="5">
-<button id="submitGuessBtn">Guess</button>
+  <div id="winnerMessage" class="winner-message" style="display: none;">
+    🎉 You cracked the code!
+  </div>
 
-<p id="message"></p>
+</div>
 
 <script src="script.js"></script>
 </body>
