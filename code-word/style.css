@@ -1,32 +1,37 @@
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
 #gameBoard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
   margin-top: 20px;
 }
 
 .row {
   display: flex;
   justify-content: space-between;
-  width: 300px;
-  margin-bottom: 5px;
+  width: 100%;
+  max-width: 400px;
+  background: #334155;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 1.2em;
 }
 
 .guess {
-  font-family: monospace;
+  letter-spacing: 2px;
 }
 
 .pegs {
-  width: 80px;
+  display: flex;
+  gap: 5px;
+  font-size: 1.2em;
 }
 
 .black {
-  color: black;
-  font-weight: bold;
+  color: #000000;
 }
 
 .white {
-  color: gray;
+  color: #ffffff;
 }
