@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Code Word</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Code Word</h1>
+
+<label>Word Length:</label>
+<select id="wordLength">
+  <option value="4">4</option>
+  <option value="5" selected>5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+</select>
+
+<button id="newGameBtn">New Game</button>
+
+<hr>
+
+<div id="gameBoard"></div>
+
+<br>
+
+<input type="text" id="guessInput" maxlength="5">
+<button id="submitGuessBtn">Guess</button>
+
+<p id="message"></p>
+
+<script src="script.js"></script>
+</body>
+</html>
