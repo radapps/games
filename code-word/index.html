@@ -30,7 +30,7 @@ h1 { font-size:2.5em; margin-bottom:10px; }
     border-radius:8px;
     text-align:center;
     font-size:1.2em;
-    margin-bottom:20px;
+    margin-bottom:15px;
 }
 
 .winner-message {
@@ -214,7 +214,7 @@ h1 { font-size:2.5em; margin-bottom:10px; }
 let secretWord = "";
 let wordLength = 5;
 let words = [];
-let usedWords = [];
+let usedWords = {};
 let currentGuess = [];
 let gameOver = false;
 
@@ -226,13 +226,6 @@ const winnerMessage = document.getElementById("winnerMessage");
 const winnerText = document.getElementById("winnerText");
 const wordLengthSelect = document.getElementById("wordLength");
 
-const sampleWords = {
-  4:["WORD","CODE","PLAY","GAME","MIND"],
-  5:["APPLE","HOUSE","RADIO","LIGHT","PLANT"],
-  6:["PUZZLE","BRIDGE","ORANGE","GUITAR","PLANET"],
-  7:["BALANCE","JOURNAL","NETWORK","MACHINE","ELEMENT"]
-};
-
 const keyboardRows = [
   "QWERTYUIOP".split(""),
   "ASDFGHJKL".split(""),
@@ -242,16 +235,36 @@ const keyboardRows = [
 document.getElementById("newGameBtn").addEventListener("click", startNewGame);
 wordLengthSelect.addEventListener("change", e => wordLength = parseInt(e.target.value));
 
-function startNewGame() {
+async function loadWords(length) {
+    const response = await fetch(`words${length}.json`);
+    const data = await response.json();
+    return data.words.map(w => w.toUpperCase());
+}
+
+async function startNewGame() {
     gameOver = false;
     currentGuess = [];
     gameBoard.innerHTML = "";
     feedbackMessage.textContent = "";
     winnerMessage.classList.add("hidden");
 
-    words = sampleWords[wordLength].map(w=>w.toUpperCase());
-    const available = words.filter(w => !usedWords.includes(w));
-    secretWord = available[Math.floor(Math.random()*available.length)];
+    if (!usedWords[wordLength]) usedWords[wordLength] = [];
+
+    try {
+        words = await loadWords(wordLength);
+    } catch {
+        feedbackMessage.textContent = "Failed to load word list.";
+        return;
+    }
+
+    const availableWords = words.filter(w => !usedWords[wordLength].includes(w));
+
+    if (availableWords.length === 0) {
+        feedbackMessage.textContent = "No more unused words left!";
+        return;
+    }
+
+    secretWord = availableWords[Math.floor(Math.random() * availableWords.length)];
     console.log("Secret:", secretWord);
 
     createLetterBoxes();
@@ -330,7 +343,7 @@ function submitGuess(){
     if(result.black===wordLength){
         winnerText.textContent="You cracked the code!";
         winnerMessage.classList.remove("hidden");
-        usedWords.push(secretWord);
+        usedWords[wordLength].push(secretWord);
         gameOver=true;
         return;
     }
