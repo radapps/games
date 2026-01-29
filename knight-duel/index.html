@@ -101,7 +101,11 @@
         }
 
         .square.valid-move {
-            box-shadow: inset 0 0 0 4px #4ade80;
+            box-shadow: inset 0 0 0 4px var(--highlight-color, #4ade80);
+        }
+        
+        .square.selected {
+            box-shadow: inset 0 0 0 4px #fbbf24;
         }
 
         .square.burned {
@@ -407,8 +411,9 @@
                     Array(this.boardSize).fill(null).map(() => ({ piece: null, burned: false }))
                 );
                 
-                this.board[0][1] = { piece: 1, burned: false };
-                this.board[this.boardSize - 1][this.boardSize - 2] = { piece: 2, burned: false };
+                // Player 1 (white) starts bottom-right, Player 2 (black) starts top-left
+                this.board[this.boardSize - 1][this.boardSize - 2] = { piece: 1, burned: false };
+                this.board[0][1] = { piece: 2, burned: false };
                 
                 this.currentPlayer = 1;
                 this.selectedSquare = null;
@@ -418,7 +423,10 @@
             }
             
             setupEventListeners() {
-                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.applySettings();
+                    this.reset();
+                });
                 document.getElementById('settingsBtn').addEventListener('click', () => this.toggleSettings());
                 document.getElementById('closeSettingsBtn').addEventListener('click', () => {
                     this.applySettings();
@@ -647,6 +655,10 @@
                 boardEl.style.gridTemplateColumns = `repeat(${this.boardSize}, 1fr)`;
                 boardEl.style.gridTemplateRows = `repeat(${this.boardSize}, 1fr)`;
                 
+                // Set highlight color based on color scheme
+                const highlightColor = this.colorScheme === 2 ? '#fbbf24' : '#4ade80'; // Yellow for green scheme, green for others
+                boardEl.style.setProperty('--highlight-color', highlightColor);
+                
                 for (let row = 0; row < this.boardSize; row++) {
                     for (let col = 0; col < this.boardSize; col++) {
                         const square = this.board[row][col];
@@ -670,12 +682,12 @@
                             squareEl.appendChild(img);
                         } else if (square.piece === 1) {
                             const img = document.createElement('img');
-                            img.src = 'assets/knight_black.png';
+                            img.src = 'assets/knight_white.png';
                             img.alt = 'Player 1 Knight';
                             squareEl.appendChild(img);
                         } else if (square.piece === 2) {
                             const img = document.createElement('img');
-                            img.src = 'assets/knight_white.png';
+                            img.src = 'assets/knight_black.png';
                             img.alt = 'Player 2 Knight';
                             squareEl.appendChild(img);
                         }
