@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIC-TAC-NO!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .game-setup {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .game-setup h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .setup-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .option-group label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .mode-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .side-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .side-btn.active {
+            background: #764ba2;
+            color: white;
+        }
+
+        .start-btn {
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .game-board {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .game-board.active {
+            display: block;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            min-height: 30px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            aspect-ratio: 1;
+        }
+
+        .cell {
+            background: #f5f5f5;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            min-height: 100px;
+        }
+
+        .cell:hover:not(.taken) {
+            background: #e8eaf6;
+            transform: scale(1.05);
+        }
+
+        .cell.taken {
+            cursor: not-allowed;
+        }
+
+        .cell .mark {
+            transition: all 0.3s;
+        }
+
+        .cell .mark.x {
+            color: #e74c3c;
+        }
+
+        .cell .mark.o {
+            color: #3498db;
+        }
+
+        .cell .mark.disappearing {
+            animation: disappear 0.5s ease-out forwards;
+        }
+
+        @keyframes disappear {
+            0% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5) rotate(180deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) rotate(360deg);
+            }
+        }
+
+        @keyframes appear {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .cell .mark.appearing {
+            animation: appear 0.3s ease-out;
+        }
+
+        .winning-cell {
+            background: #ffd700 !important;
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .reset-btn, .menu-btn {
+            flex: 1;
+            background: #667eea;
+            color: white;
+            padding: 12px;
+        }
+
+        .menu-btn {
+            background: #764ba2;
+        }
+
+        .move-history {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #666;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .cell {
+                font-size: 2.5em;
+            }
+
+            .game-setup {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TIC-TAC-NO!</h1>
+        <p class="subtitle">Only 3 pieces allowed - first piece disappears on your 4th move!</p>
+
+        <div class="game-setup active" id="setup">
+            <h2>Game Setup</h2>
+            <div class="setup-options">
+                <div class="option-group">
+                    <label>Game Mode:</label>
+                    <div class="button-group">
+                        <button class="mode-btn active" data-mode="pvp">Player vs Player</button>
+                        <button class="mode-btn" data-mode="cpu">vs CPU</button>
+                    </div>
+                </div>
+                <div class="option-group" id="sideSelection" style="display: none;">
+                    <label>Play as:</label>
+                    <div class="button-group">
+                        <button class="side-btn active" data-side="X">X (First)</button>
+                        <button class="side-btn" data-side="O">O (Second)</button>
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" id="startBtn">Start Game</button>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <div class="status" id="status">X's turn</div>
+            <div class="board" id="board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+            <div class="move-history" id="moveHistory">Moves: X(0) | O(0)</div>
+            <div class="controls">
+                <button class="reset-btn" id="resetBtn">New Game</button>
+                <button class="menu-btn" id="menuBtn">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameMode = 'pvp';
+        let playerSide = 'X';
+        let currentPlayer = 'X';
+        let board = Array(9).fill(null);
+        let moveHistory = { X: [], O: [] };
+        let gameActive = true;
+
+        // DOM elements
+        const setup = document.getElementById('setup');
+        const gameBoard = document.getElementById('gameBoard');
+        const status = document.getElementById('status');
+        const cells = document.querySelectorAll('.cell');
+        const moveHistoryEl = document.getElementById('moveHistory');
+        const sideSelection = document.getElementById('sideSelection');
+
+        // Setup event listeners
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                gameMode = btn.dataset.mode;
+                sideSelection.style.display = gameMode === 'cpu' ? 'flex' : 'none';
+            });
+        });
+
+        document.querySelectorAll('.side-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                playerSide = btn.dataset.side;
+            });
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            gameBoard.classList.remove('active');
+            setup.classList.add('active');
+        });
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
+
+        function startGame() {
+            setup.classList.remove('active');
+            gameBoard.classList.add('active');
+            resetGame();
+            
+            // If CPU mode and player is O, let CPU make first move
+            if (gameMode === 'cpu' && playerSide === 'O') {
+                setTimeout(makeCPUMove, 500);
+            }
+        }
+
+        function handleCellClick(e) {
+            const index = parseInt(e.target.dataset.index);
+            
+            if (!gameActive || board[index] !== null) return;
+            
+            // In CPU mode, only allow player's moves
+            if (gameMode === 'cpu' && currentPlayer !== playerSide) return;
+            
+            makeMove(index);
+        }
+
+        function makeMove(index) {
+            // Place the mark
+            board[index] = currentPlayer;
+            const cell = cells[index];
+            
+            const mark = document.createElement('span');
+            mark.className = `mark ${currentPlayer.toLowerCase()} appearing`;
+            mark.textContent = currentPlayer;
+            cell.appendChild(mark);
+            cell.classList.add('taken');
+            
+            // Add to move history
+            moveHistory[currentPlayer].push(index);
+            
+            // If player has 4 pieces, remove the first one
+            if (moveHistory[currentPlayer].length > 3) {
+                const removeIndex = moveHistory[currentPlayer].shift();
+                removePiece(removeIndex);
+            }
+            
+            updateMoveHistory();
+            
+            // Check for win AFTER piece removal is complete
+            // We need to wait for the removal animation if a piece was removed
+            const checkDelay = moveHistory[currentPlayer].length === 3 ? 550 : 0;
+            
+            setTimeout(() => {
+                if (checkWin()) {
+                    gameActive = false;
+                    const winner = gameMode === 'cpu' && currentPlayer !== playerSide ? 'CPU' : currentPlayer;
+                    status.textContent = `${winner} wins! 🎉`;
+                    return;
+                }
+                
+                // Check for draw (all cells filled with no win)
+                if (board.filter(cell => cell !== null).length === 9) {
+                    gameActive = false;
+                    status.textContent = "It's a draw!";
+                    return;
+                }
+                
+                // Switch player
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateStatus();
+                
+                // If CPU mode, make CPU move
+                if (gameMode === 'cpu' && currentPlayer !== playerSide && gameActive) {
+                    setTimeout(makeCPUMove, 500);
+                }
+            }, checkDelay);
+        }
+
+        function removePiece(index) {
+            const cell = cells[index];
+            const mark = cell.querySelector('.mark');
+            
+            if (mark) {
+                mark.classList.add('disappearing');
+                setTimeout(() => {
+                    cell.innerHTML = '';
+                    cell.classList.remove('taken');
+                    board[index] = null;
+                }, 500);
+            }
+        }
+
+        function makeCPUMove() {
+            if (!gameActive) return;
+            
+            const cpuSide = currentPlayer;
+            const humanSide = playerSide;
+            
+            // Try to win (considering what piece will be removed)
+            let move = findWinningMoveWithRemoval(cpuSide);
+            
+            // Block player from winning (considering what piece will be removed)
+            if (move === -1) {
+                move = findBlockingMove(humanSide);
+            }
+            
+            // Take center if available
+            if (move === -1 && board[4] === null) {
+                move = 4;
+            }
+            
+            // Take corners
+            if (move === -1) {
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(i => board[i] === null);
+                if (availableCorners.length > 0) {
+                    move = availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+            }
+            
+            // Take any available
+            if (move === -1) {
+                const available = board.map((val, idx) => val === null ? idx : -1).filter(idx => idx !== -1);
+                move = available[Math.floor(Math.random() * available.length)];
+            }
+            
+            if (move !== -1) {
+                makeMove(move);
+            }
+        }
+
+        function findWinningMoveWithRemoval(player) {
+            // Simulate placing a piece and check if it creates a win
+            // Must consider what piece will be removed if we have 3 pieces
+            const available = board.map((val, idx) => val === null ? idx : -1).filter(idx => idx !== -1);
+            
+            for (let move of available) {
+                // Simulate the move
+                const simulatedBoard = [...board];
+                simulatedBoard[move] = player;
+                
+                // Simulate removal if player will have 4 pieces
+                if (moveHistory[player].length >= 3) {
+                    const wouldRemove = moveHistory[player][0];
+                    simulatedBoard[wouldRemove] = null;
+                }
+                
+                // Check if this creates a winning position
+                if (checkWinOnBoard(simulatedBoard, player)) {
+                    return move;
+                }
+            }
+            
+            return -1;
+        }
+
+        function findBlockingMove(opponent) {
+            // Check if opponent can win on their next move
+            // We need to block them, but only if our piece won't disappear
+            const available = board.map((val, idx) => val === null ? idx : -1).filter(idx => idx !== -1);
+            
+            for (let move of available) {
+                // Simulate opponent's next move
+                const simulatedBoard = [...board];
+                simulatedBoard[move] = opponent;
+                
+                // Simulate removal if opponent will have 4 pieces
+                if (moveHistory[opponent].length >= 3) {
+                    const wouldRemove = moveHistory[opponent][0];
+                    simulatedBoard[wouldRemove] = null;
+                }
+                
+                // If opponent would win, we need to block
+                if (checkWinOnBoard(simulatedBoard, opponent)) {
+                    // But check if placing our piece here would immediately disappear
+                    const cpuSide = currentPlayer;
+                    if (moveHistory[cpuSide].length >= 3) {
+                        const ourRemovalIndex = moveHistory[cpuSide][0];
+                        // If the piece we'd place would be removed next turn, it can't block effectively
+                        // But we should still place it if it's our only blocking option
+                        // Check if there are other blocking options
+                        const otherBlockingMoves = available.filter(m => {
+                            const testBoard = [...board];
+                            testBoard[m] = opponent;
+                            if (moveHistory[opponent].length >= 3) {
+                                testBoard[moveHistory[opponent][0]] = null;
+                            }
+                            return m !== move && checkWinOnBoard(testBoard, opponent);
+                        });
+                        
+                        // If this is the only blocking move, take it even if it will disappear
+                        if (otherBlockingMoves.length === 0) {
+                            return move;
+                        }
+                    } else {
+                        return move;
+                    }
+                }
+            }
+            
+            return -1;
+        }
+
+        function checkWinOnBoard(boardState, player) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6] // diagonals
+            ];
+            
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c] && boardState[a] === player) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function checkWin() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6] // diagonals
+            ];
+            
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    // Highlight winning cells
+                    cells[a].classList.add('winning-cell');
+                    cells[b].classList.add('winning-cell');
+                    cells[c].classList.add('winning-cell');
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function updateStatus() {
+            if (gameMode === 'cpu') {
+                status.textContent = currentPlayer === playerSide ? "Your turn" : "CPU's turn...";
+            } else {
+                status.textContent = `${currentPlayer}'s turn`;
+            }
+        }
+
+        function updateMoveHistory() {
+            const xCount = moveHistory.X.length;
+            const oCount = moveHistory.O.length;
+            moveHistoryEl.textContent = `Pieces on board: X(${xCount}) | O(${oCount})`;
+        }
+
+        function resetGame() {
+            board = Array(9).fill(null);
+            moveHistory = { X: [], O: [] };
+            currentPlayer = 'X';
+            gameActive = true;
+            
+            cells.forEach(cell => {
+                cell.innerHTML = '';
+                cell.classList.remove('taken', 'winning-cell');
+            });
+            
+            updateStatus();
+            updateMoveHistory();
+        }
+    </script>
+</body>
+</html>
