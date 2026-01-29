@@ -131,8 +131,13 @@ h1 { font-size:2.5em; margin-bottom:10px; }
 .keyboard-row {
     display:flex;
     justify-content:center;
-    gap:4px;
+    gap:6px;
     width:100%;
+}
+
+.keyboard-row.middle {
+    width:90%;
+    justify-content:center;
 }
 
 .keyboard button {
@@ -140,16 +145,16 @@ h1 { font-size:2.5em; margin-bottom:10px; }
     height:48px;
     max-width:48px;
     border:none;
-    border-radius:6px;
-    background:#334155;
+    border-radius:4px;
+    background:#818384;
     color:white;
     font-weight:bold;
     cursor:pointer;
     font-size:1em;
-    transition:all 0.2s;
+    transition:all 0.15s;
 }
 
-.keyboard button:hover { background:#475569; }
+.keyboard button:hover { background:#9a9b9c; }
 
 .keyboard .wide {
     max-width:80px;
@@ -166,7 +171,7 @@ h1 { font-size:2.5em; margin-bottom:10px; }
 /* Mobile tweaks */
 @media (max-width:480px) {
     .letter-box { width:40px; height:40px; font-size:1.2em; line-height:40px; }
-    .keyboard button { height:40px; font-size:0.9em; max-width:40px; }
+    .keyboard button { height:40px; font-size:0.85em; max-width:40px; }
 }
 </style>
 </head>
@@ -258,7 +263,6 @@ async function startNewGame() {
     }
 
     const availableWords = words.filter(w => !usedWords[wordLength].includes(w));
-
     if (availableWords.length === 0) {
         feedbackMessage.textContent = "No more unused words left!";
         return;
@@ -282,15 +286,19 @@ function createLetterBoxes() {
 
 function createKeyboard() {
     keyboardDiv.innerHTML="";
-    keyboardRows.forEach(row=>{
+
+    keyboardRows.forEach((row,index)=>{
         const rowDiv=document.createElement("div");
         rowDiv.className="keyboard-row";
+        if(index===1) rowDiv.classList.add("middle");
+
         row.forEach(l=>{
             const btn=document.createElement("button");
             btn.textContent=l;
             btn.onclick=()=>addLetter(l);
             rowDiv.appendChild(btn);
         });
+
         keyboardDiv.appendChild(rowDiv);
     });
 
@@ -306,7 +314,7 @@ function createKeyboard() {
     backBtn.className="wide";
     backBtn.onclick=removeLetter;
 
-    lastRow.appendChild(enterBtn);
+    lastRow.prepend(enterBtn);
     lastRow.appendChild(backBtn);
 }
 
@@ -345,11 +353,12 @@ function submitGuess(){
         winnerMessage.classList.remove("hidden");
         usedWords[wordLength].push(secretWord);
         gameOver=true;
-        return;
     }
 
     currentGuess=[];
     updateBoxes();
+
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
 function evaluateGuess(guess,secret){
