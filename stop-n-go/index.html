@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stop & Go</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .game-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .current-player {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .winner-message {
+            background: linear-gradient(135deg, #ffd93d 0%, #f9a825 100%);
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            animation: celebration 0.6s ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        @keyframes celebration {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+
+
+        .board {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            aspect-ratio: 1;
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        .cell:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+        }
+
+        .light {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            position: relative;
+            animation: lightUp 0.5s ease-out;
+        }
+
+        @keyframes lightUp {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .light.red {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .light.yellow {
+            background: radial-gradient(circle at 30% 30%, #ffd93d, #f9a825);
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.6);
+        }
+
+        .light.green {
+            background: radial-gradient(circle at 30% 30%, #51cf66, #2f9e44);
+            box-shadow: 0 0 20px rgba(81, 207, 102, 0.6);
+        }
+
+        .light::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+
+        .winning-cell {
+            animation: pulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reset-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #da190b;
+        }
+
+        .new-game-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .new-game-btn:hover {
+            background: #0b7dda;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 999;
+        }
+
+        .settings-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 90%;
+            max-width: 400px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease-out;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-panel.show {
+            right: 0;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .settings-header h2 {
+            font-size: 1.8em;
+            margin: 0;
+        }
+
+        .close-settings {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-settings:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .settings-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .setting-row {
+            margin-bottom: 20px;
+        }
+
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+
+        .setting-row select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .start-btn:hover {
+            background: #45a049;
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .cell {
+                border-radius: 8px;
+            }
+
+            .board {
+                gap: 8px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚦 Stop & Go</h1>
+        <p class="subtitle">Get three lights in a row to win!</p>
+
+        <div id="gameArea">
+            <div class="game-info">
+                <div class="current-player" id="currentPlayer">Player 1's Turn</div>
+            </div>
+
+            <div class="board" id="board"></div>
+
+            <div class="controls">
+                <button class="btn reset-btn" onclick="newGame()">New Game</button>
+                <button class="btn settings-btn" onclick="openSettings()">Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>⚙️ Settings</h2>
+            <button class="close-settings" onclick="closeSettings()">×</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-row">
+                <label for="player1Type">Player 1:</label>
+                <select id="player1Type" onchange="saveSettings()">
+                    <option value="human">Human</option>
+                    <option value="cpu">CPU</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="player2Type">Player 2:</label>
+                <select id="player2Type" onchange="saveSettings()">
+                    <option value="human">Human</option>
+                    <option value="cpu">CPU</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <button class="btn start-btn" onclick="saveAndNewGame()">Save & New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATES = {
+            EMPTY: 0,
+            RED: 1,
+            YELLOW: 2,
+            GREEN: 3
+        };
+
+        let board = Array(9).fill(STATES.EMPTY);
+        let currentPlayer = 1;
+        let gameActive = false;
+        let player1Type = 'human';
+        let player2Type = 'human';
+        let cpuThinking = false;
+        let lastBoard = Array(9).fill(STATES.EMPTY);
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedPlayer1 = localStorage.getItem('stopgo_player1');
+            const savedPlayer2 = localStorage.getItem('stopgo_player2');
+            
+            if (savedPlayer1) {
+                player1Type = savedPlayer1;
+                document.getElementById('player1Type').value = savedPlayer1;
+            }
+            if (savedPlayer2) {
+                player2Type = savedPlayer2;
+                document.getElementById('player2Type').value = savedPlayer2;
+            }
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            player1Type = document.getElementById('player1Type').value;
+            player2Type = document.getElementById('player2Type').value;
+            
+            localStorage.setItem('stopgo_player1', player1Type);
+            localStorage.setItem('stopgo_player2', player2Type);
+        }
+
+        // Open settings panel
+        function openSettings() {
+            document.getElementById('settingsOverlay').classList.add('show');
+            document.getElementById('settingsPanel').classList.add('show');
+        }
+
+        // Close settings panel
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('show');
+            document.getElementById('settingsPanel').classList.remove('show');
+        }
+
+        // Save settings and start new game
+        function saveAndNewGame() {
+            saveSettings();
+            closeSettings();
+            newGame();
+        }
+
+        function newGame() {
+            board = Array(9).fill(STATES.EMPTY);
+            currentPlayer = 1;
+            gameActive = true;
+            cpuThinking = false;
+            lastBoard = Array(9).fill(STATES.EMPTY);
+            
+            // Clear the board visually
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            
+            renderBoard();
+            updateCurrentPlayer();
+            
+            if (getCurrentPlayerType() === 'cpu') {
+                setTimeout(makeCPUMove, 500);
+            }
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('board');
+            
+            // Only create board cells on first render
+            if (boardElement.children.length === 0) {
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.index = i;
+                    cell.onclick = () => handleCellClick(i);
+                    boardElement.appendChild(cell);
+                }
+            }
+            
+            // Update only changed cells
+            for (let i = 0; i < 9; i++) {
+                const cell = boardElement.children[i];
+                
+                // Only update if state changed
+                if (board[i] !== lastBoard[i]) {
+                    cell.innerHTML = '';
+                    cell.classList.remove('disabled');
+                    
+                    if (board[i] !== STATES.EMPTY) {
+                        const light = document.createElement('div');
+                        light.className = 'light';
+                        
+                        if (board[i] === STATES.RED) light.classList.add('red');
+                        else if (board[i] === STATES.YELLOW) light.classList.add('yellow');
+                        else if (board[i] === STATES.GREEN) light.classList.add('green');
+                        
+                        cell.appendChild(light);
+                        
+                        if (board[i] === STATES.GREEN) {
+                            cell.classList.add('disabled');
+                        }
+                    }
+                }
+            }
+            
+            lastBoard = [...board];
+        }
+
+        function handleCellClick(index) {
+            if (!gameActive || cpuThinking) return;
+            if (getCurrentPlayerType() === 'cpu') return;
+            
+            makeMove(index);
+        }
+
+        function makeMove(index) {
+            if (!gameActive) return;
+            
+            const currentState = board[index];
+            
+            // Empty cell -> Red
+            if (currentState === STATES.EMPTY) {
+                board[index] = STATES.RED;
+            }
+            // Red -> Yellow
+            else if (currentState === STATES.RED) {
+                board[index] = STATES.YELLOW;
+            }
+            // Yellow -> Green
+            else if (currentState === STATES.YELLOW) {
+                board[index] = STATES.GREEN;
+            }
+            // Green -> can't change
+            else {
+                return;
+            }
+            
+            renderBoard();
+            
+            const winner = checkWinner();
+            if (winner) {
+                endGame(winner);
+                return;
+            }
+            
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateCurrentPlayer();
+            
+            if (getCurrentPlayerType() === 'cpu') {
+                cpuThinking = true;
+                setTimeout(() => {
+                    makeCPUMove();
+                    cpuThinking = false;
+                }, 800);
+            }
+        }
+
+        function getCurrentPlayerType() {
+            return currentPlayer === 1 ? player1Type : player2Type;
+        }
+
+        function makeCPUMove() {
+            if (!gameActive) return;
+            
+            // Simple AI strategy
+            // 1. Try to win
+            // 2. Try to block opponent from winning
+            // 3. Advance existing lights
+            // 4. Place new red light
+            
+            const move = findBestMove();
+            if (move !== -1) {
+                makeMove(move);
+            }
+        }
+
+        function findBestMove() {
+            // Try to win
+            for (let i = 0; i < 9; i++) {
+                if (canMakeMove(i)) {
+                    const originalState = board[i];
+                    board[i] = getNextState(board[i]);
+                    if (checkWinner() === currentPlayer) {
+                        board[i] = originalState;
+                        return i;
+                    }
+                    board[i] = originalState;
+                }
+            }
+            
+            // Try to block opponent
+            const opponent = currentPlayer === 1 ? 2 : 1;
+            for (let i = 0; i < 9; i++) {
+                if (canMakeMove(i)) {
+                    const originalState = board[i];
+                    const originalPlayer = currentPlayer;
+                    currentPlayer = opponent;
+                    board[i] = getNextState(board[i]);
+                    const wouldWin = checkWinner() === opponent;
+                    board[i] = originalState;
+                    currentPlayer = originalPlayer;
+                    if (wouldWin) return i;
+                }
+            }
+            
+            // Advance yellow to green (close to winning)
+            const yellows = board.map((state, i) => state === STATES.YELLOW ? i : -1).filter(i => i !== -1);
+            if (yellows.length > 0) {
+                return yellows[Math.floor(Math.random() * yellows.length)];
+            }
+            
+            // Advance red to yellow
+            const reds = board.map((state, i) => state === STATES.RED ? i : -1).filter(i => i !== -1);
+            if (reds.length > 0 && Math.random() > 0.3) {
+                return reds[Math.floor(Math.random() * reds.length)];
+            }
+            
+            // Place new red light in empty cell
+            const empties = board.map((state, i) => state === STATES.EMPTY ? i : -1).filter(i => i !== -1);
+            if (empties.length > 0) {
+                // Prefer center and corners
+                const strategic = empties.filter(i => [0, 2, 4, 6, 8].includes(i));
+                const target = strategic.length > 0 ? strategic : empties;
+                return target[Math.floor(Math.random() * target.length)];
+            }
+            
+            // If no empties, just pick any available move (red or yellow)
+            const available = board.map((state, i) => canMakeMove(i) ? i : -1).filter(i => i !== -1);
+            if (available.length > 0) {
+                return available[Math.floor(Math.random() * available.length)];
+            }
+            
+            return -1;
+        }
+
+        function canMakeMove(index) {
+            return board[index] !== STATES.GREEN;
+        }
+
+        function getNextState(state) {
+            if (state === STATES.EMPTY) return STATES.RED;
+            if (state === STATES.RED) return STATES.YELLOW;
+            if (state === STATES.YELLOW) return STATES.GREEN;
+            return state;
+        }
+
+        function checkWinner() {
+            const lines = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6] // diagonals
+            ];
+            
+            for (const [a, b, c] of lines) {
+                if (board[a] !== STATES.EMPTY && 
+                    board[a] === board[b] && 
+                    board[b] === board[c]) {
+                    highlightWinningCells([a, b, c]);
+                    return currentPlayer;
+                }
+            }
+            
+            return null;
+        }
+
+        function highlightWinningCells(indices) {
+            indices.forEach(index => {
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                if (cell) {
+                    const light = cell.querySelector('.light');
+                    if (light) {
+                        light.classList.add('winning-cell');
+                    }
+                }
+            });
+        }
+
+        function endGame(winner) {
+            gameActive = false;
+            const playerType = winner === 1 ? 
+                (player1Type === 'cpu' ? 'CPU Player 1' : 'Player 1') :
+                (player2Type === 'cpu' ? 'CPU Player 2' : 'Player 2');
+            
+            const currentPlayerDiv = document.getElementById('currentPlayer');
+            currentPlayerDiv.textContent = `${playerType} Wins! 🎉`;
+            currentPlayerDiv.className = 'winner-message';
+        }
+
+        function updateCurrentPlayer() {
+            const playerType = getCurrentPlayerType() === 'cpu' ? ' (CPU)' : '';
+            const currentPlayerDiv = document.getElementById('currentPlayer');
+            currentPlayerDiv.className = 'current-player';
+            currentPlayerDiv.textContent = `Player ${currentPlayer}'s Turn${playerType}`;
+        }
+
+        // Initialize
+        loadSettings();
+        newGame();
+    </script>
+</body>
+</html>
