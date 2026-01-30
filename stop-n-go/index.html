@@ -409,6 +409,13 @@
                 </select>
             </div>
             <div class="setting-row">
+                <label for="cpuDifficulty">CPU Difficulty:</label>
+                <select id="cpuDifficulty" onchange="saveSettings()">
+                    <option value="easy">Easy</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="setting-row">
                 <button class="btn start-btn" onclick="saveAndNewGame()">Save & New Game</button>
             </div>
         </div>
@@ -427,6 +434,7 @@
         let gameActive = false;
         let player1Type = 'human';
         let player2Type = 'human';
+        let cpuDifficulty = 'easy';
         let cpuThinking = false;
         let lastBoard = Array(9).fill(STATES.EMPTY);
 
@@ -434,6 +442,7 @@
         function loadSettings() {
             const savedPlayer1 = localStorage.getItem('stopgo_player1');
             const savedPlayer2 = localStorage.getItem('stopgo_player2');
+            const savedDifficulty = localStorage.getItem('stopgo_difficulty');
             
             if (savedPlayer1) {
                 player1Type = savedPlayer1;
@@ -443,15 +452,21 @@
                 player2Type = savedPlayer2;
                 document.getElementById('player2Type').value = savedPlayer2;
             }
+            if (savedDifficulty) {
+                cpuDifficulty = savedDifficulty;
+                document.getElementById('cpuDifficulty').value = savedDifficulty;
+            }
         }
 
         // Save settings to localStorage
         function saveSettings() {
             player1Type = document.getElementById('player1Type').value;
             player2Type = document.getElementById('player2Type').value;
+            cpuDifficulty = document.getElementById('cpuDifficulty').value;
             
             localStorage.setItem('stopgo_player1', player1Type);
             localStorage.setItem('stopgo_player2', player2Type);
+            localStorage.setItem('stopgo_difficulty', cpuDifficulty);
         }
 
         // Open settings panel
@@ -591,19 +606,20 @@
         function makeCPUMove() {
             if (!gameActive) return;
             
-            // Simple AI strategy
-            // 1. Try to win
-            // 2. Try to block opponent from winning
-            // 3. Advance existing lights
-            // 4. Place new red light
+            let move = -1;
             
-            const move = findBestMove();
+            if (cpuDifficulty === 'hard') {
+                move = findBestMoveHard();
+            } else {
+                move = findBestMoveEasy();
+            }
+            
             if (move !== -1) {
                 makeMove(move);
             }
         }
 
-        function findBestMove() {
+        function findBestMoveEasy() {
             // Try to win
             for (let i = 0; i < 9; i++) {
                 if (canMakeMove(i)) {
@@ -660,6 +676,113 @@
             }
             
             return -1;
+        }
+
+        function findBestMoveHard() {
+            const opponent = currentPlayer === 1 ? 2 : 1;
+            
+            // Try to win
+            for (let i = 0; i < 9; i++) {
+                if (canMakeMove(i)) {
+                    const originalState = board[i];
+                    board[i] = getNextState(board[i]);
+                    if (checkWinner() === currentPlayer) {
+                        board[i] = originalState;
+                        return i;
+                    }
+                    board[i] = originalState;
+                }
+            }
+            
+            // Try to block opponent from winning
+            for (let i = 0; i < 9; i++) {
+                if (canMakeMove(i)) {
+                    const originalState = board[i];
+                    const originalPlayer = currentPlayer;
+                    currentPlayer = opponent;
+                    board[i] = getNextState(board[i]);
+                    const wouldWin = checkWinner() === opponent;
+                    board[i] = originalState;
+                    currentPlayer = originalPlayer;
+                    if (wouldWin) return i;
+                }
+            }
+            
+            // Get all safe moves (moves that won't let opponent win on their next turn)
+            const safeMoves = [];
+            const allMoves = board.map((state, i) => canMakeMove(i) ? i : -1).filter(i => i !== -1);
+            
+            for (const move of allMoves) {
+                if (isSafeMove(move, opponent)) {
+                    safeMoves.push(move);
+                }
+            }
+            
+            // If there are safe moves, choose from them strategically
+            if (safeMoves.length > 0) {
+                // Prefer advancing yellows to green from safe moves
+                const safeYellows = safeMoves.filter(i => board[i] === STATES.YELLOW);
+                if (safeYellows.length > 0) {
+                    return safeYellows[Math.floor(Math.random() * safeYellows.length)];
+                }
+                
+                // Prefer advancing reds to yellow from safe moves
+                const safeReds = safeMoves.filter(i => board[i] === STATES.RED);
+                if (safeReds.length > 0 && Math.random() > 0.3) {
+                    return safeReds[Math.floor(Math.random() * safeReds.length)];
+                }
+                
+                // Prefer strategic empty squares from safe moves
+                const safeEmpties = safeMoves.filter(i => board[i] === STATES.EMPTY);
+                if (safeEmpties.length > 0) {
+                    const strategic = safeEmpties.filter(i => [0, 2, 4, 6, 8].includes(i));
+                    const target = strategic.length > 0 ? strategic : safeEmpties;
+                    return target[Math.floor(Math.random() * target.length)];
+                }
+                
+                // Return any safe move
+                return safeMoves[Math.floor(Math.random() * safeMoves.length)];
+            }
+            
+            // No safe moves available - pick any random available move
+            if (allMoves.length > 0) {
+                return allMoves[Math.floor(Math.random() * allMoves.length)];
+            }
+            
+            return -1;
+        }
+
+        // Check if a move is safe (won't allow opponent to win on their next turn)
+        function isSafeMove(moveIndex, opponent) {
+            // Simulate making this move
+            const originalState = board[moveIndex];
+            const originalPlayer = currentPlayer;
+            board[moveIndex] = getNextState(board[moveIndex]);
+            
+            // Check all possible opponent responses
+            const opponentMoves = board.map((state, i) => canMakeMove(i) ? i : -1).filter(i => i !== -1);
+            
+            currentPlayer = opponent;
+            let isSafe = true;
+            
+            for (const opponentMove of opponentMoves) {
+                const oppOriginalState = board[opponentMove];
+                board[opponentMove] = getNextState(board[opponentMove]);
+                
+                if (checkWinner() === opponent) {
+                    isSafe = false;
+                    board[opponentMove] = oppOriginalState;
+                    break;
+                }
+                
+                board[opponentMove] = oppOriginalState;
+            }
+            
+            // Restore board state
+            board[moveIndex] = originalState;
+            currentPlayer = originalPlayer;
+            
+            return isSafe;
         }
 
         function canMakeMove(index) {
