@@ -136,34 +136,24 @@
   .tray-label .tray-dot.white { background: #eee; border: 1px solid #999; }
 
   .tray-piece {
-    width: 44px; height: 44px;
-    border-radius: 50%;
+    width: 48px; height: 48px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    transition: transform 0.13s, box-shadow 0.13s;
+    transition: transform 0.13s;
     flex-shrink: 0;
   }
   .tray-piece:hover { transform: scale(1.1); }
-  .tray-piece.black {
-    background: radial-gradient(circle at 35% 35%, #3a3a3a, #111);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    color: #ccc;
-  }
-  .tray-piece.white {
-    background: radial-gradient(circle at 35% 35%, #f5f0e8, #cbc2b0);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    color: #2a2a2a;
-  }
   .tray-piece .lbl {
     font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: 0.72rem; letter-spacing: 0.02em;
+    font-size: 0.8rem; letter-spacing: 0.02em;
+    color: #1a1a1a;
   }
-  .tray-piece.selected-tray {
-    box-shadow: 0 0 0 3px rgba(255,220,100,0.9), 0 2px 5px rgba(0,0,0,0.5) !important;
+  .tray-piece.selected-tray img {
+    filter: drop-shadow(0 0 5px rgba(255,220,100,0.95)) drop-shadow(0 0 10px rgba(255,220,100,0.6));
     transform: scale(1.08);
   }
   /* PNG image inside tray piece */
-  .tray-piece img { width: 30px; height: 30px; object-fit: contain; }
+  .tray-piece img { width: 40px; height: 40px; object-fit: contain; }
 
   /* ── BOARD WRAPPER ── */
   .board-wrap {
@@ -243,38 +233,28 @@
   /* ── PIECE (on board) ── */
   .piece {
     position: relative; z-index: 3;
-    width: 56px; height: 56px;
+    width: 78px; height: 78px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
     transition: transform 0.15s;
     cursor: grab;
   }
   .piece:active { transform: scale(0.92); }
-  .piece.black {
-    background: radial-gradient(circle at 35% 35%, #3a3a3a, #111);
-    box-shadow: 0 3px 7px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.08);
-    color: #ccc; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-  }
-  .piece.white {
-    background: radial-gradient(circle at 35% 35%, #f5f0e8, #cbc2b0);
-    box-shadow: 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5);
-    color: #2a2a2a; text-shadow: 0 1px 1px rgba(255,255,255,0.5);
-  }
   .piece .lbl {
     font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: 0.95rem; letter-spacing: 0.02em;
+    font-size: 1.3rem; letter-spacing: 0.02em;
+    color: #1a1a1a;
   }
   /* PNG image inside board piece */
-  .piece img { width: 38px; height: 38px; object-fit: contain; }
+  .piece img { width: 68px; height: 68px; object-fit: contain; }
 
   /* ── KING ADVANCE GLOW ── */
-  .piece.king-advance {
-    box-shadow: 0 0 14px 4px rgba(255,200,50,0.7), 0 3px 7px rgba(0,0,0,0.5);
+  .piece.king-advance img {
+    filter: drop-shadow(0 0 8px rgba(255,200,50,0.85)) drop-shadow(0 0 14px rgba(255,200,50,0.5));
     animation: kingPulse 1s ease-in-out infinite alternate;
   }
   @keyframes kingPulse {
-    from { box-shadow: 0 0 14px 4px rgba(255,200,50,0.7), 0 3px 7px rgba(0,0,0,0.5); }
-    to   { box-shadow: 0 0 22px 8px rgba(255,210,80,0.85), 0 3px 7px rgba(0,0,0,0.5); }
+    from { filter: drop-shadow(0 0 8px rgba(255,200,50,0.85)) drop-shadow(0 0 14px rgba(255,200,50,0.5)); }
+    to   { filter: drop-shadow(0 0 14px rgba(255,210,80,1))   drop-shadow(0 0 24px rgba(255,210,80,0.6)); }
   }
 
   /* ── OVERLAY ── */
@@ -320,8 +300,8 @@
       align-items: center;
     }
     .tray-label { margin-bottom: 0; margin-right: 4px; white-space: nowrap; }
-    .tray-piece { width: 36px; height: 36px; }
-    .tray-piece img { width: 24px; height: 24px; }
+    .tray-piece { width: 38px; height: 38px; }
+    .tray-piece img { width: 32px; height: 32px; }
     /* swap order: black tray top, white tray bottom */
     .tray.tray-black { order: -1; }
     .tray.tray-white { order: 1; }
@@ -329,14 +309,14 @@
   @media (max-width: 380px) {
     :root { --cell-size: 82px; }
     .header h1 { font-size: 1.9rem; }
-    .piece { width: 46px; height: 46px; }
-    .piece .lbl { font-size: 0.82rem; }
-    .piece img { width: 32px; height: 32px; }
+    .piece { width: 64px; height: 64px; }
+    .piece .lbl { font-size: 1.1rem; }
+    .piece img { width: 56px; height: 56px; }
   }
   @media (max-width: 320px) {
     :root { --cell-size: 74px; }
-    .piece { width: 42px; height: 42px; }
-    .piece img { width: 28px; height: 28px; }
+    .piece { width: 58px; height: 58px; }
+    .piece img { width: 50px; height: 50px; }
   }
 </style>
 </head>
@@ -366,7 +346,7 @@
 <!-- STATUS -->
 <div class="status-bar">
   <div class="status-turn" id="statusTurn">
-    <span class="dot black"></span> Black's turn
+    <span class="dot white"></span> White's turn
   </div>
   <div class="status-msg" id="statusMsg">Press New Game to begin</div>
 </div>
@@ -460,7 +440,7 @@ function initBoard() {
   board[3][1] = { type: P.KING,   color: 'white' };
   board[3][2] = { type: P.ROOK,   color: 'white' };
 
-  turn             = 'black';
+  turn             = 'white';
   selected         = null;
   selectedTray     = null;
   validMoves       = [];
@@ -822,75 +802,122 @@ function cpuMove() {
     return;
   }
 
-  // ── Scoring ──
+  // ── Piece values ──
+  const PIECE_VALUE = { P:1, B:2, R:3, Q:4, K:100 };
+
+  // Returns true if the enemy can capture the piece sitting at (r,c) on their next move.
+  // We temporarily place `testPiece` at (r,c) to simulate; if testPiece is null we just
+  // check whatever is already there.
+  function canBeAttackedBy(r, c, enemyColor, testPiece) {
+    const saved = board[r][c];
+    if (testPiece !== undefined) board[r][c] = testPiece;   // simulate
+    let threatened = false;
+    for (let er = 0; er < ROWS && !threatened; er++) {
+      for (let ec = 0; ec < COLS && !threatened; ec++) {
+        const ep = board[er][ec];
+        if (!ep || ep.color !== enemyColor) continue;
+        const eMoves = getMovesFor(er, ec);
+        if (eMoves.some(m => m.r === r && m.c === c)) threatened = true;
+      }
+    }
+    board[r][c] = saved;   // restore
+    return threatened;
+  }
+
+  // ── Score every candidate move ──
   function scoreMove(mv) {
-    let score = 0;
-    const target = board[mv.toR][mv.toC];
+    const target   = board[mv.toR][mv.toC];
+    const movingPV = PIECE_VALUE[mv.piece.type] || 0;
 
-    // Instant win: capture king
-    if (target && target.type === P.KING) return 10000;
+    // ══ TIER 1: instant win or forced defence ══
+    // Capture the enemy king → game over, pick this immediately
+    if (target && target.type === P.KING) return 100000;
 
-    // MUST capture advancing enemy king
+    // Enemy king is advancing — we MUST capture it or we lose next turn
     if (kingAdvanceColor === enemyColor) {
-      if (target && target.type === P.KING) return 9000;
-      // If we're NOT capturing the enemy king this turn, heavily penalise
-      // (we'll lose next turn)
-      score -= 5000;
+      if (target && target.type === P.KING) return 90000;
+      return -50000;   // any move that doesn't grab it loses
     }
 
-    // Board moves scoring
-    if (mv.kind === 'board') {
-      // Capture value
-      if (mv.capture && target) {
-        switch (target.type) {
-          case P.KING:   score += 500; break;
-          case P.QUEEN:  score += 50;  break;
-          case P.BISHOP: score += 30;  break;
-          case P.ROOK:   score += 35;  break;
-          case P.PAWN:   score += 15;  break;
+    let score = 0;
+
+    // ══ TIER 2: capture value + trade safety lookahead ══
+    if (mv.capture && target) {
+      const capturedPV = PIECE_VALUE[target.type] || 0;
+      score += capturedPV * 20;   // base reward for the capture
+
+      // After we land on (toR,toC), can the enemy recapture us there?
+      // Simulate: temporarily remove our piece from its origin so the
+      // enemy's move-gen sees the board as it will actually be.
+      const savedFrom = board[mv.fromR][mv.fromC];
+      board[mv.fromR][mv.fromC] = null;
+      const willBeRecaptured = canBeAttackedBy(mv.toR, mv.toC, enemyColor, mv.piece);
+      board[mv.fromR][mv.fromC] = savedFrom;
+
+      if (willBeRecaptured) {
+        // Net material = what we gain minus what we lose
+        const net = capturedPV - movingPV;
+        if (net >= 0) {
+          score += net * 10;          // even or favourable trade — still ok
+        } else {
+          score -= (-net) * 25;       // unfavourable — heavy penalty
         }
+      } else {
+        score += 15;                  // free capture (no recapture) — bonus
       }
-      // Advance own king
+    }
+
+    // ══ TIER 3: non-capture safety — don't move into danger for nothing ══
+    if (!mv.capture && mv.kind === 'board') {
+      const savedFrom = board[mv.fromR][mv.fromC];
+      board[mv.fromR][mv.fromC] = null;
+      const willBeAttacked = canBeAttackedBy(mv.toR, mv.toC, enemyColor, mv.piece);
+      board[mv.fromR][mv.fromC] = savedFrom;
+
+      if (willBeAttacked) {
+        // Moving here lets the enemy grab us for free — penalise by our value
+        score -= movingPV * 22;
+        // But if we're the king, extra penalty (losing the king = losing the game)
+        if (mv.piece.type === P.KING) score -= 500;
+      }
+    }
+
+    // ══ Positional / strategic bonuses ══
+    if (mv.kind === 'board') {
+      // Advance own king toward the enemy back rank (conquest goal)
       if (mv.piece.type === P.KING) {
         const goal = (cpuColor === 'black') ? 3 : 0;
-        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 18;
-        // Danger penalty
-        const dirs8 = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
-        let danger = 0;
-        for (const [dr,dc] of dirs8) {
-          const nr = mv.toR+dr, nc = mv.toC+dc;
-          if (inBounds(nr,nc) && board[nr][nc] && board[nr][nc].color === enemyColor) danger++;
-        }
-        score -= danger * 12;
+        const advance = Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal);
+        score += advance * 12;
       }
-      // Advance own pawn (also rewards reaching promotion rank)
+      // Advance own pawn; bonus for reaching promotion rank
       if (mv.piece.type === P.PAWN) {
         const goal = (cpuColor === 'black') ? 3 : 0;
-        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 10;
-        // Bonus for hitting the promotion rank
-        if (mv.toR === goal) score += 40;
+        const advance = Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal);
+        score += advance * 8;
+        if (mv.toR === goal) score += 35;   // about to promote
       }
-      // Advance own queen toward enemy side
+      // Advance queen toward enemy side
       if (mv.piece.type === P.QUEEN) {
         const goal = (cpuColor === 'black') ? 3 : 0;
-        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 12;
+        const advance = Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal);
+        score += advance * 10;
       }
     }
 
-    // Placement scoring
+    // Tray placement: prefer deploying near enemy, prefer stronger pieces
     if (mv.kind === 'place') {
-      // Prefer placing near the center / enemy side
       const goal = (cpuColor === 'black') ? 3 : 0;
-      score += (ROWS - 1 - Math.abs(mv.toR - goal)) * 6;
-      // Prefer placing pieces that threaten enemy king
-      if (mv.type === P.QUEEN)  score += 18;
-      if (mv.type === P.ROOK || mv.type === P.BISHOP) score += 8;
-      // Small bonus for having pieces on the board (army size)
-      score += 3;
+      score += (ROWS - 1 - Math.abs(mv.toR - goal)) * 5;
+      score += (PIECE_VALUE[mv.type] || 0) * 4;
+      // Don't place into immediate danger
+      if (canBeAttackedBy(mv.toR, mv.toC, enemyColor, mv.piece)) {
+        score -= (PIECE_VALUE[mv.type] || 0) * 18;
+      }
     }
 
-    // Jitter
-    score += (Math.random() - 0.5) * 4;
+    // Tiny jitter so equal-score moves aren't always the same
+    score += (Math.random() - 0.5) * 2;
     return score;
   }
 
