@@ -401,29 +401,20 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  PNG PIECE IMAGE SUPPORT
-//  When you have PNGs, set PIECE_IMAGES to the path map below.
-//  Each key = "color_TYPE", value = path to PNG.
-//  While null, the game renders the letter labels instead.
+//  PNG PIECE IMAGES
+//  PNGs live in ./assets/ with naming: piecename_color.png
+//  e.g.  assets/rook_black.png   assets/queen_white.png
+//  TYPE code → filename stem is resolved automatically.
+//  Set USE_IMAGES = false to fall back to letter labels.
 // ═══════════════════════════════════════════════════════════════
-const PIECE_IMAGES = null;
-// Example once you have PNGs:
-// const PIECE_IMAGES = {
-//   black_R: 'pieces/black_rook.png',
-//   black_K: 'pieces/black_king.png',
-//   black_B: 'pieces/black_bishop.png',
-//   black_P: 'pieces/black_pawn.png',
-//   white_R: 'pieces/white_rook.png',
-//   white_K: 'pieces/white_king.png',
-//   white_B: 'pieces/white_bishop.png',
-//   white_P: 'pieces/white_pawn.png',
-// };
+const USE_IMAGES = true;
 
-function pieceInnerHTML(type, color, size) {
-  if (PIECE_IMAGES) {
-    const key = color + '_' + type;
-    const src = PIECE_IMAGES[key];
-    if (src) return '<img src="' + src + '" alt="' + color + ' ' + type + '">';
+const TYPE_NAME = { R:'rook', K:'king', B:'bishop', P:'pawn', Q:'queen' };
+
+function pieceInnerHTML(type, color) {
+  if (USE_IMAGES && TYPE_NAME[type]) {
+    const src = 'assets/' + TYPE_NAME[type] + '_' + color + '.png';
+    return '<img src="' + src + '" alt="' + color + ' ' + TYPE_NAME[type] + '">';
   }
   return '<span class="lbl">' + type + '</span>';
 }
@@ -431,7 +422,7 @@ function pieceInnerHTML(type, color, size) {
 // ─── CONSTANTS ───────────────────────────────────────────────
 const ROWS = 4, COLS = 3;
 const ROW_ZONE = ['row-red','row-brown','row-brown','row-blue'];
-const P = { ROOK:'R', KING:'K', BISHOP:'B', PAWN:'P' };
+const P = { ROOK:'R', KING:'K', BISHOP:'B', PAWN:'P', QUEEN:'Q' };
 
 // Back-rank rows: the "home" row that each color defends
 // Black defends row 0 (red).  White defends row 3 (blue).
@@ -608,7 +599,8 @@ function getMovesFor(r, c) {
   switch (piece.type) {
     case P.ROOK:   dirs = [[-1,0],[1,0],[0,-1],[0,1]]; break;
     case P.KING:   dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]; break;
-    case P.BISHOP: dirs = [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]]; break;
+    case P.BISHOP: dirs = [[-1,-1],[-1,1],[1,-1],[1,1]]; break;                          // diagonals only
+    case P.QUEEN:  dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]; break; // all 8
     case P.PAWN: {
       const fwd = piece.color === 'black' ? 1 : -1;
       const nr = r + fwd, nc = c;
@@ -763,6 +755,14 @@ function executeMove(fromR, fromC, toR, toC) {
     else                         whiteCaptures.push(newPiece);
   }
 
+  // ── Pawn promotion: reaching the far rank promotes to Queen ──
+  if (piece.type === P.PAWN) {
+    if ((piece.color === 'white' && toR === 0) ||
+        (piece.color === 'black' && toR === 3)) {
+      board[toR][toC] = { type: P.QUEEN, color: piece.color };
+    }
+  }
+
   // ── Check king advance (king reached opponent's back rank) ──
   kingAdvanceColor = null;
   if (piece.type === P.KING) {
@@ -844,6 +844,7 @@ function cpuMove() {
       if (mv.capture && target) {
         switch (target.type) {
           case P.KING:   score += 500; break;
+          case P.QUEEN:  score += 50;  break;
           case P.BISHOP: score += 30;  break;
           case P.ROOK:   score += 35;  break;
           case P.PAWN:   score += 15;  break;
@@ -862,10 +863,17 @@ function cpuMove() {
         }
         score -= danger * 12;
       }
-      // Advance own pawn
+      // Advance own pawn (also rewards reaching promotion rank)
       if (mv.piece.type === P.PAWN) {
         const goal = (cpuColor === 'black') ? 3 : 0;
         score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 10;
+        // Bonus for hitting the promotion rank
+        if (mv.toR === goal) score += 40;
+      }
+      // Advance own queen toward enemy side
+      if (mv.piece.type === P.QUEEN) {
+        const goal = (cpuColor === 'black') ? 3 : 0;
+        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 12;
       }
     }
 
@@ -875,6 +883,7 @@ function cpuMove() {
       const goal = (cpuColor === 'black') ? 3 : 0;
       score += (ROWS - 1 - Math.abs(mv.toR - goal)) * 6;
       // Prefer placing pieces that threaten enemy king
+      if (mv.type === P.QUEEN)  score += 18;
       if (mv.type === P.ROOK || mv.type === P.BISHOP) score += 8;
       // Small bonus for having pieces on the board (army size)
       score += 3;
