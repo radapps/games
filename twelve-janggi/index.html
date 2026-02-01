@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>12 Janggi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+
+  :root {
+    --red-bg: #d45a5a;
+    --blue-bg: #5a8fd4;
+    --brown-bg: #c49a6c;
+    --cell-size: 100px;
+    --grid-line: 2px;
+    --grid-color: rgba(0,0,0,0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a1410;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(80,40,20,0.4) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 50%, rgba(40,60,90,0.35) 0%, transparent 55%);
+    font-family: 'Crimson Pro', serif;
+    color: #e8ddd0;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    padding: 12px 6px;
+  }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 14px; }
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2.4rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #f0e6d3;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  }
+  .header h1::before, .header h1::after {
+    content: '─'; color: #c49a6c; margin: 0 10px;
+    font-size: 1.1rem; vertical-align: middle;
+  }
+  .header .subtitle {
+    font-style: italic; font-weight: 300;
+    color: #a09080; font-size: 0.9rem;
+    margin-top: 2px; letter-spacing: 0.12em;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 10px; flex-wrap: wrap; justify-content: center;
+  }
+  .controls select, .controls button {
+    font-family: 'Cinzel', serif; font-size: 0.75rem;
+    letter-spacing: 0.06em; padding: 6px 12px;
+    border-radius: 4px; border: 1px solid #5a4e3c;
+    background: #2a2420; color: #d4c4a8;
+    cursor: pointer; transition: background 0.2s, border-color 0.2s;
+  }
+  .controls select:hover, .controls button:hover {
+    background: #3a3028; border-color: #8a7a5c;
+  }
+  .controls button.btn-start {
+    background: linear-gradient(135deg, #7a5a2e, #5a3e1e);
+    border-color: #9a7a4c; color: #f0dcc0; font-weight: 700;
+  }
+  .controls button.btn-start:hover {
+    background: linear-gradient(135deg, #8a6a3e, #6a4e2e);
+  }
+  .controls label { font-size: 0.78rem; color: #8a7a60; letter-spacing: 0.04em; }
+
+  /* ── STATUS ── */
+  .status-bar {
+    min-height: 26px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .status-turn {
+    font-family: 'Cinzel', serif; font-size: 0.84rem;
+    letter-spacing: 0.1em; color: #c4b48a;
+  }
+  .status-turn .dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 5px; vertical-align: middle;
+    border: 2px solid rgba(255,255,255,0.25);
+  }
+  .status-turn .dot.black { background: #1a1a1a; }
+  .status-turn .dot.white { background: #eeeeee; }
+  .status-msg { font-size: 0.78rem; color: #9a8a6a; font-style: italic; }
+
+  /* ── ARENA (board + trays row) ── */
+  .arena {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  /* ── CAPTURE TRAY ── */
+  .tray {
+    width: 72px;
+    background: #2a2218;
+    border: 1px solid #4a3e2e;
+    border-radius: 6px;
+    padding: 8px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+  }
+  .tray-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    color: #7a6a4a;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .tray-label .tray-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; vertical-align: middle; margin-right: 2px;
+  }
+  .tray-label .tray-dot.black { background: #1a1a1a; border: 1px solid #555; }
+  .tray-label .tray-dot.white { background: #eee; border: 1px solid #999; }
+
+  .tray-piece {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.13s, box-shadow 0.13s;
+    flex-shrink: 0;
+  }
+  .tray-piece:hover { transform: scale(1.1); }
+  .tray-piece.black {
+    background: radial-gradient(circle at 35% 35%, #3a3a3a, #111);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    color: #ccc;
+  }
+  .tray-piece.white {
+    background: radial-gradient(circle at 35% 35%, #f5f0e8, #cbc2b0);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    color: #2a2a2a;
+  }
+  .tray-piece .lbl {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 0.72rem; letter-spacing: 0.02em;
+  }
+  .tray-piece.selected-tray {
+    box-shadow: 0 0 0 3px rgba(255,220,100,0.9), 0 2px 5px rgba(0,0,0,0.5) !important;
+    transform: scale(1.08);
+  }
+  /* PNG image inside tray piece */
+  .tray-piece img { width: 30px; height: 30px; object-fit: contain; }
+
+  /* ── BOARD WRAPPER ── */
+  .board-wrap {
+    position: relative;
+    background: #3b2e1e;
+    border-radius: 6px;
+    padding: 8px;
+    box-shadow:
+      0 0 0 3px #5a4530,
+      0 0 0 6px #3a2e1e,
+      0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  /* ── BOARD GRID ── */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, var(--cell-size));
+    grid-template-rows: repeat(4, var(--cell-size));
+    border-radius: 3px;
+    overflow: hidden;
+    /* outer border of entire grid */
+    border: var(--grid-line) solid var(--grid-color);
+  }
+
+  /* ── CELL ── */
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: filter 0.15s;
+    /* right + bottom gridline; top/left handled by grid border or neighbour */
+    border-right: var(--grid-line) solid var(--grid-color);
+    border-bottom: var(--grid-line) solid var(--grid-color);
+  }
+  /* kill double-lines on right edge and bottom edge */
+  .cell:nth-child(3n)   { border-right: none; }
+  .cell:nth-child(n+10) { border-bottom: none; }   /* last row (cells 10-12) */
+
+  .cell:hover { filter: brightness(1.13); }
+
+  .cell.row-red   { background: var(--red-bg); }
+  .cell.row-brown { background: var(--brown-bg); }
+  .cell.row-blue  { background: var(--blue-bg); }
+
+  /* ── CELL HIGHLIGHTS ── */
+  .cell.selected {
+    box-shadow: inset 0 0 0 4px rgba(255,220,100,0.85);
+    z-index: 2;
+  }
+  .cell.valid-move::after {
+    content: ''; position: absolute;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(255,230,80,0.45);
+    border: 2px solid rgba(255,210,50,0.7);
+    z-index: 1; pointer-events: none;
+  }
+  .cell.valid-capture::after {
+    content: ''; position: absolute;
+    width: 100%; height: 100%;
+    background: rgba(200,40,40,0.3);
+    border: 3px solid rgba(220,60,60,0.7);
+    z-index: 1; pointer-events: none;
+  }
+  /* placement highlight (from tray) — softer green */
+  .cell.valid-place::after {
+    content: ''; position: absolute;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(80,210,120,0.4);
+    border: 2px solid rgba(100,230,140,0.7);
+    z-index: 1; pointer-events: none;
+  }
+
+  /* ── PIECE (on board) ── */
+  .piece {
+    position: relative; z-index: 3;
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.15s;
+    cursor: grab;
+  }
+  .piece:active { transform: scale(0.92); }
+  .piece.black {
+    background: radial-gradient(circle at 35% 35%, #3a3a3a, #111);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.08);
+    color: #ccc; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+  .piece.white {
+    background: radial-gradient(circle at 35% 35%, #f5f0e8, #cbc2b0);
+    box-shadow: 0 3px 7px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5);
+    color: #2a2a2a; text-shadow: 0 1px 1px rgba(255,255,255,0.5);
+  }
+  .piece .lbl {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 0.95rem; letter-spacing: 0.02em;
+  }
+  /* PNG image inside board piece */
+  .piece img { width: 38px; height: 38px; object-fit: contain; }
+
+  /* ── KING ADVANCE GLOW ── */
+  .piece.king-advance {
+    box-shadow: 0 0 14px 4px rgba(255,200,50,0.7), 0 3px 7px rgba(0,0,0,0.5);
+    animation: kingPulse 1s ease-in-out infinite alternate;
+  }
+  @keyframes kingPulse {
+    from { box-shadow: 0 0 14px 4px rgba(255,200,50,0.7), 0 3px 7px rgba(0,0,0,0.5); }
+    to   { box-shadow: 0 0 22px 8px rgba(255,210,80,0.85), 0 3px 7px rgba(0,0,0,0.5); }
+  }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,10,5,0.82);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; backdrop-filter: blur(3px);
+  }
+  .overlay.hidden { display: none; }
+  .overlay-box {
+    background: linear-gradient(160deg, #2a2018, #1e1812);
+    border: 1px solid #5a4830; border-radius: 10px;
+    padding: 34px 40px; text-align: center;
+    max-width: 340px; width: 90%;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+  }
+  .overlay-box h2 {
+    font-family: 'Cinzel', serif; font-size: 1.5rem;
+    color: #f0dcc0; margin-bottom: 6px; letter-spacing: 0.06em;
+  }
+  .overlay-box .result-icon { font-size: 2.6rem; margin-bottom: 4px; }
+  .overlay-box p {
+    color: #9a8a6a; font-size: 0.88rem;
+    margin-bottom: 18px; line-height: 1.5;
+  }
+  .overlay-box button {
+    font-family: 'Cinzel', serif; font-size: 0.8rem;
+    letter-spacing: 0.1em; padding: 8px 26px;
+    background: linear-gradient(135deg, #7a5a2e, #5a3e1e);
+    border: 1px solid #9a7a4c; color: #f0dcc0;
+    border-radius: 4px; cursor: pointer; transition: background 0.2s;
+  }
+  .overlay-box button:hover { background: linear-gradient(135deg, #8a6a3e, #6a4e2e); }
+
+  /* ── RESPONSIVE ── */
+  /* stack trays above/below on narrow screens */
+  @media (max-width: 440px) {
+    .arena { flex-direction: column; align-items: center; gap: 6px; }
+    .tray {
+      flex-direction: row; width: auto;
+      padding: 5px 8px; gap: 4px;
+      align-items: center;
+    }
+    .tray-label { margin-bottom: 0; margin-right: 4px; white-space: nowrap; }
+    .tray-piece { width: 36px; height: 36px; }
+    .tray-piece img { width: 24px; height: 24px; }
+    /* swap order: black tray top, white tray bottom */
+    .tray.tray-black { order: -1; }
+    .tray.tray-white { order: 1; }
+  }
+  @media (max-width: 380px) {
+    :root { --cell-size: 82px; }
+    .header h1 { font-size: 1.9rem; }
+    .piece { width: 46px; height: 46px; }
+    .piece .lbl { font-size: 0.82rem; }
+    .piece img { width: 32px; height: 32px; }
+  }
+  @media (max-width: 320px) {
+    :root { --cell-size: 74px; }
+    .piece { width: 42px; height: 42px; }
+    .piece img { width: 28px; height: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>12 Janggi</h1>
+  <div class="subtitle">A game of kings &amp; conquest</div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <label>Play as</label>
+  <select id="colorSelect">
+    <option value="white">White (bottom)</option>
+    <option value="black">Black (top)</option>
+  </select>
+  <label>vs</label>
+  <select id="opponentSelect">
+    <option value="cpu">CPU</option>
+    <option value="human">Friend (local)</option>
+  </select>
+  <button class="btn-start" id="btnStart">New Game</button>
+</div>
+
+<!-- STATUS -->
+<div class="status-bar">
+  <div class="status-turn" id="statusTurn">
+    <span class="dot black"></span> Black's turn
+  </div>
+  <div class="status-msg" id="statusMsg">Press New Game to begin</div>
+</div>
+
+<!-- ARENA: trays + board -->
+<div class="arena">
+  <!-- Black's captured pieces (pieces black has won) -->
+  <div class="tray tray-black" id="trayBlack">
+    <div class="tray-label"><span class="tray-dot black"></span>Black's<br>captures</div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- White's captured pieces (pieces white has won) -->
+  <div class="tray tray-white" id="trayWhite">
+    <div class="tray-label"><span class="tray-dot white"></span>White's<br>captures</div>
+  </div>
+</div>
+
+<!-- GAME-OVER OVERLAY -->
+<div class="overlay hidden" id="overlay">
+  <div class="overlay-box">
+    <div class="result-icon" id="resultIcon">👑</div>
+    <h2 id="resultTitle">Game Over</h2>
+    <p id="resultDesc"></p>
+    <button id="btnRestart">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  PNG PIECE IMAGE SUPPORT
+//  When you have PNGs, set PIECE_IMAGES to the path map below.
+//  Each key = "color_TYPE", value = path to PNG.
+//  While null, the game renders the letter labels instead.
+// ═══════════════════════════════════════════════════════════════
+const PIECE_IMAGES = null;
+// Example once you have PNGs:
+// const PIECE_IMAGES = {
+//   black_R: 'pieces/black_rook.png',
+//   black_K: 'pieces/black_king.png',
+//   black_B: 'pieces/black_bishop.png',
+//   black_P: 'pieces/black_pawn.png',
+//   white_R: 'pieces/white_rook.png',
+//   white_K: 'pieces/white_king.png',
+//   white_B: 'pieces/white_bishop.png',
+//   white_P: 'pieces/white_pawn.png',
+// };
+
+function pieceInnerHTML(type, color, size) {
+  if (PIECE_IMAGES) {
+    const key = color + '_' + type;
+    const src = PIECE_IMAGES[key];
+    if (src) return '<img src="' + src + '" alt="' + color + ' ' + type + '">';
+  }
+  return '<span class="lbl">' + type + '</span>';
+}
+
+// ─── CONSTANTS ───────────────────────────────────────────────
+const ROWS = 4, COLS = 3;
+const ROW_ZONE = ['row-red','row-brown','row-brown','row-blue'];
+const P = { ROOK:'R', KING:'K', BISHOP:'B', PAWN:'P' };
+
+// Back-rank rows: the "home" row that each color defends
+// Black defends row 0 (red).  White defends row 3 (blue).
+// A captured piece CANNOT be placed on the opponent's back-rank row:
+//   black pieces cannot be placed on row 3 (blue)
+//   white pieces cannot be placed on row 0 (red)
+const FORBIDDEN_ROW = { black: 3, white: 0 };
+
+// ─── GAME STATE ──────────────────────────────────────────────
+let board            = [];
+let turn             = 'black';
+let selected         = null;       // { r, c } — board piece selected
+let selectedTray     = null;       // { color, type, idx } — tray piece selected
+let validMoves       = [];         // moves for selected board piece
+let gameOver         = false;
+let playerColor      = 'white';
+let vsMode           = 'cpu';
+let kingAdvanceColor = null;
+
+// Capture trays: pieces each side has captured (now belonging to that side)
+// blackCaptures = pieces black has taken → black can deploy them
+// whiteCaptures = pieces white has taken → white can deploy them
+let blackCaptures = [];   // [{ type, color:'black' }, ...]
+let whiteCaptures = [];
+
+// ─── INIT ────────────────────────────────────────────────────
+function initBoard() {
+  board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  board[0][0] = { type: P.ROOK,   color: 'black' };
+  board[0][1] = { type: P.KING,   color: 'black' };
+  board[0][2] = { type: P.BISHOP, color: 'black' };
+  board[1][1] = { type: P.PAWN,   color: 'black' };
+  board[2][1] = { type: P.PAWN,   color: 'white' };
+  board[3][0] = { type: P.BISHOP, color: 'white' };
+  board[3][1] = { type: P.KING,   color: 'white' };
+  board[3][2] = { type: P.ROOK,   color: 'white' };
+
+  turn             = 'black';
+  selected         = null;
+  selectedTray     = null;
+  validMoves       = [];
+  gameOver         = false;
+  kingAdvanceColor = null;
+  blackCaptures    = [];
+  whiteCaptures    = [];
+}
+
+function startGame() {
+  playerColor = document.getElementById('colorSelect').value;
+  vsMode      = document.getElementById('opponentSelect').value;
+  initBoard();
+  hideOverlay();
+  render();
+  updateStatus();
+  if (vsMode === 'cpu' && turn !== playerColor) {
+    setTimeout(cpuMove, 420);
+  }
+}
+
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnRestart').addEventListener('click', startGame);
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function inBounds(r, c) { return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
+
+function getCapturesFor(color) {
+  return color === 'black' ? blackCaptures : whiteCaptures;
+}
+
+function removeCaptureAt(color, idx) {
+  const arr = getCapturesFor(color);
+  arr.splice(idx, 1);
+}
+
+// ─── RENDERING ───────────────────────────────────────────────
+function render() {
+  renderBoard();
+  renderTray('black');
+  renderTray('white');
+}
+
+function renderBoard() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + ROW_ZONE[r];
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+
+      // Highlight selected board piece
+      if (selected && selected.r === r && selected.c === c) {
+        cell.classList.add('selected');
+      }
+
+      // Highlights when a BOARD piece is selected
+      if (selected && !selectedTray) {
+        const vm = validMoves.find(m => m.r === r && m.c === c);
+        if (vm) cell.classList.add(vm.capture ? 'valid-capture' : 'valid-move');
+      }
+
+      // Highlights when a TRAY piece is selected — show valid placement cells
+      if (selectedTray) {
+        if (!board[r][c] && r !== FORBIDDEN_ROW[selectedTray.color]) {
+          cell.classList.add('valid-place');
+        }
+      }
+
+      // Render piece
+      const piece = board[r][c];
+      if (piece) {
+        const pEl = document.createElement('div');
+        pEl.className = 'piece ' + piece.color;
+        if (piece.type === P.KING && kingAdvanceColor === piece.color) {
+          pEl.classList.add('king-advance');
+        }
+        pEl.innerHTML = pieceInnerHTML(piece.type, piece.color);
+        cell.appendChild(pEl);
+      }
+
+      cell.addEventListener('click', () => onCellClick(r, c));
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+function renderTray(color) {
+  const trayEl  = document.getElementById(color === 'black' ? 'trayBlack' : 'trayWhite');
+  const captures = getCapturesFor(color);
+  // Keep the label, remove old pieces
+  const label = trayEl.querySelector('.tray-label');
+  trayEl.innerHTML = '';
+  trayEl.appendChild(label);
+
+  captures.forEach((cap, idx) => {
+    const pEl = document.createElement('div');
+    pEl.className = 'tray-piece ' + cap.color;
+    if (selectedTray && selectedTray.color === color && selectedTray.idx === idx) {
+      pEl.classList.add('selected-tray');
+    }
+    pEl.innerHTML = pieceInnerHTML(cap.type, cap.color, 30);
+    pEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onTrayClick(color, idx);
+    });
+    trayEl.appendChild(pEl);
+  });
+}
+
+// ─── STATUS ──────────────────────────────────────────────────
+function updateStatus() {
+  const label = document.getElementById('statusTurn');
+  label.innerHTML = '<span class="dot ' + turn + '"></span> ' +
+    (turn.charAt(0).toUpperCase() + turn.slice(1)) + '\'s turn';
+
+  let msg = '';
+  if (kingAdvanceColor) {
+    msg = '👑 King reached the far end — opponent must capture or lose!';
+  } else if (selectedTray) {
+    msg = 'Tap an empty square to place ' + selectedTray.type + ' (not on opponent\'s back row)';
+  }
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+// ─── MOVE GENERATION ─────────────────────────────────────────
+function getMovesFor(r, c) {
+  const piece = board[r][c];
+  if (!piece) return [];
+  const moves = [];
+  const enemy = piece.color === 'black' ? 'white' : 'black';
+
+  let dirs = [];
+  switch (piece.type) {
+    case P.ROOK:   dirs = [[-1,0],[1,0],[0,-1],[0,1]]; break;
+    case P.KING:   dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]; break;
+    case P.BISHOP: dirs = [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]]; break;
+    case P.PAWN: {
+      const fwd = piece.color === 'black' ? 1 : -1;
+      const nr = r + fwd, nc = c;
+      if (inBounds(nr, nc)) {
+        if (!board[nr][nc])                        moves.push({ r: nr, c: nc, capture: false });
+        else if (board[nr][nc].color === enemy)    moves.push({ r: nr, c: nc, capture: true  });
+      }
+      return moves;
+    }
+  }
+
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (!inBounds(nr, nc)) continue;
+    const target = board[nr][nc];
+    if (!target)                        moves.push({ r: nr, c: nc, capture: false });
+    else if (target.color === enemy)    moves.push({ r: nr, c: nc, capture: true  });
+  }
+  return moves;
+}
+
+// ─── CLICK HANDLERS ──────────────────────────────────────────
+function onTrayClick(color, idx) {
+  if (gameOver) return;
+  if (vsMode === 'cpu' && turn !== playerColor) return;
+  // Can only select from own tray on own turn
+  if (color !== turn) return;
+
+  // Toggle selection
+  if (selectedTray && selectedTray.color === color && selectedTray.idx === idx) {
+    selectedTray = null;
+  } else {
+    selectedTray = { color, type: getCapturesFor(color)[idx].type, idx };
+    selected     = null;   // deselect any board piece
+    validMoves   = [];
+  }
+  render();
+  updateStatus();
+}
+
+function onCellClick(r, c) {
+  if (gameOver) return;
+  if (vsMode === 'cpu' && turn !== playerColor) return;
+
+  // ── If a tray piece is selected → try to PLACE it ──
+  if (selectedTray) {
+    // Valid placement: empty cell, not on forbidden row
+    if (!board[r][c] && r !== FORBIDDEN_ROW[selectedTray.color]) {
+      placeTrayPiece(r, c);
+    } else {
+      // Clicked an invalid spot — deselect tray
+      selectedTray = null;
+      render();
+      updateStatus();
+    }
+    return;
+  }
+
+  const piece = board[r][c];
+
+  // ── If a board piece is selected → try to MOVE ──
+  const target = validMoves.find(m => m.r === r && m.c === c);
+  if (target && selected) {
+    executeMove(selected.r, selected.c, r, c);
+    return;
+  }
+
+  // ── Click own piece → select ──
+  if (piece && piece.color === turn) {
+    selected     = { r, c };
+    selectedTray = null;
+    validMoves   = getMovesFor(r, c);
+    render();
+    updateStatus();
+    return;
+  }
+
+  // ── Otherwise deselect ──
+  selected     = null;
+  selectedTray = null;
+  validMoves   = [];
+  render();
+  updateStatus();
+}
+
+// ─── PLACE FROM TRAY ─────────────────────────────────────────
+function placeTrayPiece(r, c) {
+  const color = selectedTray.color;
+  const type  = selectedTray.type;
+  const idx   = selectedTray.idx;
+
+  // Place the piece on the board
+  board[r][c] = { type, color };
+  // Remove from tray
+  removeCaptureAt(color, idx);
+  // Clear selection
+  selectedTray = null;
+  selected     = null;
+  validMoves   = [];
+
+  // Check king-advance survival (the placing side just finished their turn)
+  if (kingAdvanceColor && kingAdvanceColor !== color) {
+    // The advancing king was NOT captured this turn (the turn was a placement) → advancing king wins
+    gameOver = true;
+    showGameOver(kingAdvanceColor, 'king_advance');
+    render();
+    return;
+  }
+
+  // Switch turn
+  turn = (turn === 'black') ? 'white' : 'black';
+  render();
+  updateStatus();
+
+  if (vsMode === 'cpu' && turn !== playerColor && !gameOver) {
+    setTimeout(cpuMove, 380);
+  }
+}
+
+// ─── EXECUTE BOARD MOVE ──────────────────────────────────────
+function executeMove(fromR, fromC, toR, toC) {
+  const piece    = board[fromR][fromC];
+  const captured = board[toR][toC];
+
+  board[toR][toC]     = piece;
+  board[fromR][fromC] = null;
+  selected            = null;
+  selectedTray        = null;
+  validMoves          = [];
+
+  // ── Win: king captured ──
+  if (captured && captured.type === P.KING) {
+    gameOver = true;
+    showGameOver(piece.color, 'king_captured');
+    render();
+    return;
+  }
+
+  // ── Win: advancing king survived ──
+  if (kingAdvanceColor && kingAdvanceColor !== piece.color) {
+    gameOver = true;
+    showGameOver(kingAdvanceColor, 'king_advance');
+    render();
+    return;
+  }
+
+  // ── Capture: piece changes allegiance, goes to capturer's tray ──
+  if (captured) {
+    // Flip color to capturer's color
+    const newPiece = { type: captured.type, color: piece.color };
+    if (piece.color === 'black') blackCaptures.push(newPiece);
+    else                         whiteCaptures.push(newPiece);
+  }
+
+  // ── Check king advance (king reached opponent's back rank) ──
+  kingAdvanceColor = null;
+  if (piece.type === P.KING) {
+    if (piece.color === 'white' && toR === 0) kingAdvanceColor = 'white';
+    if (piece.color === 'black' && toR === 3) kingAdvanceColor = 'black';
+  }
+
+  // ── Switch turn ──
+  turn = (turn === 'black') ? 'white' : 'black';
+  render();
+  updateStatus();
+
+  if (vsMode === 'cpu' && turn !== playerColor && !gameOver) {
+    setTimeout(cpuMove, 380);
+  }
+}
+
+// ─── CPU AI ──────────────────────────────────────────────────
+function cpuMove() {
+  if (gameOver) return;
+  const cpuColor   = (playerColor === 'white') ? 'black' : 'white';
+  const enemyColor = playerColor;
+
+  // ── Gather all board moves ──
+  let allMoves = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const p = board[r][c];
+      if (p && p.color === cpuColor) {
+        getMovesFor(r, c).forEach(m => {
+          allMoves.push({ kind:'board', fromR:r, fromC:c, toR:m.r, toC:m.c, capture:m.capture, piece:p });
+        });
+      }
+    }
+  }
+
+  // ── Gather all tray placement moves ──
+  const captures = getCapturesFor(cpuColor);
+  // De-dup: only one placement move per unique piece type (placing two Rooks is the same strategically)
+  const addedTypes = new Set();
+  captures.forEach((cap, idx) => {
+    if (addedTypes.has(cap.type)) return;
+    addedTypes.add(cap.type);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (!board[r][c] && r !== FORBIDDEN_ROW[cpuColor]) {
+          allMoves.push({ kind:'place', idx, type:cap.type, color:cpuColor, toR:r, toC:c, capture:false, piece:cap });
+        }
+      }
+    }
+  });
+
+  if (allMoves.length === 0) {
+    gameOver = true;
+    showGameOver(enemyColor, 'stalemate');
+    render();
+    return;
+  }
+
+  // ── Scoring ──
+  function scoreMove(mv) {
+    let score = 0;
+    const target = board[mv.toR][mv.toC];
+
+    // Instant win: capture king
+    if (target && target.type === P.KING) return 10000;
+
+    // MUST capture advancing enemy king
+    if (kingAdvanceColor === enemyColor) {
+      if (target && target.type === P.KING) return 9000;
+      // If we're NOT capturing the enemy king this turn, heavily penalise
+      // (we'll lose next turn)
+      score -= 5000;
+    }
+
+    // Board moves scoring
+    if (mv.kind === 'board') {
+      // Capture value
+      if (mv.capture && target) {
+        switch (target.type) {
+          case P.KING:   score += 500; break;
+          case P.BISHOP: score += 30;  break;
+          case P.ROOK:   score += 35;  break;
+          case P.PAWN:   score += 15;  break;
+        }
+      }
+      // Advance own king
+      if (mv.piece.type === P.KING) {
+        const goal = (cpuColor === 'black') ? 3 : 0;
+        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 18;
+        // Danger penalty
+        const dirs8 = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+        let danger = 0;
+        for (const [dr,dc] of dirs8) {
+          const nr = mv.toR+dr, nc = mv.toC+dc;
+          if (inBounds(nr,nc) && board[nr][nc] && board[nr][nc].color === enemyColor) danger++;
+        }
+        score -= danger * 12;
+      }
+      // Advance own pawn
+      if (mv.piece.type === P.PAWN) {
+        const goal = (cpuColor === 'black') ? 3 : 0;
+        score += (Math.abs(mv.fromR - goal) - Math.abs(mv.toR - goal)) * 10;
+      }
+    }
+
+    // Placement scoring
+    if (mv.kind === 'place') {
+      // Prefer placing near the center / enemy side
+      const goal = (cpuColor === 'black') ? 3 : 0;
+      score += (ROWS - 1 - Math.abs(mv.toR - goal)) * 6;
+      // Prefer placing pieces that threaten enemy king
+      if (mv.type === P.ROOK || mv.type === P.BISHOP) score += 8;
+      // Small bonus for having pieces on the board (army size)
+      score += 3;
+    }
+
+    // Jitter
+    score += (Math.random() - 0.5) * 4;
+    return score;
+  }
+
+  let bestScore = -Infinity, bestMove = null;
+  for (const mv of allMoves) {
+    const s = scoreMove(mv);
+    if (s > bestScore) { bestScore = s; bestMove = mv; }
+  }
+
+  if (!bestMove) return;
+
+  if (bestMove.kind === 'board') {
+    executeMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
+  } else {
+    // Placement
+    selectedTray = { color: bestMove.color, type: bestMove.type, idx: bestMove.idx };
+    placeTrayPiece(bestMove.toR, bestMove.toC);
+  }
+}
+
+// ─── GAME OVER ───────────────────────────────────────────────
+function showGameOver(winnerColor, reason) {
+  const icon  = document.getElementById('resultIcon');
+  const title = document.getElementById('resultTitle');
+  const desc  = document.getElementById('resultDesc');
+  const wName = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
+
+  if (reason === 'king_captured') {
+    icon.textContent  = '⚔️';
+    title.textContent = wName + ' Wins!';
+    desc.textContent  = 'The opponent\'s King was captured in battle.';
+  } else if (reason === 'king_advance') {
+    icon.textContent  = '👑';
+    title.textContent = wName + ' Wins!';
+    desc.textContent  = wName + '\'s King reached the far end and survived — conquest complete!';
+  } else {
+    icon.textContent  = '🤝';
+    title.textContent = 'Draw';
+    desc.textContent  = 'No moves available. The game ends in a draw.';
+  }
+  document.getElementById('overlay').classList.remove('hidden');
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+// ─── TOUCH SCROLL PREVENTION ─────────────────────────────────
+document.addEventListener('touchmove', e => {
+  if (e.target.closest('.board-wrap') || e.target.closest('.tray')) e.preventDefault();
+}, { passive: false });
+
+// ─── KICK OFF ────────────────────────────────────────────────
+initBoard();
+render();
+updateStatus();
+</script>
+</body>
+</html>
