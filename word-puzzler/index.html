@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Puzzler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #121213;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            border-bottom: 1px solid #3a3a3c;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 0.2rem;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 5px;
+            margin-bottom: 30px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .tile {
+            width: 62px;
+            height: 62px;
+            border: 2px solid #3a3a3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .tile.filled {
+            border-color: #565758;
+            animation: pop 0.1s ease-in-out;
+        }
+
+        .tile.correct {
+            background-color: #538d4e;
+            border-color: #538d4e;
+            color: white;
+        }
+
+        .tile.present {
+            background-color: #b59f3b;
+            border-color: #b59f3b;
+            color: white;
+        }
+
+        .tile.absent {
+            background-color: #3a3a3c;
+            border-color: #3a3a3c;
+            color: white;
+        }
+
+        .tile.flip {
+            animation: flip 0.5s ease-in-out;
+        }
+
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes flip {
+            0% { transform: rotateX(0); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0); }
+        }
+
+        .keyboard {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .key {
+            min-width: 43px;
+            height: 58px;
+            border: none;
+            border-radius: 4px;
+            background-color: #818384;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            transition: background-color 0.2s;
+        }
+
+        .key:hover {
+            background-color: #9a9a9c;
+        }
+
+        .key:active {
+            transform: scale(0.95);
+        }
+
+        .key.wide {
+            min-width: 65px;
+            font-size: 12px;
+        }
+
+        .key.correct {
+            background-color: #538d4e;
+        }
+
+        .key.present {
+            background-color: #b59f3b;
+        }
+
+        .key.absent {
+            background-color: #3a3a3c;
+        }
+
+        .message {
+            position: fixed;
+            top: 80px;
+            background-color: white;
+            color: black;
+            padding: 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stats {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .stats button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #538d4e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .stats button:hover {
+            background-color: #6aaa64;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 28px;
+                letter-spacing: 0.1rem;
+            }
+
+            header {
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+            }
+
+            .board {
+                gap: 4px;
+                margin-bottom: 20px;
+            }
+
+            .row {
+                gap: 4px;
+            }
+
+            .tile {
+                width: 56px;
+                height: 56px;
+                font-size: 28px;
+            }
+
+            .key {
+                min-width: 32px;
+                height: 48px;
+                font-size: 11px;
+            }
+
+            .key.wide {
+                min-width: 50px;
+                font-size: 10px;
+            }
+
+            .keyboard-row {
+                gap: 4px;
+                margin-bottom: 6px;
+            }
+
+            .message {
+                top: 60px;
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .board {
+                gap: 3px;
+                margin-bottom: 15px;
+            }
+
+            .row {
+                gap: 3px;
+            }
+
+            .tile {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                border-width: 1.5px;
+            }
+
+            .key {
+                min-width: 28px;
+                height: 44px;
+                font-size: 10px;
+            }
+
+            .key.wide {
+                min-width: 42px;
+                font-size: 9px;
+            }
+
+            .keyboard-row {
+                gap: 3px;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .tile {
+                width: 45px;
+                height: 45px;
+                font-size: 22px;
+            }
+
+            .key {
+                min-width: 25px;
+                height: 40px;
+                font-size: 9px;
+            }
+
+            .key.wide {
+                min-width: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>WORD PUZZLER</h1>
+    </header>
+
+    <div class="game-container">
+        <div class="board" id="board"></div>
+        
+        <div class="keyboard">
+            <div class="keyboard-row">
+                <button class="key" data-key="q">Q</button>
+                <button class="key" data-key="w">W</button>
+                <button class="key" data-key="e">E</button>
+                <button class="key" data-key="r">R</button>
+                <button class="key" data-key="t">T</button>
+                <button class="key" data-key="y">Y</button>
+                <button class="key" data-key="u">U</button>
+                <button class="key" data-key="i">I</button>
+                <button class="key" data-key="o">O</button>
+                <button class="key" data-key="p">P</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key" data-key="a">A</button>
+                <button class="key" data-key="s">S</button>
+                <button class="key" data-key="d">D</button>
+                <button class="key" data-key="f">F</button>
+                <button class="key" data-key="g">G</button>
+                <button class="key" data-key="h">H</button>
+                <button class="key" data-key="j">J</button>
+                <button class="key" data-key="k">K</button>
+                <button class="key" data-key="l">L</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="key wide" data-key="enter">ENTER</button>
+                <button class="key" data-key="z">Z</button>
+                <button class="key" data-key="x">X</button>
+                <button class="key" data-key="c">C</button>
+                <button class="key" data-key="v">V</button>
+                <button class="key" data-key="b">B</button>
+                <button class="key" data-key="n">N</button>
+                <button class="key" data-key="m">M</button>
+                <button class="key wide" data-key="backspace">⌫</button>
+            </div>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <p id="game-over-message"></p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <script>
+        // Word list (5-letter words)
+        const WORDS = [
+            'about', 'above', 'abuse', 'actor', 'acute', 'admit', 'adopt', 'adult', 'after', 'again',
+            'agent', 'agree', 'ahead', 'alarm', 'album', 'alert', 'align', 'alike', 'alive', 'allow',
+            'alone', 'along', 'alter', 'among', 'anger', 'angle', 'angry', 'apart', 'apple', 'apply',
+            'arena', 'argue', 'arise', 'array', 'aside', 'asset', 'audio', 'audit', 'avoid', 'award',
+            'aware', 'badly', 'baker', 'bases', 'basic', 'basis', 'beach', 'began', 'begin', 'begun',
+            'being', 'below', 'bench', 'billy', 'birth', 'black', 'blame', 'blind', 'block', 'blood',
+            'board', 'boost', 'booth', 'bound', 'brain', 'brand', 'bread', 'break', 'breed', 'brief',
+            'bring', 'broad', 'broke', 'brown', 'build', 'built', 'buyer', 'cable', 'calif', 'carry',
+            'catch', 'cause', 'chain', 'chair', 'chart', 'chase', 'cheap', 'check', 'chest', 'chief',
+            'child', 'china', 'chose', 'civil', 'claim', 'class', 'clean', 'clear', 'click', 'clock',
+            'close', 'coach', 'coast', 'could', 'count', 'court', 'cover', 'craft', 'crash', 'crazy',
+            'cream', 'crime', 'cross', 'crowd', 'crown', 'crude', 'cycle', 'daily', 'dance', 'dated',
+            'dealt', 'death', 'debut', 'delay', 'depth', 'doing', 'doubt', 'dozen', 'draft', 'drama',
+            'drank', 'dream', 'dress', 'drill', 'drink', 'drive', 'drove', 'dying', 'eager', 'early',
+            'earth', 'eight', 'elite', 'empty', 'enemy', 'enjoy', 'enter', 'entry', 'equal', 'error',
+            'event', 'every', 'exact', 'exist', 'extra', 'faith', 'false', 'fault', 'fiber', 'field',
+            'fifth', 'fifty', 'fight', 'final', 'first', 'fixed', 'flash', 'fleet', 'floor', 'fluid',
+            'focus', 'force', 'forth', 'forty', 'forum', 'found', 'frame', 'frank', 'fraud', 'fresh',
+            'front', 'fruit', 'fully', 'funny', 'giant', 'given', 'glass', 'globe', 'going', 'grace',
+            'grade', 'grand', 'grant', 'grass', 'great', 'green', 'gross', 'group', 'grown', 'guard',
+            'guess', 'guest', 'guide', 'happy', 'harry', 'heart', 'heavy', 'hence', 'henry', 'horse',
+            'hotel', 'house', 'human', 'ideal', 'image', 'index', 'inner', 'input', 'issue', 'japan',
+            'jimmy', 'joint', 'jones', 'judge', 'known', 'label', 'large', 'laser', 'later', 'laugh',
+            'layer', 'learn', 'lease', 'least', 'leave', 'legal', 'lemon', 'level', 'lewis', 'light',
+            'limit', 'links', 'lives', 'local', 'logic', 'loose', 'lower', 'lucky', 'lunch', 'lying',
+            'magic', 'major', 'maker', 'march', 'maria', 'match', 'maybe', 'mayor', 'meant', 'media',
+            'metal', 'might', 'minor', 'minus', 'mixed', 'model', 'money', 'month', 'moral', 'motor',
+            'mount', 'mouse', 'mouth', 'movie', 'music', 'needs', 'never', 'newly', 'night', 'noise',
+            'north', 'noted', 'novel', 'nurse', 'occur', 'ocean', 'offer', 'often', 'order', 'other',
+            'ought', 'paint', 'panel', 'paper', 'party', 'peace', 'peter', 'phase', 'phone', 'photo',
+            'piece', 'pilot', 'pitch', 'place', 'plain', 'plane', 'plant', 'plate', 'point', 'pound',
+            'power', 'press', 'price', 'pride', 'prime', 'print', 'prior', 'prize', 'proof', 'proud',
+            'prove', 'queen', 'quick', 'quiet', 'quite', 'radio', 'raise', 'range', 'rapid', 'ratio',
+            'reach', 'ready', 'refer', 'right', 'rival', 'river', 'robin', 'roger', 'roman', 'rough',
+            'round', 'route', 'royal', 'rural', 'scale', 'scene', 'scope', 'score', 'sense', 'serve',
+            'seven', 'shall', 'shape', 'share', 'sharp', 'sheet', 'shelf', 'shell', 'shift', 'shine',
+            'shirt', 'shock', 'shoot', 'short', 'shown', 'sight', 'since', 'sixth', 'sixty', 'sized',
+            'skill', 'sleep', 'slide', 'small', 'smart', 'smile', 'smith', 'smoke', 'solid', 'solve',
+            'sorry', 'sound', 'south', 'space', 'spare', 'speak', 'speed', 'spend', 'spent', 'split',
+            'spoke', 'sport', 'staff', 'stage', 'stake', 'stand', 'start', 'state', 'steam', 'steel',
+            'stick', 'still', 'stock', 'stone', 'stood', 'store', 'storm', 'story', 'strip', 'stuck',
+            'study', 'stuff', 'style', 'sugar', 'suite', 'super', 'sweet', 'table', 'taken', 'taste',
+            'taxes', 'teach', 'terry', 'texas', 'thank', 'theft', 'their', 'theme', 'there', 'these',
+            'thick', 'thing', 'think', 'third', 'those', 'three', 'threw', 'throw', 'tight', 'times',
+            'title', 'today', 'topic', 'total', 'touch', 'tough', 'tower', 'track', 'trade', 'train',
+            'treat', 'trend', 'trial', 'tried', 'tries', 'truck', 'truly', 'trust', 'truth', 'twice',
+            'under', 'undue', 'union', 'unity', 'until', 'upper', 'upset', 'urban', 'usage', 'usual',
+            'valid', 'value', 'video', 'virus', 'visit', 'vital', 'vocal', 'voice', 'waste', 'watch',
+            'water', 'wheel', 'where', 'which', 'while', 'white', 'whole', 'whose', 'woman', 'women',
+            'world', 'worry', 'worse', 'worst', 'worth', 'would', 'wound', 'write', 'wrong', 'wrote',
+            'young', 'youth', 'angel', 'angry', 'badge', 'badly', 'beach', 'beast', 'bench', 'berry',
+            'blame', 'bless', 'bloom', 'bound', 'brave', 'brush', 'buyer', 'cabin', 'canal', 'candy',
+            'cargo', 'charm', 'chess', 'chose', 'civic', 'cliff', 'climb', 'cloth', 'couch', 'crack',
+            'creek', 'crisp', 'cubic', 'curly', 'curry', 'curve', 'daisy', 'debut', 'decor', 'delta',
+            'demon', 'dense', 'depot', 'diary', 'dirty', 'diver', 'dodge', 'dwarf', 'eagle', 'elder',
+            'embed', 'enact', 'ethos', 'exert', 'expel', 'faint', 'fancy', 'fatal', 'feast', 'fetch',
+            'fever', 'field', 'fiery', 'flare', 'fleet', 'flock', 'forth', 'frown', 'fudge', 'gauge',
+            'genie', 'glide', 'globe', 'gloom', 'gnome', 'grand', 'grape', 'grasp', 'greet', 'grill',
+            'grind', 'grove', 'habit', 'hatch', 'haven', 'haunt', 'helix', 'hoist', 'hotel', 'hound'
+        ];
+
+        let targetWord = '';
+        let currentRow = 0;
+        let currentTile = 0;
+        let gameOver = false;
+        const guesses = [];
+
+        // Initialize game
+        function init() {
+            targetWord = WORDS[Math.floor(Math.random() * WORDS.length)].toLowerCase();
+            console.log('Target word:', targetWord); // For testing - remove in production
+            createBoard();
+            addEventListeners();
+        }
+
+        // Create game board
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('div');
+                row.classList.add('row');
+                
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.setAttribute('data-row', i);
+                    tile.setAttribute('data-col', j);
+                    row.appendChild(tile);
+                }
+                
+                board.appendChild(row);
+            }
+        }
+
+        // Add event listeners
+        function addEventListeners() {
+            document.addEventListener('keydown', handleKeyPress);
+            document.querySelectorAll('.key').forEach(key => {
+                key.addEventListener('click', () => {
+                    handleKey(key.dataset.key);
+                });
+            });
+        }
+
+        // Handle keyboard input
+        function handleKeyPress(e) {
+            if (gameOver) return;
+
+            const key = e.key.toLowerCase();
+            
+            if (key === 'enter') {
+                handleKey('enter');
+            } else if (key === 'backspace') {
+                handleKey('backspace');
+            } else if (/^[a-z]$/.test(key)) {
+                handleKey(key);
+            }
+        }
+
+        // Handle key input
+        function handleKey(key) {
+            if (gameOver) return;
+
+            if (key === 'enter') {
+                submitGuess();
+            } else if (key === 'backspace') {
+                deleteLetter();
+            } else if (currentTile < 5) {
+                addLetter(key);
+            }
+        }
+
+        // Add letter to current tile
+        function addLetter(letter) {
+            if (currentTile < 5) {
+                const tile = document.querySelector(`[data-row="${currentRow}"][data-col="${currentTile}"]`);
+                tile.textContent = letter.toUpperCase();
+                tile.classList.add('filled');
+                currentTile++;
+            }
+        }
+
+        // Delete last letter
+        function deleteLetter() {
+            if (currentTile > 0) {
+                currentTile--;
+                const tile = document.querySelector(`[data-row="${currentRow}"][data-col="${currentTile}"]`);
+                tile.textContent = '';
+                tile.classList.remove('filled');
+            }
+        }
+
+        // Submit guess
+        function submitGuess() {
+            if (currentTile !== 5) {
+                showMessage('Not enough letters');
+                return;
+            }
+
+            const guess = getCurrentGuess();
+
+            guesses.push(guess);
+            flipTiles(guess);
+        }
+
+        // Get current guess
+        function getCurrentGuess() {
+            let guess = '';
+            for (let i = 0; i < 5; i++) {
+                const tile = document.querySelector(`[data-row="${currentRow}"][data-col="${i}"]`);
+                guess += tile.textContent.toLowerCase();
+            }
+            return guess;
+        }
+
+        // Flip tiles with animation
+        function flipTiles(guess) {
+            const letterCount = {};
+            for (let letter of targetWord) {
+                letterCount[letter] = (letterCount[letter] || 0) + 1;
+            }
+
+            const statuses = Array(5).fill('absent');
+            
+            // First pass: mark correct letters
+            for (let i = 0; i < 5; i++) {
+                if (guess[i] === targetWord[i]) {
+                    statuses[i] = 'correct';
+                    letterCount[guess[i]]--;
+                }
+            }
+            
+            // Second pass: mark present letters
+            for (let i = 0; i < 5; i++) {
+                if (statuses[i] === 'absent' && targetWord.includes(guess[i]) && letterCount[guess[i]] > 0) {
+                    statuses[i] = 'present';
+                    letterCount[guess[i]]--;
+                }
+            }
+
+            // Animate tiles
+            for (let i = 0; i < 5; i++) {
+                const tile = document.querySelector(`[data-row="${currentRow}"][data-col="${i}"]`);
+                setTimeout(() => {
+                    tile.classList.add('flip');
+                    setTimeout(() => {
+                        tile.classList.add(statuses[i]);
+                        updateKeyboard(guess[i], statuses[i]);
+                    }, 250);
+                }, i * 300);
+            }
+
+            // Check win/loss after animations
+            setTimeout(() => {
+                if (guess === targetWord) {
+                    endGame(true);
+                } else if (currentRow === 5) {
+                    endGame(false);
+                } else {
+                    currentRow++;
+                    currentTile = 0;
+                }
+            }, 1500);
+        }
+
+        // Update keyboard colors
+        function updateKeyboard(letter, status) {
+            const key = document.querySelector(`[data-key="${letter}"]`);
+            if (!key) return;
+
+            const currentStatus = key.classList.contains('correct') ? 'correct' :
+                                key.classList.contains('present') ? 'present' :
+                                key.classList.contains('absent') ? 'absent' : '';
+
+            if (status === 'correct' || 
+                (status === 'present' && currentStatus !== 'correct') ||
+                (status === 'absent' && !currentStatus)) {
+                key.classList.remove('correct', 'present', 'absent');
+                key.classList.add(status);
+            }
+        }
+
+        // Shake tiles animation
+        function shakeTiles() {
+            const tiles = document.querySelectorAll(`[data-row="${currentRow}"]`);
+            tiles.forEach(tile => {
+                tile.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    tile.style.animation = '';
+                }, 500);
+            });
+        }
+
+        // Show message
+        function showMessage(text) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 2000);
+        }
+
+        // End game
+        function endGame(won) {
+            gameOver = true;
+            const stats = document.getElementById('stats');
+            const message = document.getElementById('game-over-message');
+            
+            if (won) {
+                message.textContent = `Congratulations! You guessed the word in ${currentRow + 1} ${currentRow + 1 === 1 ? 'try' : 'tries'}!`;
+            } else {
+                message.textContent = `Game Over! The word was "${targetWord.toUpperCase()}"`;
+            }
+            
+            stats.style.display = 'block';
+        }
+
+        // Reset game
+        function resetGame() {
+            currentRow = 0;
+            currentTile = 0;
+            gameOver = false;
+            guesses.length = 0;
+            targetWord = WORDS[Math.floor(Math.random() * WORDS.length)].toLowerCase();
+            console.log('New target word:', targetWord);
+            
+            document.getElementById('stats').style.display = 'none';
+            createBoard();
+            
+            // Reset keyboard
+            document.querySelectorAll('.key').forEach(key => {
+                key.classList.remove('correct', 'present', 'absent');
+            });
+        }
+
+        // Add shake animation CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Start game
+        init();
+    </script>
+</body>
+</html>
