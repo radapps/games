@@ -44,6 +44,8 @@
             background: rgba(0, 0, 0, 0.3);
             padding: 15px;
             border-radius: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .score {
@@ -55,6 +57,32 @@
         .score span {
             color: #ffd700;
             font-size: 28px;
+        }
+
+        .round-display {
+            flex-basis: 100%;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .score-board {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .score {
+                font-size: 18px;
+            }
+
+            .score span {
+                font-size: 24px;
+            }
+
+            .round-display {
+                order: -1;
+                margin-bottom: 10px;
+            }
         }
 
         .player-area {
@@ -71,14 +99,16 @@
         .tiles-container {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
             min-height: 80px;
+            overflow-x: auto;
         }
 
         .tile {
             width: 60px;
             height: 80px;
+            flex-shrink: 0;
             border-radius: 8px;
             display: flex;
             justify-content: center;
@@ -89,6 +119,31 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .tiles-container {
+                gap: 5px;
+            }
+
+            .tile {
+                width: 45px;
+                height: 60px;
+                font-size: 24px;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tiles-container {
+                gap: 3px;
+            }
+
+            .tile {
+                width: 35px;
+                height: 50px;
+                font-size: 20px;
+            }
         }
 
         .tile:hover:not(.used) {
@@ -189,21 +244,6 @@
             cursor: not-allowed;
             transform: none;
         }
-
-        .game-over {
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .game-over h2 {
-            color: #ffd700;
-            margin-bottom: 20px;
-            font-size: 32px;
-        }
     </style>
 </head>
 <body>
@@ -211,8 +251,8 @@
         <h1>Black & White</h1>
         
         <div class="score-board">
+            <div class="score round-display">Round: <span id="round">1</span> / 9</div>
             <div class="score">Player 2 (CPU): <span id="cpu-score">0</span></div>
-            <div class="score">Round: <span id="round">1</span> / 9</div>
             <div class="score">Player 1 (You): <span id="player-score">0</span></div>
         </div>
 
@@ -235,8 +275,6 @@
         <div style="text-align: center;">
             <button id="new-game" onclick="initGame()">New Game</button>
         </div>
-
-        <div id="game-over-screen" style="display: none;"></div>
     </div>
 
     <script>
@@ -277,7 +315,6 @@
             clearMiddleArea();
             document.getElementById('message').textContent = '';
             updateRoundInfo();
-            document.getElementById('game-over-screen').style.display = 'none';
             
             // If CPU goes first, start their turn
             if (!playerGoesFirst) {
@@ -528,31 +565,35 @@
         }
 
         function endGame() {
-            const gameOverScreen = document.getElementById('game-over-screen');
-            gameOverScreen.style.display = 'block';
+            const middleArea = document.getElementById('played-tiles').parentElement;
+            const playedTiles = document.getElementById('played-tiles');
+            const message = document.getElementById('message');
+            const roundInfo = document.getElementById('round-info');
+            
+            playedTiles.innerHTML = '';
             
             let resultText = '';
+            let resultColor = '';
             if (playerScore > cpuScore) {
-                resultText = '🎉 Congratulations! You Win! 🎉';
+                resultText = '🎉 You Win! 🎉';
+                resultColor = '#4CAF50';
             } else if (cpuScore > playerScore) {
-                resultText = '😔 CPU Wins! Better Luck Next Time!';
+                resultText = '😔 CPU Wins!';
+                resultColor = '#f44336';
             } else {
-                resultText = '🤝 It\'s a Tie! Well Played!';
+                resultText = '🤝 It\'s a Tie!';
+                resultColor = '#ffd700';
             }
             
-            gameOverScreen.innerHTML = `
-                <div class="game-over">
-                    <h2>${resultText}</h2>
-                    <p style="font-size: 24px; margin: 20px 0;">
-                        Final Score: You ${playerScore} - ${cpuScore} CPU
-                    </p>
-                    <button onclick="initGame()" style="margin: 10px auto; display: block;">
-                        Play Again
-                    </button>
+            roundInfo.textContent = 'Game Over!';
+            message.innerHTML = `
+                <div style="font-size: 32px; color: ${resultColor}; margin-bottom: 15px;">
+                    ${resultText}
+                </div>
+                <div style="font-size: 24px; color: #ffd700;">
+                    Final Score: ${playerScore} - ${cpuScore}
                 </div>
             `;
-            
-            document.getElementById('round-info').textContent = 'Game Over!';
         }
 
         // Initialize game on load
