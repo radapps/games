@@ -3,482 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black & White</title>
+    <title>Black & White - Tile Game</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        
+
         .game-container {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            width: 900px;
-            max-width: 95%;
-            padding: 25px;
-            text-align: center;
+            background: #2d5016;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 900px;
+            width: 100%;
         }
-        
+
         h1 {
-            color: #2c3e50;
+            text-align: center;
+            color: #fff;
             margin-bottom: 20px;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
-        
-        .game-info {
+
+        .score-board {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            background: #2c3e50;
-            color: white;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
             padding: 15px;
             border-radius: 10px;
         }
-        
-        .player-stats {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .player {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            min-width: 120px;
-        }
-        
-        .player.active {
-            background: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-        
-        .player h3 {
-            margin-bottom: 8px;
-            font-size: 1.4rem;
-        }
-        
+
         .score {
-            font-size: 1.8rem;
+            color: #fff;
+            font-size: 20px;
             font-weight: bold;
         }
-        
-        .game-table {
-            background-color: #27ae60;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
-            min-height: 250px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
+
+        .score span {
+            color: #ffd700;
+            font-size: 28px;
         }
-        
-        .game-table::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
-            z-index: 0;
-        }
-        
-        .table-content {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            gap: 25px;
-            margin-top: 20px;
-        }
-        
+
         .player-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 150px;
+            margin: 20px 0;
         }
-        
-        .tile-slot {
-            width: 80px;
-            height: 100px;
-            background-color: #34495e;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            font-size: 1.8rem;
+
+        .player-label {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 10px;
             font-weight: bold;
-            color: white;
         }
-        
-        .player-area h3 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-        
+
         .tiles-container {
             display: flex;
-            justify-content: center;
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-top: 20px;
+            justify-content: center;
+            min-height: 80px;
         }
-        
+
         .tile {
             width: 60px;
-            height: 70px;
+            height: 80px;
             border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5rem;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.2);
         }
-        
-        .tile:hover {
+
+        .tile:hover:not(.used) {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
         }
-        
+
         .tile.black {
-            background: linear-gradient(to bottom, #2c3e50, #1a2530);
-            color: white;
+            background: linear-gradient(145deg, #2c2c2c, #000);
+            color: #fff;
         }
-        
+
         .tile.white {
-            background: linear-gradient(to bottom, #ecf0f1, #bdc3c7);
-            color: #2c3e50;
+            background: linear-gradient(145deg, #fff, #d0d0d0);
+            color: #000;
         }
-        
-        .tile.selected {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+
+        .tile.used {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
-        
-        .message-area {
-            background-color: #3498db;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            min-height: 70px;
+
+        .tile.cpu-tile {
+            background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+            color: transparent;
+        }
+
+        .tile.cpu-tile.black {
+            background: linear-gradient(145deg, #2c2c2c, #000);
+        }
+
+        .tile.cpu-tile.white {
+            background: linear-gradient(145deg, #fff, #d0d0d0);
+        }
+
+        .middle-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 180px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
-            font-weight: bold;
         }
-        
-        .controls {
+
+        .played-tiles {
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .played-tile {
+            width: 60px;
+            height: 80px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #8B4513, #654321);
+            border: 3px solid #D2691E;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .message {
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .round-info {
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-over {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
             margin-top: 20px;
         }
-        
-        button {
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #e74c3c;
-            color: white;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        button:hover {
-            background: #c0392b;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        button#newGameBtn {
-            background: #2ecc71;
-        }
-        
-        button#newGameBtn:hover {
-            background: #27ae60;
-        }
-        
-        .round-info {
-            margin-top: 15px;
-            font-size: 1.2rem;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-        
-        @media (max-width: 768px) {
-            .game-container {
-                padding: 15px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .table-content {
-                flex-direction: column;
-                gap: 30px;
-            }
-            
-            .player-area {
-                width: 100%;
-            }
+
+        .game-over h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 32px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>Black & White Game</h1>
+        <h1>Black & White</h1>
         
-        <div class="game-info">
-            <div class="player-stats">
-                <div class="player active" id="blackPlayer">
-                    <h3>Black Player</h3>
-                    <div class="score">0</div>
-                </div>
-                <div class="player" id="whitePlayer">
-                    <h3>White Player</h3>
-                    <div class="score">0</div>
-                </div>
-            </div>
-            <div class="round-info">Round: 1/9</div>
+        <div class="score-board">
+            <div class="score">Player 2 (CPU): <span id="cpu-score">0</span></div>
+            <div class="score">Round: <span id="round">1</span> / 9</div>
+            <div class="score">Player 1 (You): <span id="player-score">0</span></div>
         </div>
-        
-        <div class="game-table">
-            <div class="table-content">
-                <div class="player-area" id="blackPlayerArea">
-                    <h3>Black Player</h3>
-                    <div class="tile-slot" id="blackTileSlot">?</div>
-                </div>
-                
-                <div class="player-area" id="whitePlayerArea">
-                    <h3>White Player</h3>
-                    <div class="tile-slot" id="whiteTileSlot">?</div>
-                </div>
-            </div>
+
+        <div class="player-area">
+            <div class="player-label">Player 2 (CPU)</div>
+            <div class="tiles-container" id="cpu-tiles"></div>
         </div>
-        
-        <div class="message-area" id="messageArea">
-            Select a tile to start the game!
+
+        <div class="middle-area">
+            <div class="round-info" id="round-info">Choose a tile to play</div>
+            <div class="played-tiles" id="played-tiles"></div>
+            <div class="message" id="message"></div>
         </div>
-        
-        <div class="tiles-container" id="playerTiles">
-            <!-- Tiles will be generated here -->
+
+        <div class="player-area">
+            <div class="player-label">Player 1 (You)</div>
+            <div class="tiles-container" id="player-tiles"></div>
         </div>
-        
-        <div class="controls">
-            <button id="newGameBtn">New Game</button>
+
+        <div style="text-align: center;">
+            <button id="new-game" onclick="initGame()">New Game</button>
         </div>
+
+        <div id="game-over-screen" style="display: none;"></div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Game state
-            const gameState = {
-                currentPlayer: 'black',
-                round: 1,
-                blackScore: 0,
-                whiteScore: 0,
-                playerTiles: [],
-                usedTiles: new Set(),
-                gameOver: false
-            };
+        let playerTiles = [];
+        let cpuTiles = [];
+        let playerScore = 0;
+        let cpuScore = 0;
+        let currentRound = 1;
+        let playerSelectedTile = null;
+        let cpuSelectedTile = null;
+        let usedPlayerTiles = [];
+        let usedCpuTiles = [];
+        let playerGoesFirst = true; // Player 1 starts the game
+        let waitingForPlayer = true;
+
+        function initGame() {
+            // Initialize tiles (0-8, even=black, odd=white)
+            playerTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+            cpuTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8];
             
-            // DOM elements
-            const messageArea = document.getElementById('messageArea');
-            const blackPlayerArea = document.getElementById('blackPlayerArea');
-            const whitePlayerArea = document.getElementById('whitePlayerArea');
-            const blackTileSlot = document.getElementById('blackTileSlot');
-            const whiteTileSlot = document.getElementById('whiteTileSlot');
-            const playerTilesContainer = document.getElementById('playerTiles');
-            const blackScoreElement = document.querySelector('#blackPlayer .score');
-            const whiteScoreElement = document.querySelector('#whitePlayer .score');
-            const roundInfo = document.querySelector('.round-info');
-            const newGameBtn = document.getElementById('newGameBtn');
+            // Shuffle CPU tiles
+            cpuTiles = shuffleArray(cpuTiles);
             
-            // Initialize game
-            function initGame() {
-                gameState.currentPlayer = 'black';
-                gameState.round = 1;
-                gameState.blackScore = 0;
-                gameState.whiteScore = 0;
-                gameState.playerTiles = [];
-                gameState.usedTiles.clear();
-                gameState.gameOver = false;
+            // Reset game state
+            playerScore = 0;
+            cpuScore = 0;
+            currentRound = 1;
+            playerSelectedTile = null;
+            cpuSelectedTile = null;
+            usedPlayerTiles = [];
+            usedCpuTiles = [];
+            playerGoesFirst = true; // Player 1 always starts first round
+            waitingForPlayer = true;
+            
+            // Update display
+            updateScoreBoard();
+            renderTiles();
+            clearMiddleArea();
+            document.getElementById('message').textContent = '';
+            updateRoundInfo();
+            document.getElementById('game-over-screen').style.display = 'none';
+            
+            // If CPU goes first, start their turn
+            if (!playerGoesFirst) {
+                cpuPlayTile();
+            }
+        }
+
+        function shuffleArray(array) {
+            let newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function updateRoundInfo() {
+            if (waitingForPlayer) {
+                document.getElementById('round-info').textContent = 'Your turn - Choose a tile to play';
+            } else {
+                document.getElementById('round-info').textContent = 'CPU\'s turn...';
+            }
+        }
+
+        function cpuPlayTile() {
+            waitingForPlayer = false;
+            updateRoundInfo();
+            
+            setTimeout(() => {
+                // CPU randomly selects an available tile
+                let availableTiles = cpuTiles.filter(t => !usedCpuTiles.includes(t));
+                let cpuTile = availableTiles[Math.floor(Math.random() * availableTiles.length)];
                 
-                blackTileSlot.textContent = '?';
-                whiteTileSlot.textContent = '?';
-                messageArea.textContent = 'Select a tile to start the game!';
-                blackScoreElement.textContent = '0';
-                whiteScoreElement.textContent = '0';
-                roundInfo.textContent = `Round: ${gameState.round}/9`;
+                cpuSelectedTile = cpuTile;
+                usedCpuTiles.push(cpuTile);
+                renderTiles();
                 
-                // Remove active class from players
-                document.getElementById('blackPlayer').classList.remove('active');
-                document.getElementById('whitePlayer').classList.remove('active');
+                // Show CPU's tile color in the middle
+                showSingleTile('cpu');
                 
-                // Update UI for new game
-                createPlayerTiles();
+                // Now wait for player
+                waitingForPlayer = true;
+                updateRoundInfo();
+            }, 800);
+        }
+
+        function renderTiles() {
+            const playerContainer = document.getElementById('player-tiles');
+            const cpuContainer = document.getElementById('cpu-tiles');
+            
+            playerContainer.innerHTML = '';
+            cpuContainer.innerHTML = '';
+            
+            // Render player tiles
+            playerTiles.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.className = `tile ${tile % 2 === 0 ? 'black' : 'white'}`;
+                if (usedPlayerTiles.includes(tile)) {
+                    tileElement.classList.add('used');
+                }
+                tileElement.textContent = tile;
+                tileElement.onclick = () => selectPlayerTile(tile);
+                playerContainer.appendChild(tileElement);
+            });
+            
+            // Render CPU tiles (showing only color, not numbers)
+            cpuTiles.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.className = `tile cpu-tile ${tile % 2 === 0 ? 'black' : 'white'}`;
+                if (usedCpuTiles.includes(tile)) {
+                    tileElement.classList.add('used');
+                }
+                cpuContainer.appendChild(tileElement);
+            });
+        }
+
+        function selectPlayerTile(tile) {
+            if (usedPlayerTiles.includes(tile) || playerSelectedTile !== null || !waitingForPlayer) {
+                return;
             }
             
-            // Create player tiles (0-8)
-            function createPlayerTiles() {
-                playerTilesContainer.innerHTML = '';
-                gameState.playerTiles = [];
-                
-                for (let i = 0; i < 9; i++) {
-                    const tile = document.createElement('div');
-                    tile.className = `tile ${i % 2 === 0 ? 'black' : 'white'}`;
-                    tile.textContent = i;
-                    tile.dataset.value = i;
-                    
-                    // Add click event
-                    tile.addEventListener('click', () => selectTile(i));
-                    
-                    playerTilesContainer.appendChild(tile);
-                    gameState.playerTiles.push({
-                        element: tile,
-                        value: i,
-                        selected: false
-                    });
-                }
-            }
+            playerSelectedTile = tile;
+            usedPlayerTiles.push(tile);
+            renderTiles();
             
-            // Handle tile selection
-            function selectTile(value) {
-                if (gameState.gameOver || gameState.usedTiles.has(value)) return;
+            // If player went first, CPU needs to play
+            if (playerGoesFirst && cpuSelectedTile === null) {
+                // Show player's tile color in the middle
+                showSingleTile('player');
+                document.getElementById('round-info').textContent = 'CPU is thinking...';
                 
-                const currentPlayer = gameState.currentPlayer;
-                const tileElement = document.querySelector(`.tile[data-value="${value}"]`);
-                
-                // Mark tile as selected
-                tileElement.classList.add('selected');
-                tileElement.style.opacity = '0.7';
-                
-                // Add to used tiles
-                gameState.usedTiles.add(value);
-                
-                if (currentPlayer === 'black') {
-                    blackTileSlot.textContent = value;
+                setTimeout(() => {
+                    // CPU randomly selects an available tile
+                    let availableTiles = cpuTiles.filter(t => !usedCpuTiles.includes(t));
+                    let cpuTile = availableTiles[Math.floor(Math.random() * availableTiles.length)];
                     
-                    // If it's the first player, switch to white and wait for next selection
-                    if (gameState.round === 1) {
-                        messageArea.textContent = "White player's turn - select a tile!";
-                        gameState.currentPlayer = 'white';
-                    } else {
-                        // Check winner of round
-                        checkRoundWinner();
-                    }
-                } else {
-                    whiteTileSlot.textContent = value;
-                    // Check winner of round
-                    checkRoundWinner();
-                }
-            }
-            
-            // Check who wins the round
-            function checkRoundWinner() {
-                const blackValue = parseInt(blackTileSlot.textContent);
-                const whiteValue = parseInt(whiteTileSlot.textContent);
-                
-                if (blackValue > whiteValue) {
-                    gameState.blackScore++;
-                    messageArea.textContent = `Black player wins the round! (${blackValue} > ${whiteValue})`;
-                    document.getElementById('blackPlayer').classList.add('active');
-                } else if (whiteValue > blackValue) {
-                    gameState.whiteScore++;
-                    messageArea.textContent = `White player wins the round! (${whiteValue} > ${blackValue})`;
-                    document.getElementById('whitePlayer').classList.add('active');
-                } else {
-                    messageArea.textContent = `It's a tie! Both players selected ${blackValue}`;
-                }
-                
-                // Update scores
-                blackScoreElement.textContent = gameState.blackScore;
-                whiteScoreElement.textContent = gameState.whiteScore;
-                
-                // Move to next round or end game
-                if (gameState.round < 9) {
-                    gameState.round++;
-                    roundInfo.textContent = `Round: ${gameState.round}/9`;
+                    cpuSelectedTile = cpuTile;
+                    usedCpuTiles.push(cpuTile);
                     
-                    // Reset tile slots for next round
+                    // Show both played tiles with colors
+                    showPlayedTiles();
+                    
+                    // Determine winner after user can see the colors
                     setTimeout(() => {
-                        blackTileSlot.textContent = '?';
-                        whiteTileSlot.textContent = '?';
-                        
-                        // Remove selected state from all tiles
-                        document.querySelectorAll('.tile').forEach(tile => {
-                            tile.classList.remove('selected');
-                            tile.style.opacity = '1';
-                        });
-                        
-                        gameState.currentPlayer = 'black';
-                        messageArea.textContent = "Black player's turn - select a tile!";
-                        document.getElementById('blackPlayer').classList.add('active');
-                        document.getElementById('whitePlayer').classList.remove('active');
-                    }, 2000);
-                } else {
-                    // Game over
-                    setTimeout(endGame, 1500);
-                }
+                        determineRoundWinner();
+                    }, 1500);
+                }, 800);
+            } else {
+                // Player went second, both tiles are now played
+                showPlayedTiles();
+                
+                // Determine winner after user can see the colors
+                setTimeout(() => {
+                    determineRoundWinner();
+                }, 1500);
+            }
+        }
+
+        function showPlayedTiles() {
+            const playedTilesContainer = document.getElementById('played-tiles');
+            playedTilesContainer.innerHTML = '';
+            
+            // Create container for CPU tile
+            const cpuContainer = document.createElement('div');
+            cpuContainer.style.textAlign = 'center';
+            
+            const cpuLabel = document.createElement('div');
+            cpuLabel.textContent = 'Player 2';
+            cpuLabel.style.color = '#ffd700';
+            cpuLabel.style.fontSize = '14px';
+            cpuLabel.style.marginBottom = '5px';
+            
+            const cpuPlayedTile = document.createElement('div');
+            cpuPlayedTile.className = `tile ${cpuSelectedTile % 2 === 0 ? 'black' : 'white'}`;
+            cpuPlayedTile.style.margin = '0 auto';
+            
+            cpuContainer.appendChild(cpuLabel);
+            cpuContainer.appendChild(cpuPlayedTile);
+            
+            // Create container for Player tile
+            const playerContainer = document.createElement('div');
+            playerContainer.style.textAlign = 'center';
+            
+            const playerLabel = document.createElement('div');
+            playerLabel.textContent = 'Player 1';
+            playerLabel.style.color = '#ffd700';
+            playerLabel.style.fontSize = '14px';
+            playerLabel.style.marginBottom = '5px';
+            
+            const playerPlayedTile = document.createElement('div');
+            playerPlayedTile.className = `tile ${playerSelectedTile % 2 === 0 ? 'black' : 'white'}`;
+            playerPlayedTile.style.margin = '0 auto';
+            
+            playerContainer.appendChild(playerLabel);
+            playerContainer.appendChild(playerPlayedTile);
+            
+            playedTilesContainer.appendChild(cpuContainer);
+            playedTilesContainer.appendChild(playerContainer);
+            
+            document.getElementById('round-info').textContent = 'Comparing tiles...';
+        }
+
+        function showSingleTile(whichPlayer) {
+            const playedTilesContainer = document.getElementById('played-tiles');
+            playedTilesContainer.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.style.textAlign = 'center';
+            
+            const label = document.createElement('div');
+            label.textContent = whichPlayer === 'player' ? 'Player 1' : 'Player 2';
+            label.style.color = '#ffd700';
+            label.style.fontSize = '14px';
+            label.style.marginBottom = '5px';
+            
+            const playedTile = document.createElement('div');
+            const tileValue = whichPlayer === 'player' ? playerSelectedTile : cpuSelectedTile;
+            playedTile.className = `tile ${tileValue % 2 === 0 ? 'black' : 'white'}`;
+            playedTile.style.margin = '0 auto';
+            
+            container.appendChild(label);
+            container.appendChild(playedTile);
+            playedTilesContainer.appendChild(container);
+        }
+
+        function determineRoundWinner() {
+            const messageElement = document.getElementById('message');
+            let roundWinner = null; // 'player', 'cpu', or 'tie'
+            
+            if (playerSelectedTile > cpuSelectedTile) {
+                playerScore++;
+                messageElement.textContent = 'You win this round!';
+                messageElement.style.color = '#4CAF50';
+                roundWinner = 'player';
+            } else if (cpuSelectedTile > playerSelectedTile) {
+                cpuScore++;
+                messageElement.textContent = 'CPU wins this round!';
+                messageElement.style.color = '#f44336';
+                roundWinner = 'cpu';
+            } else {
+                messageElement.textContent = 'This round is a tie!';
+                messageElement.style.color = '#ffd700';
+                roundWinner = 'tie';
             }
             
-            // End the game and show results
-            function endGame() {
-                gameState.gameOver = true;
-                
-                if (gameState.blackScore > gameState.whiteScore) {
-                    messageArea.textContent = `Black Player wins the game! Final score: ${gameState.blackScore} - ${gameState.whiteScore}`;
-                } else if (gameState.whiteScore > gameState.blackScore) {
-                    messageArea.textContent = `White Player wins the game! Final score: ${gameState.whiteScore} - ${gameState.blackScore}`;
+            updateScoreBoard();
+            renderTiles();
+            
+            // Move to next round or end game
+            setTimeout(() => {
+                if (currentRound >= 9) {
+                    endGame();
                 } else {
-                    messageArea.textContent = `It's a tie! Final score: ${gameState.blackScore} - ${gameState.whiteScore}`;
+                    // Determine who goes first next round
+                    if (roundWinner === 'player') {
+                        playerGoesFirst = true;
+                    } else if (roundWinner === 'cpu') {
+                        playerGoesFirst = false;
+                    }
+                    // If tie, whoever went first this round goes first next round (playerGoesFirst stays the same)
+                    
+                    currentRound++;
+                    playerSelectedTile = null;
+                    cpuSelectedTile = null;
+                    clearMiddleArea();
+                    updateScoreBoard();
+                    
+                    // Start next round
+                    if (playerGoesFirst) {
+                        waitingForPlayer = true;
+                        updateRoundInfo();
+                    } else {
+                        cpuPlayTile();
+                    }
                 }
-                
-                // Disable all tiles
-                document.querySelectorAll('.tile').forEach(tile => {
-                    tile.style.pointerEvents = 'none';
-                });
+            }, 2000);
+        }
+
+        function clearMiddleArea() {
+            document.getElementById('played-tiles').innerHTML = '';
+            document.getElementById('message').textContent = '';
+        }
+
+        function updateScoreBoard() {
+            document.getElementById('player-score').textContent = playerScore;
+            document.getElementById('cpu-score').textContent = cpuScore;
+            document.getElementById('round').textContent = currentRound;
+        }
+
+        function endGame() {
+            const gameOverScreen = document.getElementById('game-over-screen');
+            gameOverScreen.style.display = 'block';
+            
+            let resultText = '';
+            if (playerScore > cpuScore) {
+                resultText = '🎉 Congratulations! You Win! 🎉';
+            } else if (cpuScore > playerScore) {
+                resultText = '😔 CPU Wins! Better Luck Next Time!';
+            } else {
+                resultText = '🤝 It\'s a Tie! Well Played!';
             }
             
-            // Event listeners
-            newGameBtn.addEventListener('click', initGame);
+            gameOverScreen.innerHTML = `
+                <div class="game-over">
+                    <h2>${resultText}</h2>
+                    <p style="font-size: 24px; margin: 20px 0;">
+                        Final Score: You ${playerScore} - ${cpuScore} CPU
+                    </p>
+                    <button onclick="initGame()" style="margin: 10px auto; display: block;">
+                        Play Again
+                    </button>
+                </div>
+            `;
             
-            // Initialize the game on load
-            initGame();
-        });
+            document.getElementById('round-info').textContent = 'Game Over!';
+        }
+
+        // Initialize game on load
+        initGame();
     </script>
 </body>
 </html>
