@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stockfish vs Human - Custom FEN</title>
+    <!-- Dependencies from CDNs -->
+    <link rel="stylesheet" href="https://unpkg.com">
+    <script src="https://code.jquery.com"></script>
+    <script src="https://unpkg.com"></script>
+    <script src="https://cdnjs.cloudflare.com"></script>
+</head>
+<body>
+    <div id="myBoard" style="width: 400px"></div>
+    <script>
+        // EDIT THIS FEN TO START FROM YOUR POSITION
+        const initialFen = '4k3/5ppp/8/8/8/8/PPP5/3K4 b - - 0 1';
+
+        const game = new Chess(initialFen);
+        const board = Chessboard('myBoard', {
+            draggable: true,
+            position: initialFen,
+            onDrop: handleMove
+        });
+
+        // Initialize Engine via Worker (using a hosted Stockfish.js file)
+        const engine = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+        engine.postMessage('uci'); // Initialize UCI protocol
+
+        function handleMove(source, target) {
+            const move = game.move({ from: source, to: target, promotion: 'q' });
+            if (move === null) return 'snapback';
+
+            // Ask engine for a move after the player moves
+            window.setTimeout(() => {
+                engine.postMessage(`position fen ${game.fen()}`);
+                engine.postMessage('go depth 10');
+            }, 250);
+        }
+
+        engine.onmessage = function(event) {
+            if (event.data.startsWith('bestmove')) {
+                const moveStr = event.data.split(' ')[1];
+                game.move({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4), promotion: 'q' });
+                board.position(game.fen());
+            }
+        };
+    </script>
+</body>
+</html>
