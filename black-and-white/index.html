@@ -81,10 +81,11 @@
 
         .player-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             margin-bottom: 10px;
             padding: 0 5px;
+            gap: 8px;
         }
 
         .player-label {
@@ -95,7 +96,7 @@
 
         .player-score {
             color: #ffd700;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
         }
 
@@ -105,7 +106,7 @@
             }
 
             .player-score {
-                font-size: 20px;
+                font-size: 16px;
             }
         }
 
@@ -281,7 +282,7 @@
 
         <div class="player-area">
             <div class="player-header">
-                <div class="player-label">Player 2 (CPU)</div>
+                <div class="player-label">Player 2 (CPU):</div>
                 <div class="player-score" id="cpu-score">0</div>
             </div>
             <div class="tiles-container" id="cpu-tiles"></div>
@@ -295,7 +296,7 @@
 
         <div class="player-area">
             <div class="player-header">
-                <div class="player-label">Player 1 (You)</div>
+                <div class="player-label">Player 1 (You):</div>
                 <div class="player-score" id="player-score">0</div>
             </div>
             <div class="tiles-container" id="player-tiles"></div>
