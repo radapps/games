@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: #2d5016;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -22,10 +22,10 @@
         }
 
         .game-container {
-            background: #2d5016;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            background: transparent;
+            border-radius: 0;
+            padding: 20px 10px;
+            box-shadow: none;
             max-width: 900px;
             width: 100%;
         }
@@ -38,14 +38,11 @@
         }
 
         .score-board {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
+            text-align: center;
+            margin-bottom: 20px;
             background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
+            padding: 10px;
             border-radius: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
         }
 
         .score {
@@ -60,15 +57,13 @@
         }
 
         .round-display {
-            flex-basis: 100%;
             text-align: center;
         }
 
         @media (max-width: 768px) {
             .score-board {
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
+                margin-bottom: 15px;
+                padding: 8px;
             }
 
             .score {
@@ -78,22 +73,40 @@
             .score span {
                 font-size: 24px;
             }
-
-            .round-display {
-                order: -1;
-                margin-bottom: 10px;
-            }
         }
 
         .player-area {
-            margin: 20px 0;
+            margin: 15px 0;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 5px;
         }
 
         .player-label {
             color: #fff;
             font-size: 18px;
-            margin-bottom: 10px;
             font-weight: bold;
+        }
+
+        .player-score {
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .player-label {
+                font-size: 16px;
+            }
+
+            .player-score {
+                font-size: 20px;
+            }
         }
 
         .tiles-container {
@@ -102,13 +115,12 @@
             flex-wrap: nowrap;
             justify-content: center;
             min-height: 80px;
-            overflow-x: auto;
         }
 
         .tile {
             width: 60px;
             height: 80px;
-            flex-shrink: 0;
+            flex-shrink: 1;
             border-radius: 8px;
             display: flex;
             justify-content: center;
@@ -123,26 +135,26 @@
 
         @media (max-width: 768px) {
             .tiles-container {
-                gap: 5px;
+                gap: 4px;
             }
 
             .tile {
-                width: 45px;
-                height: 60px;
-                font-size: 24px;
+                width: 40px;
+                height: 55px;
+                font-size: 22px;
                 border: 2px solid rgba(255, 255, 255, 0.2);
             }
         }
 
         @media (max-width: 480px) {
             .tiles-container {
-                gap: 3px;
+                gap: 2px;
             }
 
             .tile {
-                width: 35px;
-                height: 50px;
-                font-size: 20px;
+                width: 32px;
+                height: 48px;
+                font-size: 18px;
             }
         }
 
@@ -182,9 +194,9 @@
         .middle-area {
             background: rgba(0, 0, 0, 0.2);
             border-radius: 15px;
-            padding: 30px;
-            margin: 30px 0;
-            min-height: 180px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 150px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -194,7 +206,7 @@
         .played-tiles {
             display: flex;
             gap: 40px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .played-tile {
@@ -213,12 +225,25 @@
             text-align: center;
             min-height: 30px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin: 5px 0;
         }
 
         .round-info {
             color: #ffd700;
             font-size: 16px;
             margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .middle-area {
+                padding: 15px;
+                margin: 10px 0;
+                min-height: 130px;
+            }
+
+            .message {
+                font-size: 18px;
+            }
         }
 
         button {
@@ -229,7 +254,7 @@
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
         }
@@ -252,12 +277,13 @@
         
         <div class="score-board">
             <div class="score round-display">Round: <span id="round">1</span> / 9</div>
-            <div class="score">Player 2 (CPU): <span id="cpu-score">0</span></div>
-            <div class="score">Player 1 (You): <span id="player-score">0</span></div>
         </div>
 
         <div class="player-area">
-            <div class="player-label">Player 2 (CPU)</div>
+            <div class="player-header">
+                <div class="player-label">Player 2 (CPU)</div>
+                <div class="player-score" id="cpu-score">0</div>
+            </div>
             <div class="tiles-container" id="cpu-tiles"></div>
         </div>
 
@@ -268,7 +294,10 @@
         </div>
 
         <div class="player-area">
-            <div class="player-label">Player 1 (You)</div>
+            <div class="player-header">
+                <div class="player-label">Player 1 (You)</div>
+                <div class="player-score" id="player-score">0</div>
+            </div>
             <div class="tiles-container" id="player-tiles"></div>
         </div>
 
