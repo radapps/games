@@ -401,7 +401,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js"></script>
     <script>
         // Game state
         const INITIAL_FEN = '4k3/5ppp/8/8/8/8/PPP5/3K4 w - - 0 1';
@@ -415,18 +414,20 @@
         let engineReady = false;
         
         function initStockfish() {
-            if (typeof STOCKFISH === 'function') {
-                stockfish = STOCKFISH();
+            try {
+                // Use Stockfish WASM from CDN
+                stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
                 
                 stockfish.onmessage = function(event) {
-                    const message = event.data || event;
+                    const message = event.data;
+                    console.log('Stockfish:', message);
                     
                     if (message === 'uciok') {
                         stockfish.postMessage('isready');
                     } else if (message === 'readyok') {
                         engineReady = true;
                         console.log('Stockfish engine ready');
-                    } else if (message.startsWith('bestmove')) {
+                    } else if (typeof message === 'string' && message.startsWith('bestmove')) {
                         const match = message.match(/bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/);
                         if (match) {
                             const move = {
@@ -439,21 +440,29 @@
                     }
                 };
                 
+                stockfish.onerror = function(error) {
+                    console.error('Stockfish error:', error);
+                    engineReady = false;
+                };
+                
                 stockfish.postMessage('uci');
+            } catch (error) {
+                console.error('Failed to initialize Stockfish:', error);
+                engineReady = false;
             }
         }
         
         // Initialize engine on page load
-        initStockfish();
+        setTimeout(initStockfish, 100);
         
         // Piece image paths
         const pieceImages = {
-            'p': 'assets/pawn_black.png',
-            'k': 'assets/king_black.png',
-            'q': 'assets/queen_black.png',
-            'P': 'assets/pawn_white.png',
-            'K': 'assets/king_white.png',
-            'Q': 'assets/queen_white.png'
+            'bp': 'assets/pawn_black.png',
+            'bk': 'assets/king_black.png',
+            'bq': 'assets/queen_black.png',
+            'wp': 'assets/pawn_white.png',
+            'wk': 'assets/king_white.png',
+            'wq': 'assets/queen_white.png'
         };
         
         // Initialize board
@@ -492,8 +501,9 @@
                 if (piece) {
                     const pieceImg = document.createElement('img');
                     pieceImg.className = 'piece';
-                    pieceImg.src = pieceImages[piece.type] || '';
-                    pieceImg.alt = piece.type;
+                    const pieceKey = piece.color + piece.type; // e.g., 'wp', 'bk'
+                    pieceImg.src = pieceImages[pieceKey] || '';
+                    pieceImg.alt = pieceKey;
                     pieceImg.draggable = false;
                     square.appendChild(pieceImg);
                 }
@@ -634,17 +644,26 @@
         }
         
         function makeCpuMove() {
-            if (!engineReady || !stockfish) {
-                console.error('Stockfish engine not ready');
-                return;
-            }
-            
             document.getElementById('thinking-indicator').style.display = 'block';
             
-            // Send position to Stockfish
-            const fen = game.fen();
-            stockfish.postMessage('position fen ' + fen);
-            stockfish.postMessage('go depth 15'); // Depth 15 for strong play
+            if (engineReady && stockfish) {
+                // Use Stockfish
+                const fen = game.fen();
+                stockfish.postMessage('position fen ' + fen);
+                stockfish.postMessage('go depth 15'); // Depth 15 for strong play
+            } else {
+                // Fallback to strong minimax if Stockfish isn't ready
+                console.log('Using fallback engine (Stockfish not ready)');
+                setTimeout(() => {
+                    const bestMove = getBestMoveMinimax(7); // Depth 7 for better play
+                    if (bestMove) {
+                        game.move(bestMove);
+                        lastMove = { from: bestMove.from, to: bestMove.to };
+                        updateBoard();
+                    }
+                    document.getElementById('thinking-indicator').style.display = 'none';
+                }, 300);
+            }
         }
         
         function executeEngineMove(move) {
@@ -656,6 +675,88 @@
             }
             
             document.getElementById('thinking-indicator').style.display = 'none';
+        }
+        
+        // Fallback minimax engine (improved)
+        function getBestMoveMinimax(depth) {
+            const moves = game.moves({ verbose: true });
+            if (moves.length === 0) return null;
+            
+            let bestMove = null;
+            let bestValue = -Infinity;
+            const alpha = -Infinity;
+            const beta = Infinity;
+            
+            for (const move of moves) {
+                game.move(move);
+                const value = -negamax(depth - 1, -beta, -alpha);
+                game.undo();
+                
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove;
+        }
+        
+        function negamax(depth, alpha, beta) {
+            if (depth === 0 || game.game_over()) {
+                return evaluateBoard();
+            }
+            
+            const moves = game.moves({ verbose: true });
+            let value = -Infinity;
+            
+            for (const move of moves) {
+                game.move(move);
+                value = Math.max(value, -negamax(depth - 1, -beta, -alpha));
+                game.undo();
+                alpha = Math.max(alpha, value);
+                if (alpha >= beta) break;
+            }
+            
+            return value;
+        }
+        
+        function evaluateBoard() {
+            if (game.in_checkmate()) {
+                return -10000;
+            }
+            if (game.in_stalemate() || game.in_draw()) {
+                return 0;
+            }
+            
+            const board = game.board();
+            let score = 0;
+            const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+            const perspective = game.turn() === 'w' ? 1 : -1;
+            
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = board[i][j];
+                    if (piece) {
+                        const value = pieceValues[piece.type];
+                        const colorMultiplier = piece.color === 'w' ? 1 : -1;
+                        score += value * colorMultiplier;
+                        
+                        // Endgame king centralization
+                        if (piece.type === 'k') {
+                            const centerBonus = (3 - Math.abs(3.5 - i)) + (3 - Math.abs(3.5 - j));
+                            score += centerBonus * 10 * colorMultiplier;
+                        }
+                        
+                        // Pawn advancement
+                        if (piece.type === 'p') {
+                            const rank = piece.color === 'w' ? (7 - i) : i;
+                            score += rank * 10 * colorMultiplier;
+                        }
+                    }
+                }
+            }
+            
+            return score * perspective;
         }
         
         document.getElementById('btn-new-game').addEventListener('click', () => {
