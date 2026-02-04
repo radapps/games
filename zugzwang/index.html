@@ -207,11 +207,12 @@
         }
         
         .piece {
-            font-size: min(calc(90vw / 10), 60px);
+            width: 80%;
+            height: 80%;
             pointer-events: none;
             transition: transform 0.15s ease;
             position: absolute;
-            line-height: 1;
+            object-fit: contain;
         }
         
         .square:active .piece {
@@ -400,6 +401,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js"></script>
     <script>
         // Game state
         const INITIAL_FEN = '4k3/5ppp/8/8/8/8/PPP5/3K4 w - - 0 1';
@@ -408,10 +410,50 @@
         let gameMode = 'vs-cpu-white'; // 'two-player', 'vs-cpu-white', 'vs-cpu-black'
         let lastMove = null;
         
-        // Piece symbols
-        const pieceSymbols = {
-            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
-            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        // Initialize Stockfish engine
+        let stockfish = null;
+        let engineReady = false;
+        
+        function initStockfish() {
+            if (typeof STOCKFISH === 'function') {
+                stockfish = STOCKFISH();
+                
+                stockfish.onmessage = function(event) {
+                    const message = event.data || event;
+                    
+                    if (message === 'uciok') {
+                        stockfish.postMessage('isready');
+                    } else if (message === 'readyok') {
+                        engineReady = true;
+                        console.log('Stockfish engine ready');
+                    } else if (message.startsWith('bestmove')) {
+                        const match = message.match(/bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/);
+                        if (match) {
+                            const move = {
+                                from: match[1],
+                                to: match[2],
+                                promotion: match[3] || 'q'
+                            };
+                            executeEngineMove(move);
+                        }
+                    }
+                };
+                
+                stockfish.postMessage('uci');
+            }
+        }
+        
+        // Initialize engine on page load
+        initStockfish();
+        
+        // Piece image paths
+        const pieceImages = {
+            'p': 'assets/pawn_black.png',
+            'k': 'assets/king_black.png',
+            'q': 'assets/queen_black.png',
+            'P': 'assets/pawn_white.png',
+            'K': 'assets/king_white.png',
+            'Q': 'assets/queen_white.png'
         };
         
         // Initialize board
@@ -448,17 +490,12 @@
                 square.classList.remove('selected', 'target', 'has-piece', 'last-move');
                 
                 if (piece) {
-                    const pieceEl = document.createElement('div');
-                    pieceEl.className = 'piece';
-                    pieceEl.textContent = pieceSymbols[piece.type.toLowerCase()] || '';
-                    if (piece.color === 'w') {
-                        pieceEl.style.color = '#ffffff';
-                        pieceEl.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))';
-                    } else {
-                        pieceEl.style.color = '#1a1a1a';
-                        pieceEl.style.filter = 'drop-shadow(0 2px 4px rgba(255,255,255,0.2))';
-                    }
-                    square.appendChild(pieceEl);
+                    const pieceImg = document.createElement('img');
+                    pieceImg.className = 'piece';
+                    pieceImg.src = pieceImages[piece.type] || '';
+                    pieceImg.alt = piece.type;
+                    pieceImg.draggable = false;
+                    square.appendChild(pieceImg);
                 }
                 
                 // Highlight last move
@@ -583,7 +620,7 @@
             moveListEl.scrollTop = moveListEl.scrollHeight;
         }
         
-        // CPU Move - Endgame Engine
+        // CPU Move - Using Stockfish Engine
         function cpuMove() {
             if (game.game_over()) return;
             
@@ -597,158 +634,28 @@
         }
         
         function makeCpuMove() {
+            if (!engineReady || !stockfish) {
+                console.error('Stockfish engine not ready');
+                return;
+            }
+            
             document.getElementById('thinking-indicator').style.display = 'block';
             
-            setTimeout(() => {
-                const bestMove = getBestMove(game, 4); // Depth 4 for endgame
-                
-                if (bestMove) {
-                    game.move(bestMove);
-                    lastMove = { from: bestMove.from, to: bestMove.to };
-                    updateBoard();
-                }
-                
-                document.getElementById('thinking-indicator').style.display = 'none';
-            }, 300);
+            // Send position to Stockfish
+            const fen = game.fen();
+            stockfish.postMessage('position fen ' + fen);
+            stockfish.postMessage('go depth 15'); // Depth 15 for strong play
         }
         
-        // Minimax with Alpha-Beta Pruning
-        function getBestMove(game, depth) {
-            const moves = game.moves({ verbose: true });
-            if (moves.length === 0) return null;
+        function executeEngineMove(move) {
+            const result = game.move(move);
             
-            let bestMove = null;
-            let bestValue = -Infinity;
-            const isMaximizing = game.turn() === 'w';
-            
-            for (const move of moves) {
-                game.move(move);
-                const value = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizing);
-                game.undo();
-                
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                }
+            if (result) {
+                lastMove = { from: move.from, to: move.to };
+                updateBoard();
             }
             
-            return bestMove;
-        }
-        
-        function minimax(game, depth, alpha, beta, isMaximizing) {
-            if (depth === 0 || game.game_over()) {
-                return evaluatePosition(game);
-            }
-            
-            const moves = game.moves({ verbose: true });
-            
-            if (isMaximizing) {
-                let maxEval = -Infinity;
-                for (const move of moves) {
-                    game.move(move);
-                    const eval_ = minimax(game, depth - 1, alpha, beta, false);
-                    game.undo();
-                    maxEval = Math.max(maxEval, eval_);
-                    alpha = Math.max(alpha, eval_);
-                    if (beta <= alpha) break;
-                }
-                return maxEval;
-            } else {
-                let minEval = Infinity;
-                for (const move of moves) {
-                    game.move(move);
-                    const eval_ = minimax(game, depth - 1, alpha, beta, true);
-                    game.undo();
-                    minEval = Math.min(minEval, eval_);
-                    beta = Math.min(beta, eval_);
-                    if (beta <= alpha) break;
-                }
-                return minEval;
-            }
-        }
-        
-        // Endgame-focused evaluation
-        function evaluatePosition(game) {
-            if (game.in_checkmate()) {
-                return game.turn() === 'w' ? -10000 : 10000;
-            }
-            if (game.in_stalemate() || game.in_draw()) {
-                return 0;
-            }
-            
-            let score = 0;
-            const board = game.board();
-            
-            // Piece values
-            const pieceValues = {
-                'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 0
-            };
-            
-            // Piece-square tables for endgame
-            const kingEndgame = [
-                [-50, -40, -30, -20, -20, -30, -40, -50],
-                [-30, -20, -10,   0,   0, -10, -20, -30],
-                [-30, -10,  20,  30,  30,  20, -10, -30],
-                [-30, -10,  30,  40,  40,  30, -10, -30],
-                [-30, -10,  30,  40,  40,  30, -10, -30],
-                [-30, -10,  20,  30,  30,  20, -10, -30],
-                [-30, -30,   0,   0,   0,   0, -30, -30],
-                [-50, -30, -30, -30, -30, -30, -30, -50]
-            ];
-            
-            const pawnEndgame = [
-                [  0,   0,   0,   0,   0,   0,   0,   0],
-                [ 50,  50,  50,  50,  50,  50,  50,  50],
-                [ 10,  10,  20,  30,  30,  20,  10,  10],
-                [  5,   5,  10,  25,  25,  10,   5,   5],
-                [  0,   0,   0,  20,  20,   0,   0,   0],
-                [  5,  -5, -10,   0,   0, -10,  -5,   5],
-                [  5,  10,  10, -20, -20,  10,  10,   5],
-                [  0,   0,   0,   0,   0,   0,   0,   0]
-            ];
-            
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const piece = board[row][col];
-                    if (piece) {
-                        const value = pieceValues[piece.type];
-                        let positionBonus = 0;
-                        
-                        if (piece.type === 'k') {
-                            positionBonus = kingEndgame[row][col];
-                        } else if (piece.type === 'p') {
-                            positionBonus = piece.color === 'w' ? 
-                                pawnEndgame[row][col] : pawnEndgame[7-row][col];
-                        }
-                        
-                        const pieceScore = value + positionBonus;
-                        score += piece.color === 'w' ? pieceScore : -pieceScore;
-                    }
-                }
-            }
-            
-            // King opposition bonus in endgame
-            const whiteKing = findKing(board, 'w');
-            const blackKing = findKing(board, 'b');
-            if (whiteKing && blackKing) {
-                const distance = Math.abs(whiteKing.row - blackKing.row) + 
-                                Math.abs(whiteKing.col - blackKing.col);
-                score += (7 - distance) * 5; // Reward king proximity
-            }
-            
-            return score;
-        }
-        
-        function findKing(board, color) {
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const piece = board[row][col];
-                    if (piece && piece.type === 'k' && piece.color === color) {
-                        return { row, col };
-                    }
-                }
-            }
-            return null;
+            document.getElementById('thinking-indicator').style.display = 'none';
         }
         
         document.getElementById('btn-new-game').addEventListener('click', () => {
