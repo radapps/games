@@ -416,18 +416,13 @@
         let stockfish = null;
         let engineReady = false;
         
-        async function initStockfish() {
+        function initStockfish() {
+            console.log('Initializing Stockfish from local files...');
+            document.getElementById('engine-status').textContent = 'Loading Stockfish engine...';
+            
             try {
-                console.log('Fetching Stockfish from CDN...');
-                document.getElementById('engine-status').textContent = 'Loading Stockfish engine...';
-                
-                // Fetch the Stockfish script and create a Blob URL to bypass CORS
-                const response = await fetch('https://cdn.jsdelivr.net/npm/stockfish@11.0.0/src/stockfish.js');
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                
-                console.log('Creating Stockfish worker...');
-                stockfish = new Worker(blobUrl);
+                // Create worker from local stockfish.js file
+                stockfish = new Worker('js/stockfish.js');
                 
                 stockfish.onmessage = function(event) {
                     const message = event.data;
@@ -455,19 +450,16 @@
                 
                 stockfish.onerror = function(error) {
                     console.error('Stockfish worker error:', error);
-                    engineReady = false;
-                    document.getElementById('engine-status').textContent = 'Engine: Fallback (Strong)';
-                    document.getElementById('engine-status').style.color = 'var(--text-muted)';
+                    document.getElementById('engine-status').textContent = 'ERROR: Stockfish failed to load';
+                    document.getElementById('engine-status').style.color = '#ff4444';
                 };
                 
                 // Initialize UCI protocol
                 stockfish.postMessage('uci');
             } catch (error) {
                 console.error('Failed to initialize Stockfish:', error);
-                console.log('Will use fallback minimax engine');
-                engineReady = false;
-                document.getElementById('engine-status').textContent = 'Engine: Fallback (Strong)';
-                document.getElementById('engine-status').style.color = 'var(--text-muted)';
+                document.getElementById('engine-status').textContent = 'ERROR: Stockfish files not found';
+                document.getElementById('engine-status').style.color = '#ff4444';
             }
         }
         
@@ -663,26 +655,18 @@
         }
         
         function makeCpuMove() {
+            if (!engineReady || !stockfish) {
+                console.error('Stockfish engine not ready');
+                alert('Stockfish engine is not loaded. Please check that js/stockfish.js and js/stockfish.wasm are in the correct location.');
+                return;
+            }
+            
             document.getElementById('thinking-indicator').style.display = 'block';
             
-            if (engineReady && stockfish) {
-                // Use Stockfish
-                const fen = game.fen();
-                stockfish.postMessage('position fen ' + fen);
-                stockfish.postMessage('go depth 15'); // Depth 15 for strong play
-            } else {
-                // Fallback to strong minimax if Stockfish isn't ready
-                console.log('Using fallback engine (Stockfish not ready)');
-                setTimeout(() => {
-                    const bestMove = getBestMoveMinimax(7); // Depth 7 for better play
-                    if (bestMove) {
-                        game.move(bestMove);
-                        lastMove = { from: bestMove.from, to: bestMove.to };
-                        updateBoard();
-                    }
-                    document.getElementById('thinking-indicator').style.display = 'none';
-                }, 300);
-            }
+            // Use Stockfish
+            const fen = game.fen();
+            stockfish.postMessage('position fen ' + fen);
+            stockfish.postMessage('go depth 18'); // Deep search for strong endgame play
         }
         
         function executeEngineMove(move) {
@@ -694,88 +678,6 @@
             }
             
             document.getElementById('thinking-indicator').style.display = 'none';
-        }
-        
-        // Fallback minimax engine (improved)
-        function getBestMoveMinimax(depth) {
-            const moves = game.moves({ verbose: true });
-            if (moves.length === 0) return null;
-            
-            let bestMove = null;
-            let bestValue = -Infinity;
-            const alpha = -Infinity;
-            const beta = Infinity;
-            
-            for (const move of moves) {
-                game.move(move);
-                const value = -negamax(depth - 1, -beta, -alpha);
-                game.undo();
-                
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestMove = move;
-                }
-            }
-            
-            return bestMove;
-        }
-        
-        function negamax(depth, alpha, beta) {
-            if (depth === 0 || game.game_over()) {
-                return evaluateBoard();
-            }
-            
-            const moves = game.moves({ verbose: true });
-            let value = -Infinity;
-            
-            for (const move of moves) {
-                game.move(move);
-                value = Math.max(value, -negamax(depth - 1, -beta, -alpha));
-                game.undo();
-                alpha = Math.max(alpha, value);
-                if (alpha >= beta) break;
-            }
-            
-            return value;
-        }
-        
-        function evaluateBoard() {
-            if (game.in_checkmate()) {
-                return -10000;
-            }
-            if (game.in_stalemate() || game.in_draw()) {
-                return 0;
-            }
-            
-            const board = game.board();
-            let score = 0;
-            const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-            const perspective = game.turn() === 'w' ? 1 : -1;
-            
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    const piece = board[i][j];
-                    if (piece) {
-                        const value = pieceValues[piece.type];
-                        const colorMultiplier = piece.color === 'w' ? 1 : -1;
-                        score += value * colorMultiplier;
-                        
-                        // Endgame king centralization
-                        if (piece.type === 'k') {
-                            const centerBonus = (3 - Math.abs(3.5 - i)) + (3 - Math.abs(3.5 - j));
-                            score += centerBonus * 10 * colorMultiplier;
-                        }
-                        
-                        // Pawn advancement
-                        if (piece.type === 'p') {
-                            const rank = piece.color === 'w' ? (7 - i) : i;
-                            score += rank * 10 * colorMultiplier;
-                        }
-                    }
-                }
-            }
-            
-            return score * perspective;
         }
         
         document.getElementById('btn-new-game').addEventListener('click', () => {
