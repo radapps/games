@@ -10,23 +10,23 @@
 <style>
 body {
   margin:0;
-  background:black;
-  color:white;
   height:100vh;
   display:flex;
   flex-direction:column;
+  background:black;
+  color:white;
   font-family: monospace;
 }
 
-#connectPanel {
+#topbar {
   padding:6px;
   background:#222;
 }
 
 input, button {
+  padding:8px;
+  margin:3px 0;
   width:100%;
-  padding:10px;
-  margin-top:4px;
   font-size:16px;
 }
 
@@ -35,7 +35,6 @@ input, button {
   overflow-y:auto;
   padding:10px;
   white-space:pre-wrap;
-  word-wrap:break-word;
 }
 
 #controls {
@@ -43,23 +42,27 @@ input, button {
   padding:5px;
   display:grid;
   grid-template-columns: repeat(4,1fr);
-  gap:5px;
+  gap:6px;
 }
 
 .control-btn {
-  padding:12px;
   font-size:18px;
+  padding:12px;
 }
+
 .hidden { display:none; }
+
+#keyboardInput {
+  position:absolute;
+  opacity:0;
+}
 </style>
 </head>
 
 <body>
 
-<div id="connectPanel">
-  <input id="wsurl" placeholder="WebSocket URL">
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
+<div id="topbar">
+  <input id="wsurl" placeholder="wss://bbs.example.com/ws">
   <button onclick="connect()">Connect</button>
 </div>
 
@@ -80,84 +83,107 @@ input, button {
 
   <button class="control-btn" onclick="sendCmd('I')">🎒</button>
   <button class="control-btn" onclick="toggleKeyboard()">⌨</button>
-  <button class="control-btn" onclick="toggleMore()">➕</button>
+  <button class="control-btn" onclick="clearScreen()">🧹</button>
 </div>
 
-<input id="keyboardInput" style="position:absolute;opacity:0;">
+<input id="keyboardInput">
 
 <script>
-let ws;
 const ansi = new AnsiUp();
 const terminal = document.getElementById("terminal");
 const keyboardInput = document.getElementById("keyboardInput");
+let ws;
 
 function connect() {
-  const wsurl = wsurlInput.value;
-  const user = username.value;
-  const pass = password.value;
+  const url = document.getElementById("wsurl").value;
+  localStorage.setItem("wsurl", url);
 
-  localStorage.setItem("wsurl", wsurl);
-  localStorage.setItem("username", user);
-  localStorage.setItem("password", pass);
+  terminal.innerHTML += "*** Connecting... ***\n";
 
-  ws = new WebSocket(wsurl);
+  ws = new WebSocket(url);
+  ws.binaryType = "arraybuffer";
 
   ws.onopen = () => {
+    terminal.innerHTML += "*** Connected ***\n";
     document.getElementById("controls").classList.remove("hidden");
-    sendRaw(user);
-    sendRaw(pass);
   };
 
-  ws.onmessage = e => {
-    handleBbsOutput(e.data);
+  ws.onmessage = evt => {
+    const data = new Uint8Array(evt.data);
+    const text = decodeTelnet(data);
+    render(text);
+    parseDynamic(text);
   };
 
-  ws.onclose = () => terminal.innerHTML += "\n*** Disconnected ***\n";
-}
+  ws.onclose = () => {
+    terminal.innerHTML += "\n*** Disconnected ***\n";
+  };
 
-function handleBbsOutput(text) {
-  const html = ansi.ansi_to_html(text);
-  terminal.innerHTML += html;
-  terminal.scrollTop = terminal.scrollHeight;
-
-  // Dynamic button logic
-  if (text.includes("You are in combat")) {
-    showCombatButtons();
-  }
-  if (text.includes("Exits:")) {
-    updateExitButtons(text);
-  }
+  ws.onerror = e => {
+    terminal.innerHTML += "\n*** WebSocket error ***\n";
+  };
 }
 
 function sendCmd(cmd) {
+  if (!ws || ws.readyState !== 1) return;
   ws.send(cmd + "\r\n");
-}
-
-function sendRaw(txt) {
-  ws.send(txt + "\r\n");
 }
 
 function toggleKeyboard() {
   keyboardInput.focus();
 }
 
-keyboardInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
+keyboardInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
     sendCmd(keyboardInput.value);
-    keyboardInput.value = "";
+    keyboardInput.value="";
   }
 });
 
-function updateExitButtons(text) {
-  // example: "Exits: N S E W"
-  const exits = text.match(/Exits:(.*)/);
-  if (!exits) return;
+function clearScreen() {
+  terminal.innerHTML = "";
+}
 
-  const dirs = exits[1];
-  document.querySelectorAll(".control-btn").forEach(b => b.disabled=false);
+function render(text) {
+  const html = ansi.ansi_to_html(text);
+  terminal.innerHTML += html;
+  terminal.scrollTop = terminal.scrollHeight;
+}
 
-  if (!dirs.includes("N")) disableBtn("⬆ N");
-  if (!dirs.includes("S")) disableBtn("⬇ S");
+// Remove telnet IAC negotiation bytes
+function decodeTelnet(data) {
+  let result = "";
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === 255) { // IAC
+      i += 2;
+    } else {
+      result += String.fromCharCode(data[i]);
+    }
+  }
+  return result;
+}
+
+// Dynamic button logic
+function parseDynamic(text) {
+  if (text.includes("Exits:")) {
+    updateExits(text);
+  }
+  if (text.includes("You are attacked")) {
+    console.log("Combat mode");
+  }
+}
+
+function updateExits(text) {
+  const match = text.match(/Exits:(.*)/);
+  if (!match) return;
+  const exits = match[1];
+
+  document.querySelectorAll(".control-btn").forEach(b=>b.disabled=false);
+
+  if (!exits.includes("N")) disableBtn("⬆ N");
+  if (!exits.includes("S")) disableBtn("⬇ S");
+  if (!exits.includes("E")) disableBtn("➡ E");
+  if (!exits.includes("W")) disableBtn("⬅ W");
 }
 
 function disableBtn(label) {
@@ -166,21 +192,8 @@ function disableBtn(label) {
   });
 }
 
-function showCombatButtons() {
-  // future dynamic grouping
-  console.log("Combat detected");
-}
-
-function toggleMore() {
-  alert("Future macro buttons here");
-}
-
-// Load saved settings
-const wsurlInput = document.getElementById("wsurl");
 window.onload = () => {
-  wsurlInput.value = localStorage.getItem("wsurl") || "";
-  username.value = localStorage.getItem("username") || "";
-  password.value = localStorage.getItem("password") || "";
+  document.getElementById("wsurl").value = localStorage.getItem("wsurl") || "";
 };
 </script>
 
