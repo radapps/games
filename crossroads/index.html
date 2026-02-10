@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BBS Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://embed-v2.ftelnet.ca/js/ftelnet.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --accent-cyan: #00fff9;
+            --accent-magenta: #ff00ff;
+            --accent-green: #00ff41;
+            --text-primary: #00ff41;
+            --text-secondary: #00fff9;
+            --border-glow: rgba(0, 255, 249, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 249, 0.03),
+                    rgba(0, 255, 249, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanlines 8s linear infinite;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px var(--border-glow), inset 0 0 5px var(--border-glow); }
+            50% { box-shadow: 0 0 20px var(--border-glow), inset 0 0 10px var(--border-glow); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 10px 10px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-family: 'VT323', monospace;
+            font-size: 2.5em;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .login-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 249, 0.3);
+            animation: fadeInUp 0.6s ease-out 0.2s backwards;
+        }
+
+        .login-panel.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 255, 249, 0.05);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            background: rgba(0, 255, 249, 0.1);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+
+        .connect-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-primary);
+            font-family: 'VT323', monospace;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 249, 0.5);
+        }
+
+        .connect-btn:active {
+            transform: translateY(0);
+        }
+
+        .terminal-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .terminal-container.active {
+            display: flex;
+        }
+
+        .terminal {
+            flex: 1;
+            background: #000;
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px;
+            overflow: hidden;
+            animation: glow 3s ease-in-out infinite;
+            position: relative;
+            min-height: 300px;
+        }
+
+        .terminal iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .controls-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-magenta);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+
+        .control-section {
+            margin-bottom: 15px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            color: var(--accent-magenta);
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .button-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .button-grid.navigation {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-areas:
+                ". n ."
+                "w . e"
+                ". s ."
+                "u . d";
+        }
+
+        .button-grid.actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .control-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 255, 249, 0.2), rgba(255, 0, 255, 0.2));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 50px;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 249, 0.4), rgba(255, 0, 255, 0.4));
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--border-glow);
+        }
+
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+
+        .control-btn.keyboard-toggle {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 255, 249, 0.2));
+        }
+
+        .btn-n { grid-area: n; }
+        .btn-s { grid-area: s; }
+        .btn-e { grid-area: e; }
+        .btn-w { grid-area: w; }
+        .btn-u { grid-area: u; }
+        .btn-d { grid-area: d; }
+
+        .keyboard-container {
+            display: none;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .keyboard-container.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+            justify-content: center;
+        }
+
+        .key-btn {
+            min-width: 35px;
+            height: 40px;
+            padding: 5px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 4px;
+            color: var(--accent-green);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key-btn:hover {
+            background: rgba(0, 255, 65, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .key-btn:active {
+            background: rgba(0, 255, 65, 0.5);
+            transform: translateY(0);
+        }
+
+        .key-btn.wide {
+            flex: 2;
+        }
+
+        .key-btn.wider {
+            flex: 3;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .connection-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff0000;
+            margin-right: 5px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .connection-status.connected {
+            background: var(--accent-green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ANSI Color Classes */
+        .ansi-black { color: #000000; }
+        .ansi-red { color: #ff0000; }
+        .ansi-green { color: #00ff00; }
+        .ansi-yellow { color: #ffff00; }
+        .ansi-blue { color: #0000ff; }
+        .ansi-magenta { color: #ff00ff; }
+        .ansi-cyan { color: #00ffff; }
+        .ansi-white { color: #ffffff; }
+        .ansi-bright-black { color: #808080; }
+        .ansi-bright-red { color: #ff8080; }
+        .ansi-bright-green { color: #80ff80; }
+        .ansi-bright-yellow { color: #ffff80; }
+        .ansi-bright-blue { color: #8080ff; }
+        .ansi-bright-magenta { color: #ff80ff; }
+        .ansi-bright-cyan { color: #80ffff; }
+        .ansi-bright-white { color: #ffffff; }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .control-btn {
+                font-size: 1.3em;
+                padding: 12px;
+            }
+
+            .key-btn {
+                min-width: 28px;
+                height: 35px;
+                font-size: 0.8em;
+            }
+
+            .terminal {
+                min-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ BBS TERMINAL ⚡</h1>
+            <div class="subtitle">RETRO TELNET CLIENT</div>
+        </div>
+
+        <!-- Login Panel -->
+        <div class="login-panel" id="loginPanel">
+            <div class="form-group">
+                <label for="ipAddress">IP Address</label>
+                <input type="text" id="ipAddress" placeholder="example.com or 192.168.1.1">
+            </div>
+            <div class="form-group">
+                <label for="port">Port</label>
+                <input type="number" id="port" placeholder="23">
+            </div>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Your username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Your password">
+            </div>
+            <button class="connect-btn" onclick="connect()">⚡ CONNECT ⚡</button>
+        </div>
+
+        <!-- Terminal Container -->
+        <div class="terminal-container" id="terminalContainer">
+            <div class="terminal" id="terminal">
+                <div id="fTelnetContainer"></div>
+            </div>
+
+            <div class="controls-panel">
+                <!-- Navigation Section -->
+                <div class="control-section">
+                    <h3>🧭 Navigation</h3>
+                    <div class="button-grid navigation">
+                        <button class="control-btn btn-n" onclick="sendCommand('north')" title="North">⬆️</button>
+                        <button class="control-btn btn-s" onclick="sendCommand('south')" title="South">⬇️</button>
+                        <button class="control-btn btn-e" onclick="sendCommand('east')" title="East">➡️</button>
+                        <button class="control-btn btn-w" onclick="sendCommand('west')" title="West">⬅️</button>
+                        <button class="control-btn btn-u" onclick="sendCommand('up')" title="Up">⤴️</button>
+                        <button class="control-btn btn-d" onclick="sendCommand('down')" title="Down">⤵️</button>
+                    </div>
+                </div>
+
+                <!-- Action Section -->
+                <div class="control-section">
+                    <h3>⚔️ Actions</h3>
+                    <div class="button-grid actions">
+                        <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                        <button class="control-btn" onclick="sendCommand('hit')" title="Hit">⚔️</button>
+                        <button class="control-btn" onclick="sendCommand('spells')" title="Spells">📖</button>
+                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">🎒</button>
+                    </div>
+                </div>
+
+                <!-- Keyboard Toggle -->
+                <button class="control-btn keyboard-toggle" onclick="toggleKeyboard()" title="Toggle Keyboard">
+                    ⌨️
+                </button>
+            </div>
+
+            <!-- Virtual Keyboard -->
+            <div class="keyboard-container" id="keyboardContainer">
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('1')">1</button>
+                    <button class="key-btn" onclick="typeKey('2')">2</button>
+                    <button class="key-btn" onclick="typeKey('3')">3</button>
+                    <button class="key-btn" onclick="typeKey('4')">4</button>
+                    <button class="key-btn" onclick="typeKey('5')">5</button>
+                    <button class="key-btn" onclick="typeKey('6')">6</button>
+                    <button class="key-btn" onclick="typeKey('7')">7</button>
+                    <button class="key-btn" onclick="typeKey('8')">8</button>
+                    <button class="key-btn" onclick="typeKey('9')">9</button>
+                    <button class="key-btn" onclick="typeKey('0')">0</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('q')">Q</button>
+                    <button class="key-btn" onclick="typeKey('w')">W</button>
+                    <button class="key-btn" onclick="typeKey('e')">E</button>
+                    <button class="key-btn" onclick="typeKey('r')">R</button>
+                    <button class="key-btn" onclick="typeKey('t')">T</button>
+                    <button class="key-btn" onclick="typeKey('y')">Y</button>
+                    <button class="key-btn" onclick="typeKey('u')">U</button>
+                    <button class="key-btn" onclick="typeKey('i')">I</button>
+                    <button class="key-btn" onclick="typeKey('o')">O</button>
+                    <button class="key-btn" onclick="typeKey('p')">P</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('a')">A</button>
+                    <button class="key-btn" onclick="typeKey('s')">S</button>
+                    <button class="key-btn" onclick="typeKey('d')">D</button>
+                    <button class="key-btn" onclick="typeKey('f')">F</button>
+                    <button class="key-btn" onclick="typeKey('g')">G</button>
+                    <button class="key-btn" onclick="typeKey('h')">H</button>
+                    <button class="key-btn" onclick="typeKey('j')">J</button>
+                    <button class="key-btn" onclick="typeKey('k')">K</button>
+                    <button class="key-btn" onclick="typeKey('l')">L</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('z')">Z</button>
+                    <button class="key-btn" onclick="typeKey('x')">X</button>
+                    <button class="key-btn" onclick="typeKey('c')">C</button>
+                    <button class="key-btn" onclick="typeKey('v')">V</button>
+                    <button class="key-btn" onclick="typeKey('b')">B</button>
+                    <button class="key-btn" onclick="typeKey('n')">N</button>
+                    <button class="key-btn" onclick="typeKey('m')">M</button>
+                    <button class="key-btn wide" onclick="typeKey('Backspace')">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn wider" onclick="typeKey(' ')">SPACE</button>
+                    <button class="key-btn wider" onclick="sendCurrentInput()">ENTER ↵</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <input type="text" id="customInput" 
+                           placeholder="Type custom command here..." 
+                           style="width: 100%; padding: 10px; background: rgba(0,255,65,0.1); border: 1px solid var(--accent-green); border-radius: 4px; color: var(--accent-green); font-family: 'Share Tech Mono', monospace;"
+                           onkeypress="handleEnter(event)">
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span class="connection-status" id="connectionStatus"></span>
+            <span id="statusText">DISCONNECTED</span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let ftelnet = null;
+        let isConnected = false;
+
+        // Load saved credentials on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCredentials();
+        });
+
+        function loadCredentials() {
+            const saved = {
+                ip: localStorage.getItem('bbs_ip'),
+                port: localStorage.getItem('bbs_port'),
+                username: localStorage.getItem('bbs_username'),
+                password: localStorage.getItem('bbs_password')
+            };
+
+            if (saved.ip) document.getElementById('ipAddress').value = saved.ip;
+            if (saved.port) document.getElementById('port').value = saved.port;
+            if (saved.username) document.getElementById('username').value = saved.username;
+            if (saved.password) document.getElementById('password').value = saved.password;
+        }
+
+        function saveCredentials() {
+            localStorage.setItem('bbs_ip', document.getElementById('ipAddress').value);
+            localStorage.setItem('bbs_port', document.getElementById('port').value);
+            localStorage.setItem('bbs_username', document.getElementById('username').value);
+            localStorage.setItem('bbs_password', document.getElementById('password').value);
+        }
+
+        function connect() {
+            const ip = document.getElementById('ipAddress').value;
+            const port = document.getElementById('port').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!ip || !port) {
+                alert('Please enter IP address and port');
+                return;
+            }
+
+            // Save credentials
+            saveCredentials();
+
+            // Hide login panel, show terminal
+            document.getElementById('loginPanel').classList.add('hidden');
+            document.getElementById('terminalContainer').classList.add('active');
+
+            // Initialize fTelnet
+            const options = {
+                Hostname: ip,
+                Port: parseInt(port),
+                ConnectionType: 'telnet',
+                ScreenColumns: 80,
+                ScreenRows: 24,
+                ForceWss: false, // Use ws:// instead of wss://
+                AllowModernScrollback: true
+            };
+
+            // Create fTelnet instance
+            ftelnet = new fTelnetClient('fTelnetContainer', options);
+            
+            // Set up event listeners
+            ftelnet.OnConnectionClose = function() {
+                updateConnectionStatus(false);
+                alert('Connection closed');
+            };
+
+            ftelnet.OnConnectionOpen = function() {
+                updateConnectionStatus(true);
+                
+                // Auto-login if username is provided
+                if (username) {
+                    setTimeout(() => {
+                        sendCommand(username, false);
+                        if (password) {
+                            setTimeout(() => {
+                                sendCommand(password, false);
+                            }, 1000);
+                        }
+                    }, 1000);
+                }
+            };
+
+            // Connect
+            ftelnet.Connect();
+        }
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusIndicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                statusText.textContent = 'CONNECTED';
+            } else {
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = 'DISCONNECTED';
+            }
+        }
+
+        function sendCommand(command, addNewline = true) {
+            if (!ftelnet) {
+                alert('Not connected to BBS');
+                return;
+            }
+
+            try {
+                // Send command to fTelnet
+                if (addNewline) {
+                    ftelnet.SendString(command + '\r\n');
+                } else {
+                    ftelnet.SendString(command + '\r\n');
+                }
+            } catch (e) {
+                console.error('Error sending command:', e);
+            }
+        }
+
+        function toggleKeyboard() {
+            const keyboard = document.getElementById('keyboardContainer');
+            
+            if (keyboard.classList.contains('active')) {
+                keyboard.classList.remove('active');
+            } else {
+                keyboard.classList.add('active');
+            }
+        }
+
+        function typeKey(key) {
+            const input = document.getElementById('customInput');
+            
+            if (key === 'Backspace') {
+                input.value = input.value.slice(0, -1);
+            } else {
+                input.value += key;
+            }
+            
+            input.focus();
+        }
+
+        function sendCurrentInput() {
+            const input = document.getElementById('customInput');
+            const command = input.value.trim();
+            
+            if (command) {
+                sendCommand(command);
+                input.value = '';
+            }
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendCurrentInput();
+            }
+        }
+    </script>
+</body>
+</html>
