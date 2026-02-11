@@ -41,58 +41,6 @@
             flex-direction: column;
         }
 
-        /* Header */
-        .header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-default);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-title h1 {
-            font-family: 'VT323', monospace;
-            font-size: 1.8em;
-            color: var(--accent-primary);
-            font-weight: normal;
-        }
-
-        .connection-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            border-radius: 6px;
-            background: var(--bg-tertiary);
-            font-size: 0.75em;
-            font-weight: 500;
-        }
-
-        .connection-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-danger);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .connection-dot.connected {
-            background: var(--accent-success);
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
         /* Login Panel */
         .login-panel {
             flex: 1;
@@ -196,10 +144,10 @@
 
         /* Terminal - Top Half */
         .terminal-container {
-            height: 50vh;
+            height: 55vh;
             display: flex;
             flex-direction: column;
-            padding: 12px 12px 0 12px;
+            padding: 8px 8px 0 8px;
         }
 
         .terminal {
@@ -239,8 +187,8 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 12px;
-            gap: 12px;
+            padding: 8px;
+            gap: 4px;
         }
 
         /* Input Row */
@@ -292,34 +240,34 @@
         .buttons-row {
             display: grid;
             grid-template-columns: 1fr auto;
-            gap: 12px;
+            gap: 4px;
             align-items: start;
         }
 
         .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             align-items: flex-start;
         }
 
         .action-row-1 {
             display: flex;
-            gap: 8px;
+            gap: 4px;
         }
 
         .action-row-2, .action-row-3 {
-            height: 64px; /* Match button height to maintain alignment */
+            height: 48px; /* Match button height to maintain alignment */
         }
 
         .navigation-panel {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .nav-row {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             justify-content: flex-end;
         }
 
@@ -328,19 +276,19 @@
         }
 
         .control-btn {
-            padding: 8px;
+            padding: 4px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-default);
-            border-radius: 6px;
+            border-radius: 4px;
             color: var(--text-primary);
-            font-size: 1.8em;
+            font-size: 1.6em;
             cursor: pointer;
             transition: all 0.15s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 56px;
-            min-height: 56px;
+            width: 48px;
+            height: 48px;
         }
 
         .control-btn:hover {
@@ -357,8 +305,11 @@
         .target-buttons {
             display: none;
             flex-direction: column;
-            gap: 4px;
-            margin-top: 4px;
+            gap: 2px;
+            margin-top: 2px;
+            position: absolute;
+            z-index: 100;
+            min-width: 120px;
         }
 
         .target-buttons.active {
@@ -366,12 +317,12 @@
         }
 
         .target-btn {
-            padding: 6px 12px;
+            padding: 4px 8px;
             background: var(--bg-tertiary);
             border: 1px solid var(--accent-warning);
             border-radius: 4px;
             color: var(--text-primary);
-            font-size: 0.85em;
+            font-size: 0.75em;
             cursor: pointer;
             transition: all 0.15s ease;
             text-align: left;
@@ -381,6 +332,39 @@
         .target-btn:hover {
             background: var(--bg-primary);
             border-color: var(--accent-primary);
+        }
+
+        /* Spell buttons */
+        .spell-buttons {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 2px;
+            position: absolute;
+            z-index: 100;
+            min-width: 120px;
+        }
+
+        .spell-buttons.active {
+            display: flex;
+        }
+
+        .spell-btn {
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .spell-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-secondary);
         }
 
         /* Dynamic Buttons */
@@ -404,27 +388,37 @@
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .terminal-container {
-                height: 40vh;
+                height: 50vh;
             }
 
             .terminal {
                 font-size: 1.0em;
             }
 
+            .control-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 1.4em;
+            }
+
             .buttons-row {
                 grid-template-columns: 1fr;
-                gap: 8px;
+                gap: 2px;
+            }
+
+            .action-buttons {
+                gap: 2px;
             }
 
             .navigation-panel {
                 display: flex;
                 flex-direction: row;
-                gap: 8px;
+                gap: 2px;
                 justify-content: space-between;
             }
 
             .nav-row {
-                gap: 4px;
+                gap: 2px;
             }
         }
 
@@ -451,17 +445,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-title">
-                <h1>BBS TERMINAL</h1>
-            </div>
-            <div class="connection-badge">
-                <div class="connection-dot" id="connectionDot"></div>
-                <span id="connectionText">DISCONNECTED</span>
-            </div>
-        </div>
-
         <!-- Login Panel -->
         <div class="login-panel" id="loginPanel">
             <div class="login-card">
@@ -499,7 +482,10 @@
                             <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
                             <div class="target-buttons" id="hitTargets"></div>
                         </div>
-                        <button class="control-btn" onclick="sendCommand('cast')" title="Cast">📖</button>
+                        <div style="position: relative;">
+                            <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
+                            <div class="spell-buttons" id="spellList"></div>
+                        </div>
                         <button class="control-btn" onclick="sendCommand('drink')" title="Drink">💧</button>
                         <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
                         <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
@@ -546,6 +532,9 @@
         let recentTerminalText = '';
         let currentTargets = []; // Store current targets from "There is a ... here."
         let currentANSIStyle = ''; // Persist ANSI color state across chunks
+        let currentSpells = []; // Store user's spells
+        let selectedSpell = null; // Currently selected spell for casting
+        let waitingForSpells = false; // Waiting for spell list from server
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -639,7 +628,6 @@
                 ws.binaryType = 'arraybuffer';  // Important for binary telnet data!
 
                 ws.onopen = function() {
-                    updateConnectionStatus(true);
                     appendToTerminal('✓ Connected!\n\n');
                 };
 
@@ -674,6 +662,11 @@
                         // Extract targets from recent text
                         updateTargets();
                         
+                        // Extract spells if waiting for them
+                        if (waitingForSpells) {
+                            extractSpells();
+                        }
+                        
                         updateDynamicButtons();
                     }
                 };
@@ -681,17 +674,14 @@
                 ws.onerror = function(error) {
                     console.error('WebSocket error:', error);
                     appendToTerminal('\n✗ Connection error\n');
-                    updateConnectionStatus(false);
                 };
 
                 ws.onclose = function(event) {
                     console.log('WebSocket closed:', event.code, event.reason);
-                    updateConnectionStatus(false);
                     appendToTerminal('\n[Connection closed]\n');
                 };
             } catch (e) {
                 appendToTerminal('\n✗ Error: ' + e.message + '\n');
-                updateConnectionStatus(false);
             }
         }
 
@@ -738,20 +728,6 @@
             }
 
             return new Uint8Array(filtered);
-        }
-
-        function updateConnectionStatus(connected) {
-            isConnected = connected;
-            const dot = document.getElementById('connectionDot');
-            const text = document.getElementById('connectionText');
-
-            if (connected) {
-                dot.classList.add('connected');
-                text.textContent = 'CONNECTED';
-            } else {
-                dot.classList.remove('connected');
-                text.textContent = 'DISCONNECTED';
-            }
         }
 
         function appendToTerminal(text) {
@@ -881,12 +857,36 @@
                 const targets = targetString
                     .split(/(?:\s+and\s+|,\s*)/)
                     .map(t => t.trim())
+                    .map(t => t.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
                     .filter(t => t.length > 0);
                 
                 return targets;
             }
             
             return [];
+        }
+
+        function extractSpells() {
+            // Look for "You have the ability to cast:" followed by spell names
+            const regex = /You have the ability to cast:\s*([^\n]+)/i;
+            const match = recentTerminalText.match(regex);
+            
+            if (match) {
+                const spellString = match[1];
+                // Split by spaces and/or tabs
+                const spells = spellString
+                    .split(/[\s\t]+/)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                
+                if (spells.length > 0) {
+                    currentSpells = spells;
+                    waitingForSpells = false;
+                    console.log('Spells found:', spells);
+                    // Auto-show spell list
+                    showSpellButtons();
+                }
+            }
         }
 
         function updateTargets() {
@@ -901,6 +901,9 @@
         function handleHitButton() {
             const targetContainer = document.getElementById('hitTargets');
             
+            // Hide spell list if open
+            hideSpellButtons();
+            
             if (currentTargets.length > 0) {
                 // Toggle visibility
                 if (targetContainer.classList.contains('active')) {
@@ -912,6 +915,81 @@
                 // No targets, just send HIT
                 sendCommand('hit');
             }
+        }
+
+        function handleCastButton() {
+            const spellContainer = document.getElementById('spellList');
+            
+            // Hide target list if open
+            hideTargetButtons();
+            
+            if (currentSpells.length > 0) {
+                // Toggle visibility
+                if (spellContainer.classList.contains('active')) {
+                    hideSpellButtons();
+                } else {
+                    showSpellButtons();
+                }
+            } else {
+                // No spells known, request them
+                waitingForSpells = true;
+                sendCommand('spells');
+            }
+        }
+
+        function showSpellButtons() {
+            const spellContainer = document.getElementById('spellList');
+            spellContainer.innerHTML = '';
+            
+            currentSpells.forEach(spell => {
+                const btn = document.createElement('button');
+                btn.className = 'spell-btn';
+                btn.textContent = spell;
+                btn.onclick = () => {
+                    handleSpellSelection(spell);
+                };
+                spellContainer.appendChild(btn);
+            });
+            
+            spellContainer.classList.add('active');
+        }
+
+        function hideSpellButtons() {
+            const spellContainer = document.getElementById('spellList');
+            spellContainer.classList.remove('active');
+            selectedSpell = null;
+        }
+
+        function handleSpellSelection(spell) {
+            selectedSpell = spell;
+            hideSpellButtons();
+            
+            // Show target selection
+            if (currentTargets.length > 0) {
+                showSpellTargetButtons();
+            } else {
+                // No targets, just cast spell
+                sendCommand('cast ' + spell);
+            }
+        }
+
+        function showSpellTargetButtons() {
+            const targetContainer = document.getElementById('hitTargets');
+            targetContainer.innerHTML = '';
+            
+            currentTargets.forEach(target => {
+                const btn = document.createElement('button');
+                btn.className = 'target-btn';
+                btn.textContent = target;
+                btn.onclick = () => {
+                    sendCommand('cast ' + selectedSpell + ' ' + target);
+                    hideTargetButtons();
+                    selectedSpell = null;
+                };
+                targetContainer.appendChild(btn);
+            });
+            
+            targetContainer.classList.add('active');
         }
 
         function showTargetButtons() {
@@ -945,6 +1023,9 @@
             if (command) {
                 sendCommand(command);
                 input.value = '';
+            } else {
+                // Send just ENTER if input is empty
+                sendCommand('');
             }
             input.focus();
         }
