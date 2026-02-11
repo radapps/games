@@ -1,201 +1,864 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>BBS Mobile Client</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BBS Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #1a1f3a;
+            --accent-cyan: #00fff9;
+            --accent-magenta: #ff00ff;
+            --accent-green: #00ff41;
+            --text-primary: #00ff41;
+            --text-secondary: #00fff9;
+            --border-glow: rgba(0, 255, 249, 0.5);
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-body {
-  margin:0;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  background:black;
-  color:white;
-  font-family: monospace;
-}
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            height: 100vh;
+            position: relative;
+        }
 
-#topbar {
-  padding:6px;
-  background:#222;
-}
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 249, 0.03),
+                    rgba(0, 255, 249, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanlines 8s linear infinite;
+        }
 
-input, button {
-  padding:8px;
-  margin:3px 0;
-  width:100%;
-  font-size:16px;
-}
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
 
-#terminal {
-  flex:1;
-  overflow-y:auto;
-  padding:10px;
-  white-space:pre-wrap;
-}
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px var(--border-glow), inset 0 0 5px var(--border-glow); }
+            50% { box-shadow: 0 0 20px var(--border-glow), inset 0 0 10px var(--border-glow); }
+        }
 
-#controls {
-  background:#111;
-  padding:5px;
-  display:grid;
-  grid-template-columns: repeat(4,1fr);
-  gap:6px;
-}
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-.control-btn {
-  font-size:18px;
-  padding:12px;
-}
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-.hidden { display:none; }
+        .header {
+            text-align: center;
+            padding: 20px 10px 10px;
+            animation: fadeInUp 0.6s ease-out;
+        }
 
-#keyboardInput {
-  position:absolute;
-  opacity:0;
-}
-</style>
+        .header h1 {
+            font-family: 'VT323', monospace;
+            font-size: 2.5em;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .login-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 0 20px rgba(0, 255, 249, 0.3);
+            animation: fadeInUp 0.6s ease-out 0.2s backwards;
+        }
+
+        .login-panel.hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 255, 249, 0.05);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            background: rgba(0, 255, 249, 0.1);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+
+        .connect-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-primary);
+            font-family: 'VT323', monospace;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 249, 0.5);
+        }
+
+        .connect-btn:active {
+            transform: translateY(0);
+        }
+
+        .terminal-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+        }
+
+        .terminal-container.active {
+            display: flex;
+        }
+
+        .terminal {
+            flex: 1;
+            background: #000;
+            border: 2px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'VT323', monospace;
+            font-size: 1.2em;
+            line-height: 1.4;
+            color: #fff;
+            animation: glow 3s ease-in-out infinite;
+            position: relative;
+            min-height: 300px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .terminal::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal::-webkit-scrollbar-track {
+            background: rgba(0, 255, 249, 0.1);
+        }
+
+        .terminal::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 4px;
+        }
+
+        .controls-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-magenta);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+
+        .control-section {
+            margin-bottom: 15px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            color: var(--accent-magenta);
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .button-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .button-grid.navigation {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-areas:
+                ". n ."
+                "w . e"
+                ". s ."
+                "u . d";
+        }
+
+        .button-grid.actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .button-grid.dynamic {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .control-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 255, 249, 0.2), rgba(255, 0, 255, 0.2));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 50px;
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 249, 0.4), rgba(255, 0, 255, 0.4));
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--border-glow);
+        }
+
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+
+        .control-btn.keyboard-toggle {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 255, 249, 0.2));
+        }
+
+        .control-btn.dynamic-btn {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.2), rgba(255, 215, 0, 0.2));
+            border-color: #ffa500;
+        }
+
+        .btn-n { grid-area: n; }
+        .btn-s { grid-area: s; }
+        .btn-e { grid-area: e; }
+        .btn-w { grid-area: w; }
+        .btn-u { grid-area: u; }
+        .btn-d { grid-area: d; }
+
+        .keyboard-container {
+            display: none;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .keyboard-container.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+            justify-content: center;
+        }
+
+        .key-btn {
+            min-width: 35px;
+            height: 40px;
+            padding: 5px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 4px;
+            color: var(--accent-green);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key-btn:hover {
+            background: rgba(0, 255, 65, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .key-btn:active {
+            background: rgba(0, 255, 65, 0.5);
+            transform: translateY(0);
+        }
+
+        .key-btn.wide {
+            flex: 2;
+        }
+
+        .key-btn.wider {
+            flex: 3;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .connection-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff0000;
+            margin-right: 5px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .connection-status.connected {
+            background: var(--accent-green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .control-btn {
+                font-size: 1.3em;
+                padding: 12px;
+            }
+
+            .key-btn {
+                min-width: 28px;
+                height: 35px;
+                font-size: 0.8em;
+            }
+
+            .terminal {
+                min-height: 250px;
+            }
+        }
+    </style>
 </head>
-
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ BBS TERMINAL ⚡</h1>
+            <div class="subtitle">MOBILE TELNET CLIENT</div>
+        </div>
 
-<div id="topbar">
-  <input id="wsurl" placeholder="wss://bbs.example.com/ws">
-  <button onclick="connect()">Connect</button>
-</div>
+        <!-- Login Panel -->
+        <div class="login-panel" id="loginPanel">
+            <div class="form-group">
+                <label for="wsUrl">WebSocket URL</label>
+                <input type="text" id="wsUrl" placeholder="wss://..." value="wss://unabruptly-multiplated-kory.ngrok-free.dev:443/192.168.40.69/23">
+            </div>
+            <div class="form-group">
+                <label for="username">Username (optional - for auto-login)</label>
+                <input type="text" id="username" placeholder="Your username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password (optional - for auto-login)</label>
+                <input type="password" id="password" placeholder="Your password">
+            </div>
+            <button class="connect-btn" onclick="connect()">⚡ CONNECT ⚡</button>
+        </div>
 
-<div id="terminal"></div>
+        <!-- Terminal Container -->
+        <div class="terminal-container" id="terminalContainer">
+            <div class="terminal" id="terminal"></div>
 
-<div id="controls" class="hidden">
-  <button class="control-btn" onclick="sendCmd('N')">⬆ N</button>
-  <button class="control-btn" onclick="sendCmd('LOOK')">👁</button>
-  <button class="control-btn" onclick="sendCmd('S')">⬇ S</button>
+            <div class="controls-panel">
+                <!-- Navigation Section -->
+                <div class="control-section">
+                    <h3>🧭 Navigation</h3>
+                    <div class="button-grid navigation">
+                        <button class="control-btn btn-n" onclick="sendCommand('north')" title="North">⬆️</button>
+                        <button class="control-btn btn-s" onclick="sendCommand('south')" title="South">⬇️</button>
+                        <button class="control-btn btn-e" onclick="sendCommand('east')" title="East">➡️</button>
+                        <button class="control-btn btn-w" onclick="sendCommand('west')" title="West">⬅️</button>
+                        <button class="control-btn btn-u" onclick="sendCommand('up')" title="Up">⤴️</button>
+                        <button class="control-btn btn-d" onclick="sendCommand('down')" title="Down">⤵️</button>
+                    </div>
+                </div>
 
-  <button class="control-btn" onclick="sendCmd('W')">⬅ W</button>
-  <button class="control-btn" onclick="sendCmd('HIT')">⚔</button>
-  <button class="control-btn" onclick="sendCmd('E')">➡ E</button>
+                <!-- Action Section -->
+                <div class="control-section">
+                    <h3>⚔️ Actions</h3>
+                    <div class="button-grid actions">
+                        <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                        <button class="control-btn" onclick="sendCommand('hit')" title="Hit">⚔️</button>
+                        <button class="control-btn" onclick="sendCommand('spells')" title="Spells">📖</button>
+                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">🎒</button>
+                    </div>
+                </div>
 
-  <button class="control-btn" onclick="sendCmd('U')">⬆ U</button>
-  <button class="control-btn" onclick="sendCmd('SPELLS')">📖</button>
-  <button class="control-btn" onclick="sendCmd('D')">⬇ D</button>
+                <!-- Dynamic Buttons Section (will be populated based on game text) -->
+                <div class="control-section" id="dynamicSection" style="display: none;">
+                    <h3>🎮 Context</h3>
+                    <div class="button-grid dynamic" id="dynamicButtons"></div>
+                </div>
 
-  <button class="control-btn" onclick="sendCmd('I')">🎒</button>
-  <button class="control-btn" onclick="toggleKeyboard()">⌨</button>
-  <button class="control-btn" onclick="clearScreen()">🧹</button>
-</div>
+                <!-- Keyboard Toggle -->
+                <button class="control-btn keyboard-toggle" onclick="toggleKeyboard()" title="Toggle Keyboard">
+                    ⌨️
+                </button>
+            </div>
 
-<input id="keyboardInput">
+            <!-- Virtual Keyboard -->
+            <div class="keyboard-container" id="keyboardContainer">
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('1')">1</button>
+                    <button class="key-btn" onclick="typeKey('2')">2</button>
+                    <button class="key-btn" onclick="typeKey('3')">3</button>
+                    <button class="key-btn" onclick="typeKey('4')">4</button>
+                    <button class="key-btn" onclick="typeKey('5')">5</button>
+                    <button class="key-btn" onclick="typeKey('6')">6</button>
+                    <button class="key-btn" onclick="typeKey('7')">7</button>
+                    <button class="key-btn" onclick="typeKey('8')">8</button>
+                    <button class="key-btn" onclick="typeKey('9')">9</button>
+                    <button class="key-btn" onclick="typeKey('0')">0</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('q')">Q</button>
+                    <button class="key-btn" onclick="typeKey('w')">W</button>
+                    <button class="key-btn" onclick="typeKey('e')">E</button>
+                    <button class="key-btn" onclick="typeKey('r')">R</button>
+                    <button class="key-btn" onclick="typeKey('t')">T</button>
+                    <button class="key-btn" onclick="typeKey('y')">Y</button>
+                    <button class="key-btn" onclick="typeKey('u')">U</button>
+                    <button class="key-btn" onclick="typeKey('i')">I</button>
+                    <button class="key-btn" onclick="typeKey('o')">O</button>
+                    <button class="key-btn" onclick="typeKey('p')">P</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('a')">A</button>
+                    <button class="key-btn" onclick="typeKey('s')">S</button>
+                    <button class="key-btn" onclick="typeKey('d')">D</button>
+                    <button class="key-btn" onclick="typeKey('f')">F</button>
+                    <button class="key-btn" onclick="typeKey('g')">G</button>
+                    <button class="key-btn" onclick="typeKey('h')">H</button>
+                    <button class="key-btn" onclick="typeKey('j')">J</button>
+                    <button class="key-btn" onclick="typeKey('k')">K</button>
+                    <button class="key-btn" onclick="typeKey('l')">L</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn" onclick="typeKey('z')">Z</button>
+                    <button class="key-btn" onclick="typeKey('x')">X</button>
+                    <button class="key-btn" onclick="typeKey('c')">C</button>
+                    <button class="key-btn" onclick="typeKey('v')">V</button>
+                    <button class="key-btn" onclick="typeKey('b')">B</button>
+                    <button class="key-btn" onclick="typeKey('n')">N</button>
+                    <button class="key-btn" onclick="typeKey('m')">M</button>
+                    <button class="key-btn wide" onclick="typeKey('Backspace')">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key-btn wider" onclick="typeKey(' ')">SPACE</button>
+                    <button class="key-btn wider" onclick="sendCurrentInput()">ENTER ↵</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <input type="text" id="customInput" 
+                           placeholder="Type custom command here..." 
+                           style="width: 100%; padding: 10px; background: rgba(0,255,65,0.1); border: 1px solid var(--accent-green); border-radius: 4px; color: var(--accent-green); font-family: 'Share Tech Mono', monospace;"
+                           onkeypress="handleEnter(event)">
+                </div>
+            </div>
+        </div>
 
-<script>
-const ansi = new AnsiUp();
-const terminal = document.getElementById("terminal");
-const keyboardInput = document.getElementById("keyboardInput");
-let ws;
+        <div class="status-bar">
+            <span class="connection-status" id="connectionStatus"></span>
+            <span id="statusText">DISCONNECTED</span>
+        </div>
+    </div>
 
-function connect() {
-  const url = document.getElementById("wsurl").value;
-  localStorage.setItem("wsurl", url);
+    <script>
+        // Global variables
+        let ws = null;
+        let isConnected = false;
+        let autoLoginUsername = '';
+        let autoLoginPassword = '';
+        let currentTerminalText = '';
+        let recentTerminalText = '';
 
-  terminal.innerHTML += "*** Connecting... ***\n";
+        // ANSI escape code parser
+        const ANSI_REGEX = /\x1b\[([0-9;]*)m/g;
+        const ANSI_COLORS = {
+            '30': 'color: #000000', '31': 'color: #ff0000', '32': 'color: #00ff00',
+            '33': 'color: #ffff00', '34': 'color: #0000ff', '35': 'color: #ff00ff',
+            '36': 'color: #00ffff', '37': 'color: #ffffff', '90': 'color: #808080',
+            '91': 'color: #ff8080', '92': 'color: #80ff80', '93': 'color: #ffff80',
+            '94': 'color: #8080ff', '95': 'color: #ff80ff', '96': 'color: #80ffff',
+            '97': 'color: #ffffff', '0': ''
+        };
 
-  ws = new WebSocket(url);
-  ws.binaryType = "arraybuffer";
+        // Dynamic button configurations - ADD YOUR OWN HERE!
+        const dynamicButtonRules = [
+            {
+                trigger: /enemy|monster|goblin|dragon/i,
+                buttons: [
+                    { icon: '⚔️', command: 'attack', title: 'Attack' },
+                    { icon: '🛡️', command: 'defend', title: 'Defend' },
+                    { icon: '🏃', command: 'flee', title: 'Flee' }
+                ]
+            },
+            {
+                trigger: /merchant|shop|store/i,
+                buttons: [
+                    { icon: '💰', command: 'buy', title: 'Buy' },
+                    { icon: '💸', command: 'sell', title: 'Sell' },
+                    { icon: '👁️', command: 'list', title: 'List Items' }
+                ]
+            },
+            {
+                trigger: /treasure|chest|loot/i,
+                buttons: [
+                    { icon: '📦', command: 'get all', title: 'Get All' },
+                    { icon: '🔍', command: 'examine', title: 'Examine' }
+                ]
+            },
+            {
+                trigger: /rest|inn|sleep/i,
+                buttons: [
+                    { icon: '😴', command: 'rest', title: 'Rest' },
+                    { icon: '🛏️', command: 'sleep', title: 'Sleep' }
+                ]
+            }
+        ];
 
-  ws.onopen = () => {
-    terminal.innerHTML += "*** Connected ***\n";
-    document.getElementById("controls").classList.remove("hidden");
-  };
+        // Load saved credentials on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCredentials();
+        });
 
-  ws.onmessage = evt => {
-    const data = new Uint8Array(evt.data);
-    const text = decodeTelnet(data);
-    render(text);
-    parseDynamic(text);
-  };
+        function loadCredentials() {
+            const saved = {
+                wsUrl: localStorage.getItem('bbs_ws_url'),
+                username: localStorage.getItem('bbs_username'),
+                password: localStorage.getItem('bbs_password')
+            };
 
-  ws.onclose = () => {
-    terminal.innerHTML += "\n*** Disconnected ***\n";
-  };
+            if (saved.wsUrl) document.getElementById('wsUrl').value = saved.wsUrl;
+            if (saved.username) document.getElementById('username').value = saved.username;
+            if (saved.password) document.getElementById('password').value = saved.password;
+        }
 
-  ws.onerror = e => {
-    terminal.innerHTML += "\n*** WebSocket error ***\n";
-  };
-}
+        function saveCredentials() {
+            localStorage.setItem('bbs_ws_url', document.getElementById('wsUrl').value);
+            localStorage.setItem('bbs_username', document.getElementById('username').value);
+            localStorage.setItem('bbs_password', document.getElementById('password').value);
+        }
 
-function sendCmd(cmd) {
-  if (!ws || ws.readyState !== 1) return;
-  ws.send(cmd + "\r\n");
-}
+        function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-function toggleKeyboard() {
-  keyboardInput.focus();
-}
+            if (!wsUrl) {
+                alert('Please enter WebSocket URL');
+                return;
+            }
 
-keyboardInput.addEventListener("keydown", e=>{
-  if(e.key==="Enter"){
-    sendCmd(keyboardInput.value);
-    keyboardInput.value="";
-  }
-});
+            // Save credentials
+            saveCredentials();
+            autoLoginUsername = username;
+            autoLoginPassword = password;
 
-function clearScreen() {
-  terminal.innerHTML = "";
-}
+            // Hide login panel, show terminal
+            document.getElementById('loginPanel').classList.add('hidden');
+            document.getElementById('terminalContainer').classList.add('active');
 
-function render(text) {
-  const html = ansi.ansi_to_html(text);
-  terminal.innerHTML += html;
-  terminal.scrollTop = terminal.scrollHeight;
-}
+            // Clear terminal
+            document.getElementById('terminal').innerHTML = '';
+            currentTerminalText = '';
+            recentTerminalText = '';
 
-// Remove telnet IAC negotiation bytes
-function decodeTelnet(data) {
-  let result = "";
-  for (let i = 0; i < data.length; i++) {
-    if (data[i] === 255) { // IAC
-      i += 2;
-    } else {
-      result += String.fromCharCode(data[i]);
-    }
-  }
-  return result;
-}
+            appendToTerminal('Connecting to ' + wsUrl + '...\n\n');
 
-// Dynamic button logic
-function parseDynamic(text) {
-  if (text.includes("Exits:")) {
-    updateExits(text);
-  }
-  if (text.includes("You are attacked")) {
-    console.log("Combat mode");
-  }
-}
+            try {
+                ws = new WebSocket(wsUrl);
 
-function updateExits(text) {
-  const match = text.match(/Exits:(.*)/);
-  if (!match) return;
-  const exits = match[1];
+                ws.onopen = function() {
+                    updateConnectionStatus(true);
+                    appendToTerminal('✓ Connected!\n\n');
 
-  document.querySelectorAll(".control-btn").forEach(b=>b.disabled=false);
+                    // Auto-login if credentials provided
+                    if (autoLoginUsername) {
+                        setTimeout(() => {
+                            sendCommand(autoLoginUsername);
+                            if (autoLoginPassword) {
+                                setTimeout(() => {
+                                    sendCommand(autoLoginPassword);
+                                }, 1000);
+                            }
+                        }, 1000);
+                    }
+                };
 
-  if (!exits.includes("N")) disableBtn("⬆ N");
-  if (!exits.includes("S")) disableBtn("⬇ S");
-  if (!exits.includes("E")) disableBtn("➡ E");
-  if (!exits.includes("W")) disableBtn("⬅ W");
-}
+                ws.onmessage = function(event) {
+                    const data = event.data;
+                    appendToTerminal(data);
+                    
+                    // Store text for dynamic button detection
+                    currentTerminalText += stripANSI(data);
+                    recentTerminalText += stripANSI(data);
+                    
+                    // Keep only last 10000 characters
+                    if (currentTerminalText.length > 10000) {
+                        currentTerminalText = currentTerminalText.slice(-10000);
+                    }
+                    
+                    // Keep only last 500 characters for recent text
+                    if (recentTerminalText.length > 500) {
+                        recentTerminalText = recentTerminalText.slice(-500);
+                    }
+                    
+                    // Check for dynamic buttons
+                    updateDynamicButtons();
+                };
 
-function disableBtn(label) {
-  document.querySelectorAll("button").forEach(btn=>{
-    if(btn.textContent.includes(label)) btn.disabled=true;
-  });
-}
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    appendToTerminal('\n\n✗ [ERROR] Connection failed.\n');
+                    updateConnectionStatus(false);
+                };
 
-window.onload = () => {
-  document.getElementById("wsurl").value = localStorage.getItem("wsurl") || "";
-};
-</script>
+                ws.onclose = function() {
+                    updateConnectionStatus(false);
+                    appendToTerminal('\n\n[DISCONNECTED] Connection closed.\n');
+                };
+            } catch (e) {
+                appendToTerminal('\n\n✗ [ERROR] Cannot connect: ' + e.message + '\n');
+                updateConnectionStatus(false);
+            }
+        }
 
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusIndicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                statusText.textContent = 'CONNECTED';
+            } else {
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = 'DISCONNECTED';
+            }
+        }
+
+        function appendToTerminal(text) {
+            const terminal = document.getElementById('terminal');
+            const processed = processANSI(text);
+            terminal.innerHTML += processed;
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function stripANSI(text) {
+            return text.replace(/\x1b\[[0-9;]*m/g, '');
+        }
+
+        function processANSI(text) {
+            text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            let result = '';
+            let lastIndex = 0;
+            let currentStyle = '';
+
+            text.replace(ANSI_REGEX, (match, codes, offset) => {
+                if (offset > lastIndex) {
+                    const textBefore = text.substring(lastIndex, offset);
+                    if (currentStyle) {
+                        result += `<span style="${currentStyle}">${textBefore}</span>`;
+                    } else {
+                        result += textBefore;
+                    }
+                }
+
+                const codeList = codes.split(';');
+                for (const code of codeList) {
+                    if (ANSI_COLORS[code] !== undefined) {
+                        currentStyle = ANSI_COLORS[code];
+                    }
+                }
+
+                lastIndex = offset + match.length;
+                return '';
+            });
+
+            if (lastIndex < text.length) {
+                const textAfter = text.substring(lastIndex);
+                if (currentStyle) {
+                    result += `<span style="${currentStyle}">${textAfter}</span>`;
+                } else {
+                    result += textAfter;
+                }
+            }
+
+            return result;
+        }
+
+        function updateDynamicButtons() {
+            const dynamicSection = document.getElementById('dynamicSection');
+            const dynamicButtonsContainer = document.getElementById('dynamicButtons');
+            
+            // Check which rule matches
+            let matchedRule = null;
+            for (const rule of dynamicButtonRules) {
+                if (rule.trigger.test(recentTerminalText)) {
+                    matchedRule = rule;
+                    break;
+                }
+            }
+            
+            if (matchedRule) {
+                // Clear and populate dynamic buttons
+                dynamicButtonsContainer.innerHTML = '';
+                matchedRule.buttons.forEach(btn => {
+                    const button = document.createElement('button');
+                    button.className = 'control-btn dynamic-btn';
+                    button.innerHTML = btn.icon;
+                    button.title = btn.title;
+                    button.onclick = () => sendCommand(btn.command);
+                    dynamicButtonsContainer.appendChild(button);
+                });
+                dynamicSection.style.display = 'block';
+                
+                // Clear recent text after showing buttons (so they don't stay forever)
+                setTimeout(() => {
+                    recentTerminalText = '';
+                }, 5000);
+            } else {
+                dynamicSection.style.display = 'none';
+            }
+        }
+
+        function sendCommand(command) {
+            if (!isConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected to BBS');
+                return;
+            }
+
+            try {
+                ws.send(command + '\r\n');
+            } catch (e) {
+                console.error('Error sending command:', e);
+                alert('Error sending command: ' + e.message);
+            }
+        }
+
+        function toggleKeyboard() {
+            const keyboard = document.getElementById('keyboardContainer');
+            keyboard.classList.toggle('active');
+        }
+
+        function typeKey(key) {
+            const input = document.getElementById('customInput');
+            
+            if (key === 'Backspace') {
+                input.value = input.value.slice(0, -1);
+            } else {
+                input.value += key;
+            }
+            
+            input.focus();
+        }
+
+        function sendCurrentInput() {
+            const input = document.getElementById('customInput');
+            const command = input.value.trim();
+            
+            if (command) {
+                sendCommand(command);
+                input.value = '';
+            }
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendCurrentInput();
+            }
+        }
+
+        // Public function to get terminal text (for custom scripting)
+        function getTerminalText() {
+            return currentTerminalText;
+        }
+
+        function getRecentText() {
+            return recentTerminalText;
+        }
+    </script>
 </body>
 </html>
