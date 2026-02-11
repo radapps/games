@@ -210,7 +210,7 @@
             padding: 16px;
             overflow-y: auto;
             font-family: 'VT323', monospace;
-            font-size: 1.3em;
+            font-size: 1.2em;
             line-height: 1.3;
             color: #ffffff;
             white-space: pre-wrap;
@@ -290,36 +290,50 @@
 
         /* Button Rows */
         .buttons-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto;
             gap: 12px;
+            align-items: start;
         }
 
         .action-buttons {
             display: flex;
             gap: 8px;
+            align-items: flex-start;
+        }
+
+        .action-row-1 {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-row-2, .action-row-3 {
+            height: 64px; /* Match button height to maintain alignment */
         }
 
         .navigation-panel {
-            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        .nav-row {
+            display: flex;
             gap: 8px;
-            grid-template-areas:
-                "d n u"
-                "w ex e"
-                ". s .";
+            justify-content: flex-end;
+        }
+
+        .nav-row-3 {
+            justify-content: center;
         }
 
         .control-btn {
-            padding: 12px;
+            padding: 8px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-default);
             border-radius: 6px;
             color: var(--text-primary);
-            font-size: 1.4em;
+            font-size: 1.8em;
             cursor: pointer;
             transition: all 0.15s ease;
             display: flex;
@@ -339,13 +353,35 @@
             transform: scale(0.95);
         }
 
-        .btn-d { grid-area: d; }
-        .btn-n { grid-area: n; }
-        .btn-u { grid-area: u; }
-        .btn-w { grid-area: w; }
-        .btn-ex { grid-area: ex; }
-        .btn-e { grid-area: e; }
-        .btn-s { grid-area: s; }
+        /* Target buttons - hidden by default */
+        .target-buttons {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .target-buttons.active {
+            display: flex;
+        }
+
+        .target-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-warning);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .target-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
 
         /* Dynamic Buttons */
         .dynamic-section {
@@ -371,12 +407,24 @@
                 height: 40vh;
             }
 
+            .terminal {
+                font-size: 1.0em;
+            }
+
             .buttons-row {
-                flex-direction: column;
+                grid-template-columns: 1fr;
+                gap: 8px;
             }
 
             .navigation-panel {
-                margin-left: 0;
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                justify-content: space-between;
+            }
+
+            .nav-row {
+                gap: 4px;
             }
         }
 
@@ -444,27 +492,45 @@
                     </div>
                 </div>
 
-                <!-- Action & Navigation Buttons Row -->
+                <!-- Row 1: Action Buttons Left, Navigation Right (D, N, U) -->
                 <div class="buttons-row">
-                    <!-- Action Buttons (Left) -->
                     <div class="action-buttons">
-                        <button class="control-btn" onclick="sendCommand('hit')" title="Hit">⚔️</button>
+                        <div style="position: relative;">
+                            <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
+                            <div class="target-buttons" id="hitTargets"></div>
+                        </div>
                         <button class="control-btn" onclick="sendCommand('cast')" title="Cast">📖</button>
                         <button class="control-btn" onclick="sendCommand('drink')" title="Drink">💧</button>
-                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">🎒</button>
+                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
                         <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
                     </div>
-
-                    <!-- Navigation Buttons (Right) -->
                     <div class="navigation-panel">
-                        <div class="nav-grid">
-                            <button class="control-btn btn-d" onclick="sendCommand('d')" title="Down">⤵️</button>
-                            <button class="control-btn btn-n" onclick="sendCommand('n')" title="North">⬆️</button>
-                            <button class="control-btn btn-u" onclick="sendCommand('u')" title="Up">⤴️</button>
-                            <button class="control-btn btn-w" onclick="sendCommand('w')" title="West">⬅️</button>
-                            <button class="control-btn btn-ex" onclick="sendCommand('ex')" title="Examine">🚪</button>
-                            <button class="control-btn btn-e" onclick="sendCommand('e')" title="East">➡️</button>
-                            <button class="control-btn btn-s" onclick="sendCommand('s')" title="South">⬇️</button>
+                        <div class="nav-row">
+                            <button class="control-btn" onclick="sendDirectional('d')" title="Down">⤵️</button>
+                            <button class="control-btn" onclick="sendDirectional('n')" title="North">⬆️</button>
+                            <button class="control-btn" onclick="sendDirectional('u')" title="Up">⤴️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Navigation Right (W, EX, E) -->
+                <div class="buttons-row">
+                    <div class="action-row-2"></div>
+                    <div class="navigation-panel">
+                        <div class="nav-row">
+                            <button class="control-btn" onclick="sendDirectional('w')" title="West">⬅️</button>
+                            <button class="control-btn" onclick="sendDirectional('ex')" title="Exits">🚪</button>
+                            <button class="control-btn" onclick="sendDirectional('e')" title="East">➡️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Navigation Right (S) -->
+                <div class="buttons-row">
+                    <div class="action-row-3"></div>
+                    <div class="navigation-panel">
+                        <div class="nav-row nav-row-3">
+                            <button class="control-btn" onclick="sendDirectional('s')" title="South">⬇️</button>
                         </div>
                     </div>
                 </div>
@@ -478,6 +544,8 @@
         let isConnected = false;
         let currentTerminalText = '';
         let recentTerminalText = '';
+        let currentTargets = []; // Store current targets from "There is a ... here."
+        let currentANSIStyle = ''; // Persist ANSI color state across chunks
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -590,7 +658,7 @@
                     if (data.length > 0) {
                         appendToTerminal(data);
                         
-                        // Store text for dynamic buttons
+                        // Store text for dynamic buttons and target extraction
                         const plainText = stripANSI(data);
                         currentTerminalText += plainText;
                         recentTerminalText += plainText;
@@ -602,6 +670,9 @@
                         if (recentTerminalText.length > 1000) {
                             recentTerminalText = recentTerminalText.slice(-1000);
                         }
+                        
+                        // Extract targets from recent text
+                        updateTargets();
                         
                         updateDynamicButtons();
                     }
@@ -702,26 +773,25 @@
             const regex = /\x1b\[([0-9;]*)m/g;
             let result = '';
             let lastIndex = 0;
-            let currentStyle = '';
 
             text.replace(regex, (match, codes, offset) => {
                 // Add text before this code
                 if (offset > lastIndex) {
                     const textBefore = text.substring(lastIndex, offset);
-                    if (currentStyle) {
-                        result += `<span style="${currentStyle}">${textBefore}</span>`;
+                    if (currentANSIStyle) {
+                        result += `<span style="${currentANSIStyle}">${textBefore}</span>`;
                     } else {
                         result += textBefore;
                     }
                 }
 
-                // Update style
+                // Update style based on codes
                 const codeList = codes.split(';').filter(c => c);
                 for (const code of codeList) {
                     if (ANSI_COLORS[code]) {
-                        currentStyle = ANSI_COLORS[code];
+                        currentANSIStyle = ANSI_COLORS[code];
                     } else if (code === '0' || code === '') {
-                        currentStyle = '';
+                        currentANSIStyle = 'color: #ffffff'; // Reset to white
                     }
                 }
 
@@ -729,11 +799,11 @@
                 return '';
             });
 
-            // Add remaining text
+            // Add remaining text with current style
             if (lastIndex < text.length) {
                 const textAfter = text.substring(lastIndex);
-                if (currentStyle) {
-                    result += `<span style="${currentStyle}">${textAfter}</span>`;
+                if (currentANSIStyle) {
+                    result += `<span style="${currentANSIStyle}">${textAfter}</span>`;
                 } else {
                     result += textAfter;
                 }
@@ -786,6 +856,86 @@
             } catch (e) {
                 console.error('Send error:', e);
             }
+        }
+
+        function sendDirectional(direction) {
+            // Hide target buttons when moving
+            hideTargetButtons();
+            currentTargets = [];
+            
+            // Send the directional command
+            sendCommand(direction);
+        }
+
+        function extractTargets(text) {
+            // Look for pattern: "There is a ... here."
+            const regex = /There is (?:a |an )?(.*?) here\./gi;
+            const matches = [...text.matchAll(regex)];
+            
+            if (matches.length > 0) {
+                // Get the last match (most recent)
+                const lastMatch = matches[matches.length - 1];
+                const targetString = lastMatch[1];
+                
+                // Split by "and" and commas to get individual targets
+                const targets = targetString
+                    .split(/(?:\s+and\s+|,\s*)/)
+                    .map(t => t.trim())
+                    .filter(t => t.length > 0);
+                
+                return targets;
+            }
+            
+            return [];
+        }
+
+        function updateTargets() {
+            const targets = extractTargets(recentTerminalText);
+            
+            if (targets.length > 0) {
+                currentTargets = targets;
+                console.log('Targets found:', targets);
+            }
+        }
+
+        function handleHitButton() {
+            const targetContainer = document.getElementById('hitTargets');
+            
+            if (currentTargets.length > 0) {
+                // Toggle visibility
+                if (targetContainer.classList.contains('active')) {
+                    hideTargetButtons();
+                } else {
+                    showTargetButtons();
+                }
+            } else {
+                // No targets, just send HIT
+                sendCommand('hit');
+            }
+        }
+
+        function showTargetButtons() {
+            const targetContainer = document.getElementById('hitTargets');
+            targetContainer.innerHTML = '';
+            
+            currentTargets.forEach(target => {
+                const btn = document.createElement('button');
+                btn.className = 'target-btn';
+                btn.textContent = target;
+                btn.onclick = () => {
+                    sendCommand('hit ' + target);
+                    hideTargetButtons();
+                };
+                targetContainer.appendChild(btn);
+            });
+            
+            targetContainer.classList.add('active');
+        }
+
+        function hideTargetButtons() {
+            const targetContainer = document.getElementById('hitTargets');
+            targetContainer.classList.remove('active');
+            targetContainer.innerHTML = '';
         }
 
         function sendCurrentInput() {
