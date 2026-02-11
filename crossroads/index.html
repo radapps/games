@@ -238,28 +238,20 @@
 
         /* Button Rows */
         .buttons-row {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 4px;
-            align-items: start;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
         }
 
-        .action-buttons {
+        .action-buttons-container {
+            flex: 0 0 60%;
             display: flex;
             gap: 4px;
             align-items: flex-start;
         }
 
-        .action-row-1 {
-            display: flex;
-            gap: 4px;
-        }
-
-        .action-row-2, .action-row-3 {
-            height: 48px; /* Match button height to maintain alignment */
-        }
-
-        .navigation-panel {
+        .navigation-container {
+            flex: 0 0 40%;
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -268,10 +260,6 @@
         .nav-row {
             display: flex;
             gap: 4px;
-            justify-content: flex-end;
-        }
-
-        .nav-row-3 {
             justify-content: center;
         }
 
@@ -291,14 +279,19 @@
             height: 48px;
         }
 
-        .control-btn:hover {
+        .control-btn:hover:not(:disabled) {
             background: var(--bg-primary);
             border-color: var(--accent-primary);
             transform: scale(1.05);
         }
 
-        .control-btn:active {
+        .control-btn:active:not(:disabled) {
             transform: scale(0.95);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
 
         /* Target buttons - hidden by default */
@@ -402,23 +395,18 @@
             }
 
             .buttons-row {
-                grid-template-columns: 1fr;
-                gap: 2px;
+                flex-direction: column;
+                gap: 4px;
             }
 
-            .action-buttons {
-                gap: 2px;
+            .action-buttons-container {
+                flex: 1;
+                width: 100%;
             }
 
-            .navigation-panel {
-                display: flex;
-                flex-direction: row;
-                gap: 2px;
-                justify-content: space-between;
-            }
-
-            .nav-row {
-                gap: 2px;
+            .navigation-container {
+                flex: 1;
+                width: 100%;
             }
         }
 
@@ -475,9 +463,10 @@
                     </div>
                 </div>
 
-                <!-- Row 1: Action Buttons Left, Navigation Right (D, N, U) -->
+                <!-- Buttons Row -->
                 <div class="buttons-row">
-                    <div class="action-buttons">
+                    <!-- Action Buttons (60%) -->
+                    <div class="action-buttons-container">
                         <div style="position: relative;">
                             <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
                             <div class="target-buttons" id="hitTargets"></div>
@@ -490,33 +479,24 @@
                         <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
                         <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
                     </div>
-                    <div class="navigation-panel">
-                        <div class="nav-row">
-                            <button class="control-btn" onclick="sendDirectional('d')" title="Down">⤵️</button>
-                            <button class="control-btn" onclick="sendDirectional('n')" title="North">⬆️</button>
-                            <button class="control-btn" onclick="sendDirectional('u')" title="Up">⤴️</button>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Row 2: Navigation Right (W, EX, E) -->
-                <div class="buttons-row">
-                    <div class="action-row-2"></div>
-                    <div class="navigation-panel">
+                    <!-- Navigation Buttons (40%) -->
+                    <div class="navigation-container">
+                        <!-- Row 1: D, N, U -->
                         <div class="nav-row">
-                            <button class="control-btn" onclick="sendDirectional('w')" title="West">⬅️</button>
-                            <button class="control-btn" onclick="sendDirectional('ex')" title="Exits">🚪</button>
-                            <button class="control-btn" onclick="sendDirectional('e')" title="East">➡️</button>
+                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
+                            <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
+                            <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Row 3: Navigation Right (S) -->
-                <div class="buttons-row">
-                    <div class="action-row-3"></div>
-                    <div class="navigation-panel">
-                        <div class="nav-row nav-row-3">
-                            <button class="control-btn" onclick="sendDirectional('s')" title="South">⬇️</button>
+                        <!-- Row 2: W, EX, E -->
+                        <div class="nav-row">
+                            <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
+                            <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
+                            <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
+                        </div>
+                        <!-- Row 3: S -->
+                        <div class="nav-row">
+                            <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                         </div>
                     </div>
                 </div>
@@ -535,6 +515,7 @@
         let currentSpells = []; // Store user's spells
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
+        let waitingForExits = false; // Waiting for exit list from server
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -628,6 +609,7 @@
                 ws.binaryType = 'arraybuffer';  // Important for binary telnet data!
 
                 ws.onopen = function() {
+                    isConnected = true;
                     appendToTerminal('✓ Connected!\n\n');
                 };
 
@@ -667,17 +649,24 @@
                             extractSpells();
                         }
                         
+                        // Extract exits if waiting for them
+                        if (waitingForExits) {
+                            extractExits();
+                        }
+                        
                         updateDynamicButtons();
                     }
                 };
 
                 ws.onerror = function(error) {
                     console.error('WebSocket error:', error);
+                    isConnected = false;
                     appendToTerminal('\n✗ Connection error\n');
                 };
 
                 ws.onclose = function(event) {
                     console.log('WebSocket closed:', event.code, event.reason);
+                    isConnected = false;
                     appendToTerminal('\n[Connection closed]\n');
                 };
             } catch (e) {
@@ -839,8 +828,17 @@
             hideTargetButtons();
             currentTargets = [];
             
+            // Re-enable all nav buttons when moving
+            enableAllNavButtons();
+            
             // Send the directional command
             sendCommand(direction);
+        }
+
+        function handleExitsButton() {
+            // Request exits from server
+            waitingForExits = true;
+            sendCommand('ex');
         }
 
         function extractTargets(text) {
@@ -887,6 +885,63 @@
                     showSpellButtons();
                 }
             }
+        }
+
+        function extractExits() {
+            // Look for "Visible exits are:" followed by exit directions
+            const regex = /Visible exits are:\s*([^\n.]+)/i;
+            const match = recentTerminalText.match(regex);
+            
+            if (match) {
+                const exitString = match[1];
+                // Split by commas and remove "and"
+                const exits = exitString
+                    .toLowerCase()
+                    .replace(/\band\b/g, '')
+                    .split(/[,\s]+/)
+                    .map(e => e.trim())
+                    .filter(e => e.length > 0);
+                
+                waitingForExits = false;
+                console.log('Exits found:', exits);
+                updateNavButtons(exits);
+            }
+        }
+
+        function updateNavButtons(availableExits) {
+            // Disable all nav buttons first
+            const navButtons = ['btnN', 'btnS', 'btnE', 'btnW', 'btnU', 'btnD'];
+            const directionMap = {
+                'n': 'btnN', 'north': 'btnN',
+                's': 'btnS', 'south': 'btnS',
+                'e': 'btnE', 'east': 'btnE',
+                'w': 'btnW', 'west': 'btnW',
+                'u': 'btnU', 'up': 'btnU',
+                'd': 'btnD', 'down': 'btnD'
+            };
+            
+            // Disable all buttons
+            navButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) btn.disabled = true;
+            });
+            
+            // Enable only available exits
+            availableExits.forEach(exit => {
+                const btnId = directionMap[exit];
+                if (btnId) {
+                    const btn = document.getElementById(btnId);
+                    if (btn) btn.disabled = false;
+                }
+            });
+        }
+
+        function enableAllNavButtons() {
+            const navButtons = ['btnN', 'btnS', 'btnE', 'btnW', 'btnU', 'btnD'];
+            navButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) btn.disabled = false;
+            });
         }
 
         function updateTargets() {
