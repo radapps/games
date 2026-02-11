@@ -425,14 +425,6 @@
                 <label for="wsUrl">WebSocket URL</label>
                 <input type="text" id="wsUrl" placeholder="wss://..." value="wss://unabruptly-multiplated-kory.ngrok-free.dev:443/192.168.40.69/23">
             </div>
-            <div class="form-group">
-                <label for="username">Username (optional - for auto-login)</label>
-                <input type="text" id="username" placeholder="Your username">
-            </div>
-            <div class="form-group">
-                <label for="password">Password (optional - for auto-login)</label>
-                <input type="password" id="password" placeholder="Your password">
-            </div>
             <button class="connect-btn" onclick="connect()">⚡ CONNECT ⚡</button>
         </div>
 
@@ -547,8 +539,6 @@
         // Global variables
         let ws = null;
         let isConnected = false;
-        let autoLoginUsername = '';
-        let autoLoginPassword = '';
         let currentTerminalText = '';
         let recentTerminalText = '';
 
@@ -604,26 +594,18 @@
 
         function loadCredentials() {
             const saved = {
-                wsUrl: localStorage.getItem('bbs_ws_url'),
-                username: localStorage.getItem('bbs_username'),
-                password: localStorage.getItem('bbs_password')
+                wsUrl: localStorage.getItem('bbs_ws_url')
             };
 
             if (saved.wsUrl) document.getElementById('wsUrl').value = saved.wsUrl;
-            if (saved.username) document.getElementById('username').value = saved.username;
-            if (saved.password) document.getElementById('password').value = saved.password;
         }
 
         function saveCredentials() {
             localStorage.setItem('bbs_ws_url', document.getElementById('wsUrl').value);
-            localStorage.setItem('bbs_username', document.getElementById('username').value);
-            localStorage.setItem('bbs_password', document.getElementById('password').value);
         }
 
         function connect() {
             const wsUrl = document.getElementById('wsUrl').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
 
             if (!wsUrl) {
                 alert('Please enter WebSocket URL');
@@ -632,8 +614,6 @@
 
             // Save credentials
             saveCredentials();
-            autoLoginUsername = username;
-            autoLoginPassword = password;
 
             // Hide login panel, show terminal
             document.getElementById('loginPanel').classList.add('hidden');
@@ -652,18 +632,6 @@
                 ws.onopen = function() {
                     updateConnectionStatus(true);
                     appendToTerminal('✓ Connected!\n\n');
-
-                    // Auto-login if credentials provided
-                    if (autoLoginUsername) {
-                        setTimeout(() => {
-                            sendCommand(autoLoginUsername);
-                            if (autoLoginPassword) {
-                                setTimeout(() => {
-                                    sendCommand(autoLoginPassword);
-                                }, 1000);
-                            }
-                        }, 1000);
-                    }
                 };
 
                 ws.onmessage = function(event) {
