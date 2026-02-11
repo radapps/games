@@ -194,20 +194,12 @@
             display: flex;
         }
 
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            gap: 12px;
-            padding: 12px;
-            min-height: 0;
-        }
-
-        /* Terminal */
+        /* Terminal - Top Half */
         .terminal-container {
-            flex: 1;
+            height: 50vh;
             display: flex;
             flex-direction: column;
-            min-width: 0;
+            padding: 12px 12px 0 12px;
         }
 
         .terminal {
@@ -242,88 +234,23 @@
             background: var(--text-secondary);
         }
 
-        /* Controls Panel */
-        .controls-container {
-            width: 280px;
+        /* Bottom Controls Area */
+        .controls-area {
+            flex: 1;
             display: flex;
             flex-direction: column;
+            padding: 12px;
             gap: 12px;
         }
 
-        .control-panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-default);
-            border-radius: 8px;
-            padding: 16px;
-        }
-
-        .control-panel h3 {
-            font-size: 0.85em;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .button-grid {
-            display: grid;
-            gap: 8px;
-        }
-
-        .button-grid.navigation {
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-areas:
-                ". n ."
-                "w . e"
-                ". s ."
-                "u . d";
-        }
-
-        .button-grid.actions {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .control-btn {
-            padding: 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-default);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 1.4em;
-            cursor: pointer;
-            transition: all 0.15s ease;
+        /* Input Row */
+        .input-row {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 48px;
-        }
-
-        .control-btn:hover {
-            background: var(--bg-primary);
-            border-color: var(--accent-primary);
-            transform: scale(1.05);
-        }
-
-        .control-btn:active {
-            transform: scale(0.95);
-        }
-
-        .btn-n { grid-area: n; }
-        .btn-s { grid-area: s; }
-        .btn-e { grid-area: e; }
-        .btn-w { grid-area: w; }
-        .btn-u { grid-area: u; }
-        .btn-d { grid-area: d; }
-
-        /* Input Section */
-        .input-section {
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border-default);
-            padding: 12px;
+            gap: 12px;
         }
 
         .input-wrapper {
+            flex: 1;
             display: flex;
             gap: 8px;
         }
@@ -361,77 +288,64 @@
             background: var(--accent-secondary);
         }
 
-        .keyboard-toggle {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
+        /* Button Rows */
+        .buttons-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .navigation-panel {
+            margin-left: auto;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            grid-template-areas:
+                "d n u"
+                "w ex e"
+                ". s .";
+        }
+
+        .control-btn {
+            padding: 12px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-default);
             border-radius: 6px;
-            color: var(--text-secondary);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .keyboard-toggle:hover {
-            border-color: var(--accent-primary);
             color: var(--text-primary);
-        }
-
-        /* Virtual Keyboard */
-        .virtual-keyboard {
-            display: none;
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border-default);
-            padding: 12px;
-        }
-
-        .virtual-keyboard.active {
-            display: block;
-        }
-
-        .keyboard-row {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 4px;
-            justify-content: center;
-        }
-
-        .key-btn {
-            min-width: 40px;
-            height: 40px;
-            padding: 8px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-default);
-            border-radius: 4px;
-            color: var(--text-primary);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.85em;
+            font-size: 1.4em;
             cursor: pointer;
-            transition: all 0.1s ease;
+            transition: all 0.15s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-width: 56px;
+            min-height: 56px;
         }
 
-        .key-btn:hover {
+        .control-btn:hover {
             background: var(--bg-primary);
             border-color: var(--accent-primary);
+            transform: scale(1.05);
         }
 
-        .key-btn:active {
+        .control-btn:active {
             transform: scale(0.95);
         }
 
-        .key-btn.wide {
-            flex: 2;
-        }
-
-        .key-btn.wider {
-            flex: 3;
-        }
+        .btn-d { grid-area: d; }
+        .btn-n { grid-area: n; }
+        .btn-u { grid-area: u; }
+        .btn-w { grid-area: w; }
+        .btn-ex { grid-area: ex; }
+        .btn-e { grid-area: e; }
+        .btn-s { grid-area: s; }
 
         /* Dynamic Buttons */
         .dynamic-section {
@@ -453,22 +367,16 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .content-wrapper {
+            .terminal-container {
+                height: 40vh;
+            }
+
+            .buttons-row {
                 flex-direction: column;
             }
 
-            .controls-container {
-                width: 100%;
-                flex-direction: row;
-                overflow-x: auto;
-            }
-
-            .control-panel {
-                min-width: 250px;
-            }
-
-            .terminal {
-                min-height: 300px;
+            .navigation-panel {
+                margin-left: 0;
             }
         }
 
@@ -521,105 +429,44 @@
 
         <!-- Main Content -->
         <div class="main-content" id="mainContent">
-            <div class="content-wrapper">
-                <!-- Terminal -->
-                <div class="terminal-container">
-                    <div class="terminal" id="terminal"></div>
-                </div>
-
-                <!-- Controls -->
-                <div class="controls-container">
-                    <!-- Navigation -->
-                    <div class="control-panel">
-                        <h3>Navigation</h3>
-                        <div class="button-grid navigation">
-                            <button class="control-btn btn-n" onclick="sendCommand('north')" title="North">⬆️</button>
-                            <button class="control-btn btn-s" onclick="sendCommand('south')" title="South">⬇️</button>
-                            <button class="control-btn btn-e" onclick="sendCommand('east')" title="East">➡️</button>
-                            <button class="control-btn btn-w" onclick="sendCommand('west')" title="West">⬅️</button>
-                            <button class="control-btn btn-u" onclick="sendCommand('up')" title="Up">⤴️</button>
-                            <button class="control-btn btn-d" onclick="sendCommand('down')" title="Down">⤵️</button>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="control-panel">
-                        <h3>Actions</h3>
-                        <div class="button-grid actions">
-                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
-                            <button class="control-btn" onclick="sendCommand('hit')" title="Hit">⚔️</button>
-                            <button class="control-btn" onclick="sendCommand('spells')" title="Spells">📖</button>
-                            <button class="control-btn" onclick="sendCommand('i')" title="Inventory">🎒</button>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Buttons -->
-                    <div class="control-panel dynamic-section" id="dynamicSection">
-                        <h3>Context</h3>
-                        <div class="button-grid actions" id="dynamicButtons"></div>
-                    </div>
-                </div>
+            <!-- Terminal - Top Half -->
+            <div class="terminal-container">
+                <div class="terminal" id="terminal"></div>
             </div>
 
-            <!-- Input Section -->
-            <div class="input-section">
-                <div class="input-wrapper">
-                    <input type="text" id="commandInput" placeholder="Type command..." onkeypress="handleEnter(event)">
-                    <button class="send-btn" onclick="sendCurrentInput()">Send</button>
+            <!-- Bottom Controls Area -->
+            <div class="controls-area">
+                <!-- Input Row -->
+                <div class="input-row">
+                    <div class="input-wrapper">
+                        <input type="text" id="commandInput" placeholder="Type command..." onkeypress="handleEnter(event)">
+                        <button class="send-btn" onclick="sendCurrentInput()">Send</button>
+                    </div>
                 </div>
-                <button class="keyboard-toggle" onclick="toggleKeyboard()">⌨️ Toggle Virtual Keyboard</button>
-            </div>
 
-            <!-- Virtual Keyboard -->
-            <div class="virtual-keyboard" id="virtualKeyboard">
-                <div class="keyboard-row">
-                    <button class="key-btn" onclick="typeKey('1')">1</button>
-                    <button class="key-btn" onclick="typeKey('2')">2</button>
-                    <button class="key-btn" onclick="typeKey('3')">3</button>
-                    <button class="key-btn" onclick="typeKey('4')">4</button>
-                    <button class="key-btn" onclick="typeKey('5')">5</button>
-                    <button class="key-btn" onclick="typeKey('6')">6</button>
-                    <button class="key-btn" onclick="typeKey('7')">7</button>
-                    <button class="key-btn" onclick="typeKey('8')">8</button>
-                    <button class="key-btn" onclick="typeKey('9')">9</button>
-                    <button class="key-btn" onclick="typeKey('0')">0</button>
-                </div>
-                <div class="keyboard-row">
-                    <button class="key-btn" onclick="typeKey('q')">Q</button>
-                    <button class="key-btn" onclick="typeKey('w')">W</button>
-                    <button class="key-btn" onclick="typeKey('e')">E</button>
-                    <button class="key-btn" onclick="typeKey('r')">R</button>
-                    <button class="key-btn" onclick="typeKey('t')">T</button>
-                    <button class="key-btn" onclick="typeKey('y')">Y</button>
-                    <button class="key-btn" onclick="typeKey('u')">U</button>
-                    <button class="key-btn" onclick="typeKey('i')">I</button>
-                    <button class="key-btn" onclick="typeKey('o')">O</button>
-                    <button class="key-btn" onclick="typeKey('p')">P</button>
-                </div>
-                <div class="keyboard-row">
-                    <button class="key-btn" onclick="typeKey('a')">A</button>
-                    <button class="key-btn" onclick="typeKey('s')">S</button>
-                    <button class="key-btn" onclick="typeKey('d')">D</button>
-                    <button class="key-btn" onclick="typeKey('f')">F</button>
-                    <button class="key-btn" onclick="typeKey('g')">G</button>
-                    <button class="key-btn" onclick="typeKey('h')">H</button>
-                    <button class="key-btn" onclick="typeKey('j')">J</button>
-                    <button class="key-btn" onclick="typeKey('k')">K</button>
-                    <button class="key-btn" onclick="typeKey('l')">L</button>
-                </div>
-                <div class="keyboard-row">
-                    <button class="key-btn" onclick="typeKey('z')">Z</button>
-                    <button class="key-btn" onclick="typeKey('x')">X</button>
-                    <button class="key-btn" onclick="typeKey('c')">C</button>
-                    <button class="key-btn" onclick="typeKey('v')">V</button>
-                    <button class="key-btn" onclick="typeKey('b')">B</button>
-                    <button class="key-btn" onclick="typeKey('n')">N</button>
-                    <button class="key-btn" onclick="typeKey('m')">M</button>
-                    <button class="key-btn wide" onclick="typeKey('Backspace')">⌫</button>
-                </div>
-                <div class="keyboard-row">
-                    <button class="key-btn wider" onclick="typeKey(' ')">SPACE</button>
-                    <button class="key-btn wider" onclick="sendCurrentInput()">ENTER ↵</button>
+                <!-- Action & Navigation Buttons Row -->
+                <div class="buttons-row">
+                    <!-- Action Buttons (Left) -->
+                    <div class="action-buttons">
+                        <button class="control-btn" onclick="sendCommand('hit')" title="Hit">⚔️</button>
+                        <button class="control-btn" onclick="sendCommand('cast')" title="Cast">📖</button>
+                        <button class="control-btn" onclick="sendCommand('drink')" title="Drink">💧</button>
+                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">🎒</button>
+                        <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                    </div>
+
+                    <!-- Navigation Buttons (Right) -->
+                    <div class="navigation-panel">
+                        <div class="nav-grid">
+                            <button class="control-btn btn-d" onclick="sendCommand('d')" title="Down">⤵️</button>
+                            <button class="control-btn btn-n" onclick="sendCommand('n')" title="North">⬆️</button>
+                            <button class="control-btn btn-u" onclick="sendCommand('u')" title="Up">⤴️</button>
+                            <button class="control-btn btn-w" onclick="sendCommand('w')" title="West">⬅️</button>
+                            <button class="control-btn btn-ex" onclick="sendCommand('ex')" title="Examine">🚪</button>
+                            <button class="control-btn btn-e" onclick="sendCommand('e')" title="East">➡️</button>
+                            <button class="control-btn btn-s" onclick="sendCommand('s')" title="South">⬇️</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -643,7 +490,7 @@
 
         // ANSI color map
         const ANSI_COLORS = {
-            '0': 'color: #c9d1d9',      // Reset / Normal
+            '0': 'color: #ffffff',      // Reset to white
             '30': 'color: #484f58',     // Black
             '31': 'color: #ff7b72',     // Red
             '32': 'color: #3fb950',     // Green
@@ -651,7 +498,7 @@
             '34': 'color: #58a6ff',     // Blue
             '35': 'color: #bc8cff',     // Magenta
             '36': 'color: #76e3ea',     // Cyan
-            '37': 'color: #c9d1d9',     // White
+            '37': 'color: #ffffff',     // White
             '90': 'color: #6e7681',     // Bright Black (Gray)
             '91': 'color: #ffa198',     // Bright Red
             '92': 'color: #56d364',     // Bright Green
@@ -956,23 +803,6 @@
             if (event.key === 'Enter') {
                 sendCurrentInput();
             }
-        }
-
-        function toggleKeyboard() {
-            const keyboard = document.getElementById('virtualKeyboard');
-            keyboard.classList.toggle('active');
-        }
-
-        function typeKey(key) {
-            const input = document.getElementById('commandInput');
-            
-            if (key === 'Backspace') {
-                input.value = input.value.slice(0, -1);
-            } else {
-                input.value += key;
-            }
-            
-            input.focus();
         }
     </script>
 </body>
