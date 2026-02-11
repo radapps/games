@@ -932,7 +932,10 @@
             }
 
             try {
-                ws.send(command + '\r\n');
+                // Send as binary (Uint8Array) instead of text
+                const encoder = new TextEncoder();
+                const data = encoder.encode(command + '\r\n');
+                ws.send(data.buffer);
             } catch (e) {
                 console.error('Send error:', e);
             }
