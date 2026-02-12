@@ -239,27 +239,26 @@
         /* Button Rows */
         .buttons-row {
             display: flex;
-            gap: 8px;
-            align-items: flex-start;
+            justify-content: center;
+            align-items: center;
         }
 
-        .action-buttons-container {
-            display: flex;
-            gap: 4px;
-            align-items: flex-start;
-        }
-
-        .navigation-container {
+        .all-buttons-container {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            margin-left: auto;
         }
 
-        .nav-row {
+        .button-row {
             display: flex;
             gap: 4px;
             justify-content: center;
+            align-items: center;
+        }
+
+        .button-spacer {
+            width: 48px;
+            height: 48px;
         }
 
         .control-btn {
@@ -436,10 +435,18 @@
         <div class="login-panel" id="loginPanel">
             <div class="login-card">
                 <h2>Connect to BBS</h2>
-                <p>Enter the WebSocket URL to connect to the telnet server</p>
+                <p>Enter connection details and credentials</p>
                 <div class="form-group">
                     <label for="wsUrl">WebSocket URL</label>
                     <input type="text" id="wsUrl" placeholder="wss://server.com/host/port" value="wss://unabruptly-multiplated-kory.ngrok-free.dev:443/192.168.40.69/23">
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Your username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Your password">
                 </div>
                 <button class="connect-btn" onclick="connect()">Connect</button>
             </div>
@@ -464,48 +471,44 @@
 
                 <!-- Buttons Row -->
                 <div class="buttons-row">
-                    <!-- Action Buttons -->
-                    <div class="action-buttons-container">
-                        <!-- Row 1 -->
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <div style="display: flex; gap: 4px;">
-                                <div style="position: relative;">
-                                    <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
-                                    <div class="target-buttons" id="hitTargets"></div>
-                                </div>
-                                <div style="position: relative;">
-                                    <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
-                                    <div class="spell-buttons" id="spellList"></div>
-                                </div>
-                                <div style="position: relative;">
-                                    <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
-                                    <div class="target-buttons" id="potionList"></div>
-                                </div>
+                    <div class="all-buttons-container">
+                        <!-- Row 1: HIT, CAST, DRINK, <empty>, D, N, U -->
+                        <div class="button-row">
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
+                                <div class="target-buttons" id="hitTargets"></div>
                             </div>
-                            <!-- Row 2 -->
-                            <div style="display: flex; gap: 4px;">
-                                <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                                <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
+                                <div class="spell-buttons" id="spellList"></div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Buttons (40%) -->
-                    <div class="navigation-container">
-                        <!-- Row 1: D, N, U -->
-                        <div class="nav-row">
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
+                                <div class="target-buttons" id="potionList"></div>
+                            </div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                             <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
                             <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
-                        <!-- Row 2: W, EX, E -->
-                        <div class="nav-row">
+                        
+                        <!-- Row 2: I, LOOK, HITS, <empty>, W, EX, E -->
+                        <div class="button-row">
+                            <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
+                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
+                            <div class="button-spacer"></div>
                             <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
                             <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
-                        <!-- Row 3: S -->
-                        <div class="nav-row">
+                        
+                        <!-- Row 3: <empty>, <empty>, <empty>, <empty>, S -->
+                        <div class="button-row">
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                         </div>
                     </div>
@@ -588,22 +591,31 @@
 
         // Load saved credentials
         window.addEventListener('DOMContentLoaded', () => {
-            const savedUrl = localStorage.getItem('bbs_ws_url');
-            if (savedUrl) {
-                document.getElementById('wsUrl').value = savedUrl;
-            }
+            const saved = {
+                wsUrl: localStorage.getItem('bbs_ws_url'),
+                username: localStorage.getItem('bbs_username'),
+                password: localStorage.getItem('bbs_password')
+            };
+            
+            if (saved.wsUrl) document.getElementById('wsUrl').value = saved.wsUrl;
+            if (saved.username) document.getElementById('username').value = saved.username;
+            if (saved.password) document.getElementById('password').value = saved.password;
         });
 
         function connect() {
             const wsUrl = document.getElementById('wsUrl').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
             if (!wsUrl) {
                 alert('Please enter a WebSocket URL');
                 return;
             }
 
-            // Save URL
+            // Save credentials
             localStorage.setItem('bbs_ws_url', wsUrl);
+            localStorage.setItem('bbs_username', username);
+            localStorage.setItem('bbs_password', password);
 
             // Hide login, show terminal
             document.getElementById('loginPanel').classList.add('hidden');
@@ -623,6 +635,17 @@
                 ws.onopen = function() {
                     isConnected = true;
                     appendToTerminal('✓ Connected!\n\n');
+                    
+                    // Auto-login sequence
+                    if (username && password) {
+                        setTimeout(() => sendCommand(username), 3000);
+                        setTimeout(() => sendCommand(password), 3100);
+                        setTimeout(() => sendCommand('q'), 3200);
+                        setTimeout(() => sendCommand('g'), 3300);
+                        setTimeout(() => sendCommand('q'), 3400);
+                        setTimeout(() => sendCommand('5'), 3500);
+                        setTimeout(() => sendCommand('p'), 3600);
+                    }
                 };
 
                 ws.onmessage = function(event) {
@@ -934,7 +957,10 @@
                         .filter(item => item.length > 0);
                     
                     // Filter only items ending with "potion"
-                    const potions = items.filter(item => item.toLowerCase().endsWith('potion'));
+                    const potions = items.filter(item => {
+                        const lower = item.toLowerCase();
+                        return lower.endsWith('potion') || lower.includes('potion');
+                    });
                     
                     waitingForPotions = false;
                     console.log('Potions found:', potions);
@@ -1161,6 +1187,8 @@
                     sendCommand('cast ' + selectedSpell + ' ' + target);
                     hideTargetButtons();
                     selectedSpell = null;
+                    // Auto-call HITS after CAST
+                    setTimeout(() => sendCommand('hits'), 100);
                 };
                 targetContainer.appendChild(btn);
             });
@@ -1179,6 +1207,8 @@
                 btn.onclick = () => {
                     sendCommand('hit ' + target);
                     hideTargetButtons();
+                    // Auto-call HITS after HIT
+                    setTimeout(() => sendCommand('hits'), 100);
                 };
                 targetContainer.appendChild(btn);
             });
