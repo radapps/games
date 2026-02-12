@@ -244,17 +244,16 @@
         }
 
         .action-buttons-container {
-            flex: 0 0 60%;
             display: flex;
             gap: 4px;
             align-items: flex-start;
         }
 
         .navigation-container {
-            flex: 0 0 40%;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            margin-left: auto;
         }
 
         .nav-row {
@@ -888,23 +887,33 @@
         }
 
         function extractExits() {
-            // Look for "Visible exits are:" followed by exit directions
-            const regex = /Visible exits are:\s*([^\n.]+)/i;
-            const match = recentTerminalText.match(regex);
+            // Look for "Visible exits are:" - use lastIndexOf to find the most recent occurrence
+            const searchText = 'Visible exits are:';
+            const lastIndex = recentTerminalText.lastIndexOf(searchText);
             
-            if (match) {
-                const exitString = match[1];
-                // Split by commas and remove "and"
-                const exits = exitString
-                    .toLowerCase()
-                    .replace(/\band\b/g, '')
-                    .split(/[,\s]+/)
-                    .map(e => e.trim())
-                    .filter(e => e.length > 0);
+            if (lastIndex !== -1) {
+                // Extract text after "Visible exits are:"
+                const afterText = recentTerminalText.substring(lastIndex + searchText.length);
                 
-                waitingForExits = false;
-                console.log('Exits found:', exits);
-                updateNavButtons(exits);
+                // Take until newline or period
+                const match = afterText.match(/^([^\n.]+)/);
+                
+                if (match) {
+                    const exitString = match[1];
+                    console.log('Exit string found:', exitString);
+                    
+                    // Split by commas and remove "and"
+                    const exits = exitString
+                        .toLowerCase()
+                        .replace(/\band\b/g, '')
+                        .split(/[,\s]+/)
+                        .map(e => e.trim())
+                        .filter(e => e.length > 0 && e !== '');
+                    
+                    waitingForExits = false;
+                    console.log('Exits parsed:', exits);
+                    updateNavButtons(exits);
+                }
             }
         }
 
@@ -1017,6 +1026,7 @@
 
         function handleSpellSelection(spell) {
             selectedSpell = spell;
+            console.log('Selected spell:', selectedSpell);
             hideSpellButtons();
             
             // Show target selection
@@ -1024,7 +1034,8 @@
                 showSpellTargetButtons();
             } else {
                 // No targets, just cast spell
-                sendCommand('cast ' + spell);
+                sendCommand('cast ' + selectedSpell);
+                selectedSpell = null;
             }
         }
 
@@ -1037,6 +1048,7 @@
                 btn.className = 'target-btn';
                 btn.textContent = target;
                 btn.onclick = () => {
+                    console.log('Casting:', selectedSpell, 'on', target);
                     sendCommand('cast ' + selectedSpell + ' ' + target);
                     hideTargetButtons();
                     selectedSpell = null;
