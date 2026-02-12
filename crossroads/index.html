@@ -189,6 +189,25 @@
             flex-direction: column;
             padding: 8px;
             gap: 4px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .controls-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .controls-area::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .controls-area::-webkit-scrollbar-thumb {
+            background: var(--border-default);
+            border-radius: 4px;
+        }
+
+        .controls-area::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
         }
 
         /* Input Row */
@@ -503,15 +522,18 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: Help, <empty>, <empty>, <empty>, <empty>, S, <empty> -->
+                        <!-- Row 3: Help, Social, <empty>, Stats, <empty>, S, <empty> -->
                         <div class="button-row">
                             <div style="position: relative;">
                                 <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
                                 <div class="spell-buttons" id="helpTopics"></div>
                             </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
+                                <div class="spell-buttons" id="socialActions"></div>
+                            </div>
                             <div class="button-spacer"></div>
-                            <div class="button-spacer"></div>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
                             <div class="button-spacer"></div>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                             <div class="button-spacer"></div>
@@ -946,6 +968,54 @@
             }
         }
 
+        function handleSocialButton() {
+            const socialContainer = document.getElementById('socialActions');
+            
+            // Hide other lists if open
+            hideTargetButtons();
+            hideSpellButtons();
+            hidePotionButtons();
+            hideHelpTopics();
+            hideSocialActions();
+            
+            // Toggle social actions
+            if (socialContainer.classList.contains('active')) {
+                hideSocialActions();
+            } else {
+                showSocialActions();
+            }
+        }
+
+        function showSocialActions() {
+            const socialContainer = document.getElementById('socialActions');
+            socialContainer.innerHTML = '';
+            
+            const actions = [
+                'Bow', 'Blush', 'Burp', 'Chortle', 'Cry',
+                'Frown', 'Glare', 'Grin', 'Grumble', 'Hug',
+                'Kick', 'Kiss', 'Laugh', 'Nod', 'Smack',
+                'Smile', 'Smooch', 'Snarl', 'Wave'
+            ];
+            
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'spell-btn';
+                btn.textContent = action;
+                btn.onclick = () => {
+                    sendCommand(action);
+                    hideSocialActions();
+                };
+                socialContainer.appendChild(btn);
+            });
+            
+            socialContainer.classList.add('active');
+        }
+
+        function hideSocialActions() {
+            const socialContainer = document.getElementById('socialActions');
+            socialContainer.classList.remove('active');
+        }
+
         function handleHelpButton() {
             const helpContainer = document.getElementById('helpTopics');
             
@@ -953,6 +1023,7 @@
             hideTargetButtons();
             hideSpellButtons();
             hidePotionButtons();
+            hideSocialActions();
             
             // Toggle help topics
             if (helpContainer.classList.contains('active')) {
@@ -980,6 +1051,7 @@
                 btn.onclick = () => {
                     sendCommand('help ' + topic);
                     hideHelpTopics();
+            hideSocialActions();
                 };
                 helpContainer.appendChild(btn);
             });
@@ -990,6 +1062,53 @@
         function hideHelpTopics() {
             const helpContainer = document.getElementById('helpTopics');
             helpContainer.classList.remove('active');
+        }
+
+        function handleSocialButton() {
+            const socialContainer = document.getElementById('socialActions');
+            
+            // Hide other lists if open
+            hideTargetButtons();
+            hideSpellButtons();
+            hidePotionButtons();
+            hideHelpTopics();
+            
+            // Toggle social actions
+            if (socialContainer.classList.contains('active')) {
+                hideSocialActions();
+            } else {
+                showSocialActions();
+            }
+        }
+
+        function showSocialActions() {
+            const socialContainer = document.getElementById('socialActions');
+            socialContainer.innerHTML = '';
+            
+            const actions = [
+                'Bow', 'Blush', 'Burp', 'Chortle', 'Cry',
+                'Frown', 'Glare', 'Grin', 'Grumble', 'Hug',
+                'Kick', 'Kiss', 'Laugh', 'Nod', 'Smack',
+                'Smile', 'Smooch', 'Snarl', 'Wave'
+            ];
+            
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'spell-btn';
+                btn.textContent = action;
+                btn.onclick = () => {
+                    sendCommand(action);
+                    hideSocialActions();
+                };
+                socialContainer.appendChild(btn);
+            });
+            
+            socialContainer.classList.add('active');
+        }
+
+        function hideSocialActions() {
+            const socialContainer = document.getElementById('socialActions');
+            socialContainer.classList.remove('active');
         }
 
         function checkForSpellRefresh() {
@@ -1020,6 +1139,17 @@
                 // Auto-get the item
                 setTimeout(() => {
                     sendCommand('get ' + item);
+                }, 100);
+            }
+            
+            // Check for spell level up
+            if (text.includes('The god smiles at you in approval')) {
+                console.log('Spell level up detected!');
+                // Refresh spell list
+                currentSpells = [];
+                waitingForSpells = true;
+                setTimeout(() => {
+                    sendCommand('spells');
                 }, 100);
             }
         }
@@ -1076,6 +1206,7 @@
             hideTargetButtons();
             hideSpellButtons();
             hideHelpTopics();
+            hideSocialActions();
             
             // If potions are currently showing, hide them
             if (potionContainer.classList.contains('active')) {
@@ -1194,6 +1325,8 @@
             hideSpellButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideSocialActions();
+            
             
             if (currentTargets.length > 0) {
                 // Toggle visibility
@@ -1215,6 +1348,7 @@
             hideTargetButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideSocialActions();
             
             if (currentSpells.length > 0) {
                 // Toggle visibility
