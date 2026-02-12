@@ -503,13 +503,15 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: <empty>, <empty>, <empty>, <empty>, S -->
+                        <!-- Row 3: <empty>, <empty>, <empty>, <empty>, <empty>, S, <empty> -->
                         <div class="button-row">
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
+                            <div class="button-spacer"></div>
                         </div>
                     </div>
                 </div>
@@ -640,11 +642,11 @@
                     if (username && password) {
                         setTimeout(() => sendCommand(username), 3000);
                         setTimeout(() => sendCommand(password), 3100);
-                        setTimeout(() => sendCommand('q'), 3200);
-                        setTimeout(() => sendCommand('g'), 3300);
-                        setTimeout(() => sendCommand('q'), 3400);
-                        setTimeout(() => sendCommand('5'), 3500);
-                        setTimeout(() => sendCommand('p'), 3600);
+                        setTimeout(() => sendCommand('q'), 3600);  // 500ms after password
+                        setTimeout(() => sendCommand('g'), 3800);  // 200ms after Q
+                        setTimeout(() => sendCommand('q'), 4000);  // 200ms after G
+                        setTimeout(() => sendCommand('5'), 4200);  // 200ms after Q
+                        setTimeout(() => sendCommand('p'), 4400);  // 200ms after 5
                     }
                 };
 
@@ -984,18 +986,9 @@
             hideTargetButtons();
             hideSpellButtons();
             
-            if (currentPotions.length > 0) {
-                // Toggle visibility
-                if (potionContainer.classList.contains('active')) {
-                    hidePotionButtons();
-                } else {
-                    showPotionButtons();
-                }
-            } else {
-                // No potions known, request inventory
-                waitingForPotions = true;
-                sendCommand('i');
-            }
+            // Always request fresh inventory to rebuild potion list
+            waitingForPotions = true;
+            sendCommand('i');
         }
 
         function showPotionButtons() {
