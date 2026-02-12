@@ -503,9 +503,12 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: <empty>, <empty>, <empty>, <empty>, <empty>, S, <empty> -->
+                        <!-- Row 3: Help, <empty>, <empty>, <empty>, <empty>, S, <empty> -->
                         <div class="button-row">
-                            <div class="button-spacer"></div>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
+                                <div class="spell-buttons" id="helpTopics"></div>
+                            </div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -533,6 +536,7 @@
         let waitingForExits = false; // Waiting for exit list from server
         let currentPotions = []; // Store available potions
         let waitingForPotions = false; // Waiting for inventory to extract potions
+        let waitingForSpellRefresh = false; // Waiting to check if CAST failed and needs spell list
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -695,6 +699,14 @@
                         if (waitingForPotions) {
                             extractPotions();
                         }
+                        
+                        // Check for spell refresh needed
+                        if (waitingForSpellRefresh) {
+                            checkForSpellRefresh();
+                        }
+                        
+                        // Check for item drops
+                        checkForItemDrops(plainText);
                         
                         updateDynamicButtons();
                     }
@@ -934,6 +946,84 @@
             }
         }
 
+        function handleHelpButton() {
+            const helpContainer = document.getElementById('helpTopics');
+            
+            // Hide other lists if open
+            hideTargetButtons();
+            hideSpellButtons();
+            hidePotionButtons();
+            
+            // Toggle help topics
+            if (helpContainer.classList.contains('active')) {
+                hideHelpTopics();
+            } else {
+                showHelpTopics();
+            }
+        }
+
+        function showHelpTopics() {
+            const helpContainer = document.getElementById('helpTopics');
+            helpContainer.innerHTML = '';
+            
+            const topics = [
+                'Air', 'Attributes', 'Combat', 'Commands', 'Credits',
+                'Earth', 'Elements', 'Experience', 'Fire', 'Gold',
+                'Hints', 'Invoking', 'Items', 'Magic', 'Movement',
+                'Speed', 'Starting', 'Talismans', 'Water'
+            ];
+            
+            topics.forEach(topic => {
+                const btn = document.createElement('button');
+                btn.className = 'spell-btn';
+                btn.textContent = topic;
+                btn.onclick = () => {
+                    sendCommand('help ' + topic);
+                    hideHelpTopics();
+                };
+                helpContainer.appendChild(btn);
+            });
+            
+            helpContainer.classList.add('active');
+        }
+
+        function hideHelpTopics() {
+            const helpContainer = document.getElementById('helpTopics');
+            helpContainer.classList.remove('active');
+        }
+
+        function checkForSpellRefresh() {
+            // Look for "Cast WHAT spell?" to trigger spell refresh
+            if (recentTerminalText.includes('Cast WHAT spell?')) {
+                waitingForSpellRefresh = false;
+                currentSpells = []; // Clear old spells
+                waitingForSpells = true;
+                sendCommand('spells');
+            }
+        }
+
+        function checkForItemDrops(text) {
+            // Look for pattern: "<item> falls to the ground!"
+            const regex = /(.+?)\s+falls to the ground!/gi;
+            const matches = [...text.matchAll(regex)];
+            
+            if (matches.length > 0) {
+                // Get the last match (most recent drop)
+                const lastMatch = matches[matches.length - 1];
+                let item = lastMatch[1].trim();
+                
+                // Remove "a" or "an" prefix
+                item = item.replace(/^(a |an )/i, '');
+                
+                console.log('Item dropped:', item);
+                
+                // Auto-get the item
+                setTimeout(() => {
+                    sendCommand('get ' + item);
+                }, 100);
+            }
+        }
+
         function extractPotions() {
             // Look for "You are holding" - use lastIndexOf to find the most recent occurrence
             const searchText = 'You are holding';
@@ -950,11 +1040,11 @@
                     const itemString = match[1];
                     console.log('Inventory string found:', itemString);
                     
-                    // Split by commas and filter for potions
+                    // Split by commas and "and", then clean up
                     const items = itemString
+                        .replace(/\s+and\s+/gi, ',') // Replace "and" with comma
                         .split(/[,]/)
                         .map(item => item.trim())
-                        .map(item => item.replace(/\band\b/gi, '').trim()) // Remove "and"
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
                         .filter(item => item.length > 0);
                     
@@ -985,6 +1075,13 @@
             // Hide other lists if open
             hideTargetButtons();
             hideSpellButtons();
+            hideHelpTopics();
+            
+            // If potions are currently showing, hide them
+            if (potionContainer.classList.contains('active')) {
+                hidePotionButtons();
+                return;
+            }
             
             // Always request fresh inventory to rebuild potion list
             waitingForPotions = true;
@@ -1093,8 +1190,10 @@
         function handleHitButton() {
             const targetContainer = document.getElementById('hitTargets');
             
-            // Hide spell list if open
+            // Hide other lists if open
             hideSpellButtons();
+            hidePotionButtons();
+            hideHelpTopics();
             
             if (currentTargets.length > 0) {
                 // Toggle visibility
@@ -1112,8 +1211,10 @@
         function handleCastButton() {
             const spellContainer = document.getElementById('spellList');
             
-            // Hide target list if open
+            // Hide other lists if open
             hideTargetButtons();
+            hidePotionButtons();
+            hideHelpTopics();
             
             if (currentSpells.length > 0) {
                 // Toggle visibility
@@ -1180,6 +1281,8 @@
                     sendCommand('cast ' + selectedSpell + ' ' + target);
                     hideTargetButtons();
                     selectedSpell = null;
+                    // Set flag to check if spell refresh needed
+                    waitingForSpellRefresh = true;
                     // Auto-call HITS after CAST
                     setTimeout(() => sendCommand('hits'), 100);
                 };
