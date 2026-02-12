@@ -522,7 +522,7 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: Help, Social, <empty>, Stats, <empty>, S, <empty> -->
+                        <!-- Row 3: Help, Social, Stats, <empty>, <empty>, S, <empty> -->
                         <div class="button-row">
                             <div style="position: relative;">
                                 <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
@@ -532,10 +532,24 @@
                                 <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
                                 <div class="spell-buttons" id="socialActions"></div>
                             </div>
-                            <div class="button-spacer"></div>
                             <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
                             <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
+                            <div class="button-spacer"></div>
+                        </div>
+
+                        <!-- Row 4: Shop, <empty>, <empty>, <empty>, <empty>, <empty>, <empty> -->
+                        <div class="button-row">
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
+                                <div class="spell-buttons" id="shopActions"></div>
+                            </div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                         </div>
                     </div>
@@ -559,6 +573,10 @@
         let currentPotions = []; // Store available potions
         let waitingForPotions = false; // Waiting for inventory to extract potions
         let waitingForSpellRefresh = false; // Waiting to check if CAST failed and needs spell list
+        let waitingForShopItems = false; // Waiting for shop inventory
+        let waitingForSellItems = false; // Waiting for sell inventory
+        let waitingForAppraiseItems = false; // Waiting for appraise inventory
+        let currentShopkeeper = null; // Current shopkeeper name
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -729,6 +747,16 @@
                         
                         // Check for item drops
                         checkForItemDrops(plainText);
+                        
+                        // Extract shop items if waiting
+                        if (waitingForShopItems) {
+                            extractShopItems();
+                        }
+                        
+                        // Extract sell/appraise items if waiting
+                        if (waitingForSellItems || waitingForAppraiseItems) {
+                            extractInventoryForShop();
+                        }
                         
                         updateDynamicButtons();
                     }
@@ -976,6 +1004,7 @@
             hideSpellButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideShopActions();
             hideSocialActions();
             
             // Toggle social actions
@@ -1028,6 +1057,7 @@
             // Toggle help topics
             if (helpContainer.classList.contains('active')) {
                 hideHelpTopics();
+            hideShopActions();
             } else {
                 showHelpTopics();
             }
@@ -1051,6 +1081,7 @@
                 btn.onclick = () => {
                     sendCommand('help ' + topic);
                     hideHelpTopics();
+            hideShopActions();
             hideSocialActions();
                 };
                 helpContainer.appendChild(btn);
@@ -1072,6 +1103,7 @@
             hideSpellButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideShopActions();
             
             // Toggle social actions
             if (socialContainer.classList.contains('active')) {
@@ -1109,6 +1141,145 @@
         function hideSocialActions() {
             const socialContainer = document.getElementById('socialActions');
             socialContainer.classList.remove('active');
+        }
+
+        function handleShopButton() {
+            const shopContainer = document.getElementById('shopActions');
+            
+            // Hide other lists if open
+            hideTargetButtons();
+            hideSpellButtons();
+            hidePotionButtons();
+            hideHelpTopics();
+            hideShopActions();
+            hideSocialActions();
+            
+            // Toggle shop actions
+            if (shopContainer.classList.contains('active')) {
+                hideShopActions();
+            } else {
+                showShopActions();
+            }
+        }
+
+        function showShopActions() {
+            const shopContainer = document.getElementById('shopActions');
+            shopContainer.innerHTML = '';
+            
+            const actions = ['Buy', 'Sell', 'Appraise'];
+            
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = 'spell-btn';
+                btn.textContent = action;
+                btn.onclick = () => {
+                    handleShopAction(action);
+                };
+                shopContainer.appendChild(btn);
+            });
+            
+            shopContainer.classList.add('active');
+        }
+
+        function hideShopActions() {
+            const shopContainer = document.getElementById('shopActions');
+            shopContainer.classList.remove('active');
+        }
+
+        function handleShopAction(action) {
+            hideShopActions();
+            
+            if (action === 'Buy') {
+                // Find shopkeeper and look at them
+                const shopkeeperMatch = recentTerminalText.match(/(\w+)\s+is here\./i);
+                if (shopkeeperMatch) {
+                    currentShopkeeper = shopkeeperMatch[1];
+                    waitingForShopItems = true;
+                    sendCommand('look ' + currentShopkeeper);
+                } else {
+                    alert('No shopkeeper found in the room');
+                }
+            } else if (action === 'Sell') {
+                waitingForSellItems = true;
+                sendCommand('i');
+            } else if (action === 'Appraise') {
+                waitingForAppraiseItems = true;
+                sendCommand('i');
+            }
+        }
+
+        function extractShopItems() {
+            // Look for shop inventory format: "Qty  Price  <item>"
+            const lines = recentTerminalText.split('\n');
+            const items = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                // Match lines with numbers (qty and price) followed by item name
+                const match = line.match(/^\d+\s+\d+\s+(.+)$/);
+                if (match) {
+                    items.push(match[1].trim());
+                }
+            }
+            
+            if (items.length > 0) {
+                waitingForShopItems = false;
+                showShopItemButtons(items, 'buy');
+            }
+        }
+
+        function extractInventoryForShop() {
+            // Look for "You are holding" - use lastIndexOf to find the most recent occurrence
+            const searchText = 'You are holding';
+            const lastIndex = recentTerminalText.lastIndexOf(searchText);
+            
+            if (lastIndex !== -1) {
+                // Extract text after "You are holding"
+                const afterText = recentTerminalText.substring(lastIndex + searchText.length);
+                
+                // Take until newline or period
+                const match = afterText.match(/^([^\n.]+)/);
+                
+                if (match) {
+                    const itemString = match[1];
+                    
+                    // Split by commas and "and", then clean up
+                    const items = itemString
+                        .replace(/\s+and\s+/gi, ',') // Replace "and" with comma
+                        .split(/[,]/)
+                        .map(item => item.trim())
+                        .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .filter(item => item.length > 0);
+                    
+                    if (items.length > 0) {
+                        if (waitingForSellItems) {
+                            waitingForSellItems = false;
+                            showShopItemButtons(items, 'sell');
+                        } else if (waitingForAppraiseItems) {
+                            waitingForAppraiseItems = false;
+                            showShopItemButtons(items, 'appraise');
+                        }
+                    }
+                }
+            }
+        }
+
+        function showShopItemButtons(items, action) {
+            const targetContainer = document.getElementById('hitTargets');
+            targetContainer.innerHTML = '';
+            
+            items.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'target-btn';
+                btn.textContent = item;
+                btn.onclick = () => {
+                    sendCommand(action + ' ' + item);
+                    hideTargetButtons();
+                };
+                targetContainer.appendChild(btn);
+            });
+            
+            targetContainer.classList.add('active');
         }
 
         function checkForSpellRefresh() {
@@ -1206,6 +1377,7 @@
             hideTargetButtons();
             hideSpellButtons();
             hideHelpTopics();
+            hideShopActions();
             hideSocialActions();
             
             // If potions are currently showing, hide them
@@ -1325,6 +1497,7 @@
             hideSpellButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideShopActions();
             hideSocialActions();
             
             
@@ -1348,6 +1521,7 @@
             hideTargetButtons();
             hidePotionButtons();
             hideHelpTopics();
+            hideShopActions();
             hideSocialActions();
             
             if (currentSpells.length > 0) {
