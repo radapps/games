@@ -464,19 +464,30 @@
 
                 <!-- Buttons Row -->
                 <div class="buttons-row">
-                    <!-- Action Buttons (60%) -->
+                    <!-- Action Buttons -->
                     <div class="action-buttons-container">
-                        <div style="position: relative;">
-                            <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
-                            <div class="target-buttons" id="hitTargets"></div>
+                        <!-- Row 1 -->
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <div style="display: flex; gap: 4px;">
+                                <div style="position: relative;">
+                                    <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
+                                    <div class="target-buttons" id="hitTargets"></div>
+                                </div>
+                                <div style="position: relative;">
+                                    <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
+                                    <div class="spell-buttons" id="spellList"></div>
+                                </div>
+                                <div style="position: relative;">
+                                    <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
+                                    <div class="target-buttons" id="potionList"></div>
+                                </div>
+                            </div>
+                            <!-- Row 2 -->
+                            <div style="display: flex; gap: 4px;">
+                                <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
+                                <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            </div>
                         </div>
-                        <div style="position: relative;">
-                            <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
-                            <div class="spell-buttons" id="spellList"></div>
-                        </div>
-                        <button class="control-btn" onclick="sendCommand('drink')" title="Drink">💧</button>
-                        <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                        <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
                     </div>
 
                     <!-- Navigation Buttons (40%) -->
@@ -515,6 +526,8 @@
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
         let waitingForExits = false; // Waiting for exit list from server
+        let currentPotions = []; // Store available potions
+        let waitingForPotions = false; // Waiting for inventory to extract potions
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -651,6 +664,11 @@
                         // Extract exits if waiting for them
                         if (waitingForExits) {
                             extractExits();
+                        }
+                        
+                        // Extract potions if waiting for them
+                        if (waitingForPotions) {
+                            extractPotions();
                         }
                         
                         updateDynamicButtons();
@@ -832,6 +850,11 @@
             
             // Send the directional command
             sendCommand(direction);
+            
+            // Auto-trigger exits check after a short delay
+            setTimeout(() => {
+                handleExitsButton();
+            }, 500);
         }
 
         function handleExitsButton() {
@@ -884,6 +907,92 @@
                     showSpellButtons();
                 }
             }
+        }
+
+        function extractPotions() {
+            // Look for "You are holding" - use lastIndexOf to find the most recent occurrence
+            const searchText = 'You are holding';
+            const lastIndex = recentTerminalText.lastIndexOf(searchText);
+            
+            if (lastIndex !== -1) {
+                // Extract text after "You are holding"
+                const afterText = recentTerminalText.substring(lastIndex + searchText.length);
+                
+                // Take until newline or period
+                const match = afterText.match(/^([^\n.]+)/);
+                
+                if (match) {
+                    const itemString = match[1];
+                    console.log('Inventory string found:', itemString);
+                    
+                    // Split by commas and filter for potions
+                    const items = itemString
+                        .split(/[,]/)
+                        .map(item => item.trim())
+                        .map(item => item.replace(/\band\b/gi, '').trim()) // Remove "and"
+                        .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .filter(item => item.length > 0);
+                    
+                    // Filter only items ending with "potion"
+                    const potions = items.filter(item => item.toLowerCase().endsWith('potion'));
+                    
+                    waitingForPotions = false;
+                    console.log('Potions found:', potions);
+                    
+                    if (potions.length > 0) {
+                        currentPotions = potions;
+                        showPotionButtons();
+                    } else {
+                        // No potions, just send DRINK
+                        currentPotions = [];
+                        sendCommand('drink');
+                    }
+                }
+            }
+        }
+
+        function handleDrinkButton() {
+            const potionContainer = document.getElementById('potionList');
+            
+            // Hide other lists if open
+            hideTargetButtons();
+            hideSpellButtons();
+            
+            if (currentPotions.length > 0) {
+                // Toggle visibility
+                if (potionContainer.classList.contains('active')) {
+                    hidePotionButtons();
+                } else {
+                    showPotionButtons();
+                }
+            } else {
+                // No potions known, request inventory
+                waitingForPotions = true;
+                sendCommand('i');
+            }
+        }
+
+        function showPotionButtons() {
+            const potionContainer = document.getElementById('potionList');
+            potionContainer.innerHTML = '';
+            
+            currentPotions.forEach(potion => {
+                const btn = document.createElement('button');
+                btn.className = 'target-btn';
+                btn.textContent = potion;
+                btn.onclick = () => {
+                    sendCommand('drink ' + potion);
+                    hidePotionButtons();
+                };
+                potionContainer.appendChild(btn);
+            });
+            
+            potionContainer.classList.add('active');
+        }
+
+        function hidePotionButtons() {
+            const potionContainer = document.getElementById('potionList');
+            potionContainer.classList.remove('active');
         }
 
         function extractExits() {
@@ -1021,7 +1130,7 @@
         function hideSpellButtons() {
             const spellContainer = document.getElementById('spellList');
             spellContainer.classList.remove('active');
-            selectedSpell = null;
+            // Don't reset selectedSpell here - it's needed for casting
         }
 
         function handleSpellSelection(spell) {
