@@ -1074,8 +1074,7 @@
         }
 
         function sendDirectional(direction) {
-            // Hide target buttons when moving
-            hideTargetButtons();
+            // Clear targets when moving
             currentTargets = [];
             
             // Re-enable all nav buttons when moving
@@ -1154,112 +1153,8 @@
                 }
             }
         }
-            // Look for "You have the ability to cast:" followed by spell names
-            const regex = /You have the ability to cast:\s*([^\n]+)/i;
-            const match = recentTerminalText.match(regex);
-            
-            if (match) {
-                const spellString = match[1];
-                // Split by spaces and/or tabs
-                const spells = spellString
-                    .split(/[\s\t]+/)
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0);
-                
-                if (spells.length > 0) {
-                    currentSpells = spells;
-                    waitingForSpells = false;
-                    console.log('Spells found:', spells);
-                    // Auto-show spell list
-                    showSpellButtons();
-                }
-            }
-        }
-
-        function handleSocialButton() {
-            const socialContainer = document.getElementById('socialActions');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hideSpellButtons();
-            hidePotionButtons();
-            hideHelpTopics();
-            hideShopActions();
-            hideSocialActions();
-            
-            // Toggle social actions
-            if (socialContainer.classList.contains('active')) {
-                hideSocialActions();
-            } else {
-                showSocialActions();
-            }
-        }
-
-
-
-        function handleHelpButton() {
-            const helpContainer = document.getElementById('helpTopics');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hideSpellButtons();
-            hidePotionButtons();
-            hideSocialActions();
-            
-            // Toggle help topics
-            if (helpContainer.classList.contains('active')) {
-                hideHelpTopics();
-            hideShopActions();
-            } else {
-                showHelpTopics();
-            }
-        }
-
-
-
-        function handleSocialButton() {
-            const socialContainer = document.getElementById('socialActions');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hideSpellButtons();
-            hidePotionButtons();
-            hideHelpTopics();
-            hideShopActions();
-            
-            // Toggle social actions
-            if (socialContainer.classList.contains('active')) {
-                hideSocialActions();
-            } else {
-                showSocialActions();
-            }
-        }
-
-
-
-        function handleShopButton() {
-            const shopContainer = document.getElementById('shopActions');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hideSpellButtons();
-            hidePotionButtons();
-            hideHelpTopics();
-            hideSocialActions();
-            
-            // Toggle shop actions
-            if (shopContainer.classList.contains('active')) {
-                hideShopActions();
-            } else {
-                showShopActions();
-            }
-        }
-
-
 
         function handleShopAction(action) {
-            hideShopActions();
-            
             if (action === 'Buy') {
                 // Find shopkeeper and look at them
                 const shopkeeperMatch = recentTerminalText.match(/(\w+)\s+is here\./i);
@@ -1432,29 +1327,6 @@
             }
         }
 
-        function handleDrinkButton() {
-            const potionContainer = document.getElementById('potionList');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hideSpellButtons();
-            hideHelpTopics();
-            hideShopActions();
-            hideSocialActions();
-            
-            // If potions are currently showing, hide them
-            if (potionContainer.classList.contains('active')) {
-                hidePotionButtons();
-                return;
-            }
-            
-            // Always request fresh inventory to rebuild potion list
-            waitingForPotions = true;
-            sendCommand('i');
-        }
-
-
-
         function extractExits() {
             // Look for "Visible exits are:" - use lastIndexOf to find the most recent occurrence
             const searchText = 'Visible exits are:';
@@ -1598,50 +1470,6 @@
                 handleShopAction(action);
             });
         }
-            
-            
-            if (currentTargets.length > 0) {
-                // Toggle visibility
-                if (targetContainer.classList.contains('active')) {
-                    hideTargetButtons();
-                } else {
-                    showTargetButtons();
-                }
-            } else {
-                // No targets, just send HIT
-                sendCommand('hit');
-            }
-        }
-
-        function handleCastButton() {
-            const spellContainer = document.getElementById('spellList');
-            
-            // Hide other lists if open
-            hideTargetButtons();
-            hidePotionButtons();
-            hideHelpTopics();
-            hideShopActions();
-            hideSocialActions();
-            
-            if (currentSpells.length > 0) {
-                // Toggle visibility
-                if (spellContainer.classList.contains('active')) {
-                    hideSpellButtons();
-                } else {
-                    showSpellButtons();
-                }
-            } else {
-                // No spells known, request them
-                waitingForSpells = true;
-                sendCommand('spells');
-            }
-        }
-
-
-
-
-
-
 
         function sendCurrentInput() {
             const input = document.getElementById('commandInput');
