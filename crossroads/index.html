@@ -522,25 +522,9 @@
                 font-size: 0.7em;
             }
 
-            /*.control-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 1.4em;
-            }*/
-
             .buttons-row {
                 flex-direction: column;
                 gap: 4px;
-            }
-
-            .action-buttons-container {
-                flex: 1;
-                width: 100%;
-            }
-
-            .navigation-container {
-                flex: 1;
-                width: 100%;
             }
         }
 
@@ -903,8 +887,6 @@
                         if (waitingForSellItems || waitingForAppraiseItems) {
                             extractInventoryForShop();
                         }
-                        
-                        updateDynamicButtons();
                     }
                 };
 
@@ -1025,36 +1007,6 @@
             }
 
             return result;
-        }
-
-        function updateDynamicButtons() {
-            const section = document.getElementById('dynamicSection');
-            const container = document.getElementById('dynamicButtons');
-            
-            let matchedRule = null;
-            for (const rule of dynamicButtonRules) {
-                if (rule.trigger.test(recentTerminalText)) {
-                    matchedRule = rule;
-                    break;
-                }
-            }
-            
-            if (matchedRule) {
-                container.innerHTML = '';
-                matchedRule.buttons.forEach(btn => {
-                    const button = document.createElement('button');
-                    button.className = 'control-btn dynamic-btn';
-                    button.innerHTML = btn.icon;
-                    button.title = btn.title;
-                    button.onclick = () => sendCommand(btn.command);
-                    container.appendChild(button);
-                });
-                section.classList.add('active');
-                
-                setTimeout(() => { recentTerminalText = ''; }, 5000);
-            } else {
-                section.classList.remove('active');
-            }
         }
 
         function sendCommand(command) {
@@ -1215,7 +1167,8 @@
                         .split(/[,]/)
                         .map(item => item.trim())
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
-                        .filter(item => item.length > 0);
+                        .filter(item => item.length > 0)
+                        .filter(item => !['a', 'an'].includes(item.toLowerCase())); // Filter out standalone "a" or "an"
                     
                     if (items.length > 0) {
                         if (waitingForSellItems) {
