@@ -210,6 +210,123 @@
             background: var(--text-secondary);
         }
 
+        /* Popup Modal for Button Lists */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup-container {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .popup-title {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--accent-primary);
+        }
+
+        .popup-close {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .popup-close:hover {
+            background: var(--accent-danger);
+            border-color: var(--accent-danger);
+            color: #ffffff;
+        }
+
+        .popup-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .popup-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .popup-content::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        .popup-content::-webkit-scrollbar-thumb {
+            background: var(--border-default);
+            border-radius: 4px;
+        }
+
+        .popup-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .popup-button-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .popup-list-btn {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .popup-list-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+            transform: translateX(4px);
+        }
+
+        .popup-list-btn:active {
+            transform: translateX(2px);
+        }
+
         /* Input Row */
         .input-row {
             display: flex;
@@ -493,80 +610,40 @@
                     <div class="all-buttons-container">
                         <!-- Row 1: HIT, CAST, DRINK, <empty>, D, N, U -->
                         <div class="button-row">
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
-                                <div class="target-buttons" id="hitTargets"></div>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
-                                <div class="spell-buttons" id="spellList"></div>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
-                                <div class="target-buttons" id="potionList"></div>
-                            </div>
+                            <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
+                            <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
+                            <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
                             <div class="button-spacer"></div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
-                            </div>
+                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
+                            <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
+                            <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
                         
                         <!-- Row 2: I, LOOK, HITS, <empty>, W, EX, E -->
                         <div class="button-row">
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
-                            </div>
+                            <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
+                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
                             <div class="button-spacer"></div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
-                            </div>
+                            <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
+                            <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
+                            <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
                         <!-- Row 3: Help, Social, Stats, <empty>, <empty>, S, <empty> -->
                         <div class="button-row">
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
-                                <div class="spell-buttons" id="helpTopics"></div>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
-                                <div class="spell-buttons" id="socialActions"></div>
-                            </div>
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
-                            </div>
+                            <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
+                            <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
+                            <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
-                            <div style="position: relative;">
-                                <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
-                            </div>
+                            <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                             <div class="button-spacer"></div>
                         </div>
 
                         <!-- Row 4: Shop, <empty>, <empty>, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
-                            <div style="position: relative;">
-                                <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
-                                <div class="spell-buttons" id="shopActions"></div>
-                            </div>
+                            <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -574,11 +651,21 @@
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                         </div>
-                        
-                        <!-- Extra padding for scroll visibility -->
-                        <div style="height: 200px;"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Modal for Button Lists -->
+    <div class="popup-overlay" id="popupOverlay" onclick="closePopupIfClickedOutside(event)">
+        <div class="popup-container" onclick="event.stopPropagation()">
+            <div class="popup-header">
+                <div class="popup-title" id="popupTitle">Select</div>
+                <button class="popup-close" onclick="closePopup()">✕</button>
+            </div>
+            <div class="popup-content">
+                <div class="popup-button-list" id="popupButtonList"></div>
             </div>
         </div>
     </div>
@@ -602,6 +689,40 @@
         let waitingForSellItems = false; // Waiting for sell inventory
         let waitingForAppraiseItems = false; // Waiting for appraise inventory
         let currentShopkeeper = null; // Current shopkeeper name
+
+        // Popup control functions
+        function showPopup(title, buttons, onClickCallback) {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            
+            titleEl.textContent = title;
+            listEl.innerHTML = '';
+            
+            buttons.forEach(button => {
+                const btn = document.createElement('button');
+                btn.className = 'popup-list-btn';
+                btn.textContent = button.label || button;
+                btn.onclick = () => {
+                    onClickCallback(button.value || button);
+                    closePopup();
+                };
+                listEl.appendChild(btn);
+            });
+            
+            overlay.classList.add('active');
+        }
+
+        function closePopup() {
+            const overlay = document.getElementById('popupOverlay');
+            overlay.classList.remove('active');
+        }
+
+        function closePopupIfClickedOutside(event) {
+            if (event.target.id === 'popupOverlay') {
+                closePopup();
+            }
+        }
 
         // Telnet IAC (Interpret As Command) constants
         const IAC = 255;  // 0xFF
@@ -1015,6 +1136,40 @@
                     currentSpells = spells;
                     waitingForSpells = false;
                     console.log('Spells found:', spells);
+                    // Auto-show spell list in popup
+                    showPopup('Select Spell', currentSpells, (spell) => {
+                        selectedSpell = spell;
+                        if (currentTargets.length > 0) {
+                            showPopup('Select Target', currentTargets, (target) => {
+                                sendCommand('cast ' + selectedSpell + ' ' + target);
+                                selectedSpell = null;
+                                waitingForSpellRefresh = true;
+                                setTimeout(() => sendCommand('hits'), 100);
+                            });
+                        } else {
+                            sendCommand('cast ' + selectedSpell);
+                            selectedSpell = null;
+                        }
+                    });
+                }
+            }
+        }
+            // Look for "You have the ability to cast:" followed by spell names
+            const regex = /You have the ability to cast:\s*([^\n]+)/i;
+            const match = recentTerminalText.match(regex);
+            
+            if (match) {
+                const spellString = match[1];
+                // Split by spaces and/or tabs
+                const spells = spellString
+                    .split(/[\s\t]+/)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                
+                if (spells.length > 0) {
+                    currentSpells = spells;
+                    waitingForSpells = false;
+                    console.log('Spells found:', spells);
                     // Auto-show spell list
                     showSpellButtons();
                 }
@@ -1040,35 +1195,7 @@
             }
         }
 
-        function showSocialActions() {
-            const socialContainer = document.getElementById('socialActions');
-            socialContainer.innerHTML = '';
-            
-            const actions = [
-                'Bow', 'Blush', 'Burp', 'Chortle', 'Cry',
-                'Frown', 'Glare', 'Grin', 'Grumble', 'Hug',
-                'Kick', 'Kiss', 'Laugh', 'Nod', 'Smack',
-                'Smile', 'Smooch', 'Snarl', 'Wave'
-            ];
-            
-            actions.forEach(action => {
-                const btn = document.createElement('button');
-                btn.className = 'spell-btn';
-                btn.textContent = action;
-                btn.onclick = () => {
-                    sendCommand(action);
-                    hideSocialActions();
-                };
-                socialContainer.appendChild(btn);
-            });
-            
-            socialContainer.classList.add('active');
-        }
 
-        function hideSocialActions() {
-            const socialContainer = document.getElementById('socialActions');
-            socialContainer.classList.remove('active');
-        }
 
         function handleHelpButton() {
             const helpContainer = document.getElementById('helpTopics');
@@ -1088,37 +1215,7 @@
             }
         }
 
-        function showHelpTopics() {
-            const helpContainer = document.getElementById('helpTopics');
-            helpContainer.innerHTML = '';
-            
-            const topics = [
-                'Air', 'Attributes', 'Combat', 'Commands', 'Credits',
-                'Earth', 'Elements', 'Experience', 'Fire', 'Gold',
-                'Hints', 'Invoking', 'Items', 'Magic', 'Movement',
-                'Speed', 'Starting', 'Talismans', 'Water'
-            ];
-            
-            topics.forEach(topic => {
-                const btn = document.createElement('button');
-                btn.className = 'spell-btn';
-                btn.textContent = topic;
-                btn.onclick = () => {
-                    sendCommand('help ' + topic);
-                    hideHelpTopics();
-            hideShopActions();
-            hideSocialActions();
-                };
-                helpContainer.appendChild(btn);
-            });
-            
-            helpContainer.classList.add('active');
-        }
 
-        function hideHelpTopics() {
-            const helpContainer = document.getElementById('helpTopics');
-            helpContainer.classList.remove('active');
-        }
 
         function handleSocialButton() {
             const socialContainer = document.getElementById('socialActions');
@@ -1138,35 +1235,7 @@
             }
         }
 
-        function showSocialActions() {
-            const socialContainer = document.getElementById('socialActions');
-            socialContainer.innerHTML = '';
-            
-            const actions = [
-                'Bow', 'Blush', 'Burp', 'Chortle', 'Cry',
-                'Frown', 'Glare', 'Grin', 'Grumble', 'Hug',
-                'Kick', 'Kiss', 'Laugh', 'Nod', 'Smack',
-                'Smile', 'Smooch', 'Snarl', 'Wave'
-            ];
-            
-            actions.forEach(action => {
-                const btn = document.createElement('button');
-                btn.className = 'spell-btn';
-                btn.textContent = action;
-                btn.onclick = () => {
-                    sendCommand(action);
-                    hideSocialActions();
-                };
-                socialContainer.appendChild(btn);
-            });
-            
-            socialContainer.classList.add('active');
-        }
 
-        function hideSocialActions() {
-            const socialContainer = document.getElementById('socialActions');
-            socialContainer.classList.remove('active');
-        }
 
         function handleShopButton() {
             const shopContainer = document.getElementById('shopActions');
@@ -1186,29 +1255,7 @@
             }
         }
 
-        function showShopActions() {
-            const shopContainer = document.getElementById('shopActions');
-            shopContainer.innerHTML = '';
-            
-            const actions = ['Buy', 'Sell', 'Appraise'];
-            
-            actions.forEach(action => {
-                const btn = document.createElement('button');
-                btn.className = 'spell-btn';
-                btn.textContent = action;
-                btn.onclick = () => {
-                    handleShopAction(action);
-                };
-                shopContainer.appendChild(btn);
-            });
-            
-            shopContainer.classList.add('active');
-        }
 
-        function hideShopActions() {
-            const shopContainer = document.getElementById('shopActions');
-            shopContainer.classList.remove('active');
-        }
 
         function handleShopAction(action) {
             hideShopActions();
@@ -1289,21 +1336,10 @@
         }
 
         function showShopItemButtons(items, action) {
-            const targetContainer = document.getElementById('hitTargets');
-            targetContainer.innerHTML = '';
-            
-            items.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = 'target-btn';
-                btn.textContent = item;
-                btn.onclick = () => {
-                    sendCommand(action + ' ' + item);
-                    hideTargetButtons();
-                };
-                targetContainer.appendChild(btn);
+            const title = action === 'buy' ? 'Buy Item' : action === 'sell' ? 'Sell Item' : 'Appraise Item';
+            showPopup(title, items, (item) => {
+                sendCommand(action + ' ' + item);
             });
-            
-            targetContainer.classList.add('active');
         }
 
         function checkForSpellRefresh() {
@@ -1384,7 +1420,9 @@
                     
                     if (potions.length > 0) {
                         currentPotions = potions;
-                        showPotionButtons();
+                        showPopup('Select Potion', potions, (potion) => {
+                            sendCommand('drink ' + potion);
+                        });
                     } else {
                         // No potions, just send DRINK
                         currentPotions = [];
@@ -1415,28 +1453,7 @@
             sendCommand('i');
         }
 
-        function showPotionButtons() {
-            const potionContainer = document.getElementById('potionList');
-            potionContainer.innerHTML = '';
-            
-            currentPotions.forEach(potion => {
-                const btn = document.createElement('button');
-                btn.className = 'target-btn';
-                btn.textContent = potion;
-                btn.onclick = () => {
-                    sendCommand('drink ' + potion);
-                    hidePotionButtons();
-                };
-                potionContainer.appendChild(btn);
-            });
-            
-            potionContainer.classList.add('active');
-        }
 
-        function hidePotionButtons() {
-            const potionContainer = document.getElementById('potionList');
-            potionContainer.classList.remove('active');
-        }
 
         function extractExits() {
             // Look for "Visible exits are:" - use lastIndexOf to find the most recent occurrence
@@ -1515,14 +1532,72 @@
         }
 
         function handleHitButton() {
-            const targetContainer = document.getElementById('hitTargets');
-            
-            // Hide other lists if open
-            hideSpellButtons();
-            hidePotionButtons();
-            hideHelpTopics();
-            hideShopActions();
-            hideSocialActions();
+            if (currentTargets.length > 0) {
+                showPopup('Select Target', currentTargets, (target) => {
+                    sendCommand('hit ' + target);
+                    setTimeout(() => sendCommand('hits'), 100);
+                });
+            } else {
+                sendCommand('hit');
+            }
+        }
+
+        function handleCastButton() {
+            if (currentSpells.length > 0) {
+                showPopup('Select Spell', currentSpells, (spell) => {
+                    selectedSpell = spell;
+                    if (currentTargets.length > 0) {
+                        showPopup('Select Target', currentTargets, (target) => {
+                            sendCommand('cast ' + selectedSpell + ' ' + target);
+                            selectedSpell = null;
+                            waitingForSpellRefresh = true;
+                            setTimeout(() => sendCommand('hits'), 100);
+                        });
+                    } else {
+                        sendCommand('cast ' + selectedSpell);
+                        selectedSpell = null;
+                    }
+                });
+            } else {
+                waitingForSpells = true;
+                sendCommand('spells');
+            }
+        }
+
+        function handleDrinkButton() {
+            waitingForPotions = true;
+            sendCommand('i');
+        }
+
+        function handleHelpButton() {
+            const topics = [
+                'Air', 'Attributes', 'Combat', 'Commands', 'Credits',
+                'Earth', 'Elements', 'Experience', 'Fire', 'Gold',
+                'Hints', 'Invoking', 'Items', 'Magic', 'Movement',
+                'Speed', 'Starting', 'Talismans', 'Water'
+            ];
+            showPopup('Help Topics', topics, (topic) => {
+                sendCommand('help ' + topic);
+            });
+        }
+
+        function handleSocialButton() {
+            const actions = [
+                'Bow', 'Blush', 'Burp', 'Chortle', 'Cry', 'Frown',
+                'Glare', 'Grin', 'Grumble', 'Hug', 'Kick', 'Kiss',
+                'Laugh', 'Nod', 'Smack', 'Smile', 'Smooch', 'Snarl', 'Wave'
+            ];
+            showPopup('Social Actions', actions, (action) => {
+                sendCommand(action);
+            });
+        }
+
+        function handleShopButton() {
+            const actions = ['Buy', 'Sell', 'Appraise'];
+            showPopup('Shop', actions, (action) => {
+                handleShopAction(action);
+            });
+        }
             
             
             if (currentTargets.length > 0) {
@@ -1562,93 +1637,11 @@
             }
         }
 
-        function showSpellButtons() {
-            const spellContainer = document.getElementById('spellList');
-            spellContainer.innerHTML = '';
-            
-            currentSpells.forEach(spell => {
-                const btn = document.createElement('button');
-                btn.className = 'spell-btn';
-                btn.textContent = spell;
-                btn.onclick = () => {
-                    handleSpellSelection(spell);
-                };
-                spellContainer.appendChild(btn);
-            });
-            
-            spellContainer.classList.add('active');
-        }
 
-        function hideSpellButtons() {
-            const spellContainer = document.getElementById('spellList');
-            spellContainer.classList.remove('active');
-            // Don't reset selectedSpell here - it's needed for casting
-        }
 
-        function handleSpellSelection(spell) {
-            selectedSpell = spell;
-            console.log('Selected spell:', selectedSpell);
-            hideSpellButtons();
-            
-            // Show target selection
-            if (currentTargets.length > 0) {
-                showSpellTargetButtons();
-            } else {
-                // No targets, just cast spell
-                sendCommand('cast ' + selectedSpell);
-                selectedSpell = null;
-            }
-        }
 
-        function showSpellTargetButtons() {
-            const targetContainer = document.getElementById('hitTargets');
-            targetContainer.innerHTML = '';
-            
-            currentTargets.forEach(target => {
-                const btn = document.createElement('button');
-                btn.className = 'target-btn';
-                btn.textContent = target;
-                btn.onclick = () => {
-                    console.log('Casting:', selectedSpell, 'on', target);
-                    sendCommand('cast ' + selectedSpell + ' ' + target);
-                    hideTargetButtons();
-                    selectedSpell = null;
-                    // Set flag to check if spell refresh needed
-                    waitingForSpellRefresh = true;
-                    // Auto-call HITS after CAST
-                    setTimeout(() => sendCommand('hits'), 100);
-                };
-                targetContainer.appendChild(btn);
-            });
-            
-            targetContainer.classList.add('active');
-        }
 
-        function showTargetButtons() {
-            const targetContainer = document.getElementById('hitTargets');
-            targetContainer.innerHTML = '';
-            
-            currentTargets.forEach(target => {
-                const btn = document.createElement('button');
-                btn.className = 'target-btn';
-                btn.textContent = target;
-                btn.onclick = () => {
-                    sendCommand('hit ' + target);
-                    hideTargetButtons();
-                    // Auto-call HITS after HIT
-                    setTimeout(() => sendCommand('hits'), 100);
-                };
-                targetContainer.appendChild(btn);
-            });
-            
-            targetContainer.classList.add('active');
-        }
 
-        function hideTargetButtons() {
-            const targetContainer = document.getElementById('hitTargets');
-            targetContainer.classList.remove('active');
-            targetContainer.innerHTML = '';
-        }
 
         function sendCurrentInput() {
             const input = document.getElementById('commandInput');
