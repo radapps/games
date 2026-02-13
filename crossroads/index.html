@@ -1048,9 +1048,15 @@
         }
 
         function extractTargets(text) {
+            // First find the last occurrence of "...You" to get the most recent room description
+            const youIndex = text.lastIndexOf('You');
+            
+            // If "You" is found, only look for targets after that point
+            const searchText = youIndex !== -1 ? text.substring(youIndex) : text;
+            
             // Look for pattern: "There is a ... here."
             const regex = /There is (?:a |an )?(.*?) here\./gi;
-            const matches = [...text.matchAll(regex)];
+            const matches = [...searchText.matchAll(regex)];
             
             if (matches.length > 0) {
                 // Get the last match (most recent)
@@ -1371,17 +1377,25 @@
             if (currentSpells.length > 0) {
                 showPopup('Select Spell', currentSpells, (spell) => {
                     selectedSpell = spell;
-                    if (currentTargets.length > 0) {
-                        showPopup('Select Target', currentTargets, (target) => {
-                            sendCommand('cast ' + selectedSpell + ' ' + target);
+                    console.log('Spell selected:', selectedSpell);
+                    
+                    // Close the spell popup first
+                    closePopup();
+                    
+                    // Then show target popup after a small delay to ensure first popup is closed
+                    setTimeout(() => {
+                        if (currentTargets.length > 0) {
+                            showPopup('Select Target', currentTargets, (target) => {
+                                sendCommand('cast ' + selectedSpell + ' ' + target);
+                                selectedSpell = null;
+                                waitingForSpellRefresh = true;
+                                setTimeout(() => sendCommand('hits'), 100);
+                            });
+                        } else {
+                            sendCommand('cast ' + selectedSpell);
                             selectedSpell = null;
-                            waitingForSpellRefresh = true;
-                            setTimeout(() => sendCommand('hits'), 100);
-                        });
-                    } else {
-                        sendCommand('cast ' + selectedSpell);
-                        selectedSpell = null;
-                    }
+                        }
+                    }, 100);
                 });
             } else {
                 waitingForSpells = true;
