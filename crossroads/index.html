@@ -625,10 +625,10 @@
                             <div class="button-spacer"></div>
                         </div>
 
-                        <!-- Row 4: Shop, <empty>, <empty>, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: Shop, Equip, <empty>, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="handleEquipButton()" title="Equip">🛡️</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -673,6 +673,9 @@
         let waitingForSellItems = false; // Waiting for sell inventory
         let waitingForAppraiseItems = false; // Waiting for appraise inventory
         let currentShopkeeper = null; // Current shopkeeper name
+        let currentUsername = ''; // Logged-in username
+        let waitingForArmItems = false; // Waiting for arm inventory
+        let waitingForWearItems = false; // Waiting for wear inventory
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -792,10 +795,11 @@
                 return;
             }
 
-            // Save credentials
+            // Save credentials and username
             localStorage.setItem('bbs_ws_url', wsUrl);
             localStorage.setItem('bbs_username', username);
             localStorage.setItem('bbs_password', password);
+            currentUsername = username; // Store for self-targeting spells
 
             // Hide login, show terminal
             document.getElementById('loginPanel').classList.add('hidden');
@@ -890,6 +894,11 @@
                         // Extract sell/appraise items if waiting
                         if (waitingForSellItems || waitingForAppraiseItems) {
                             extractInventoryForShop();
+                        }
+                        
+                        // Extract arm/wear items if waiting
+                        if (waitingForArmItems || waitingForWearItems) {
+                            extractInventoryForEquip();
                         }
                     }
                 };
@@ -1193,6 +1202,50 @@
             }
         }
 
+        function extractInventoryForEquip() {
+            // Look for "You are holding" - use lastIndexOf to find the most recent occurrence
+            const searchText = 'You are holding';
+            const lastIndex = recentTerminalText.lastIndexOf(searchText);
+            
+            if (lastIndex !== -1) {
+                // Extract text after "You are holding"
+                const afterText = recentTerminalText.substring(lastIndex + searchText.length);
+                
+                // Take until newline or period
+                const match = afterText.match(/^([^\n.]+)/);
+                
+                if (match) {
+                    const itemString = match[1];
+                    
+                    // Split by commas and "and", then clean up
+                    const items = itemString
+                        .replace(/\s+and\s+/gi, ',') // Replace "and" with comma
+                        .split(/[,]/)
+                        .map(item => item.trim())
+                        .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .filter(item => item.length > 0)
+                        .filter(item => !['a', 'an'].includes(item.toLowerCase())); // Filter out standalone "a" or "an"
+                    
+                    if (items.length > 0) {
+                        if (waitingForArmItems) {
+                            waitingForArmItems = false;
+                            showEquipItemButtons(items, 'arm');
+                        } else if (waitingForWearItems) {
+                            waitingForWearItems = false;
+                            showEquipItemButtons(items, 'wear');
+                        }
+                    }
+                }
+            }
+        }
+
+        function showEquipItemButtons(items, action) {
+            const title = action === 'arm' ? 'Arm Item' : 'Wear Item';
+            showPopup(title, items, (item) => {
+                sendCommand(action + ' ' + item);
+            });
+        }
+
         function showShopItemButtons(items, action) {
             const title = action === 'buy' ? 'Buy Item' : action === 'sell' ? 'Sell Item' : 'Appraise Item';
             showPopup(title, items, (item) => {
@@ -1384,9 +1437,14 @@
                     console.log('Spell selected:', selectedSpell);
                     
                     // Popup already closed before this callback, so we can show target popup immediately
-                    if (currentTargets.length > 0) {
-                        console.log('Showing targets:', currentTargets);
-                        showPopup('Select Target', currentTargets, (target) => {
+                    if (currentTargets.length > 0 || currentUsername) {
+                        // Add username as a target option for self-casting
+                        const targets = [...currentTargets];
+                        if (currentUsername) {
+                            targets.push(currentUsername);
+                        }
+                        console.log('Showing targets:', targets);
+                        showPopup('Select Target', targets, (target) => {
                             console.log('Target selected:', target);
                             sendCommand('cast ' + selectedSpell + ' ' + target);
                             selectedSpell = null;
@@ -1438,6 +1496,27 @@
             showPopup('Shop', actions, (action) => {
                 handleShopAction(action);
             });
+        }
+
+        function handleEquipButton() {
+            const actions = ['Arm', 'Disarm', 'Wear', 'Disrobe'];
+            showPopup('Equip', actions, (action) => {
+                handleEquipAction(action);
+            });
+        }
+
+        function handleEquipAction(action) {
+            if (action === 'Arm') {
+                waitingForArmItems = true;
+                sendCommand('i');
+            } else if (action === 'Disarm') {
+                sendCommand('disarm');
+            } else if (action === 'Wear') {
+                waitingForWearItems = true;
+                sendCommand('i');
+            } else if (action === 'Disrobe') {
+                sendCommand('disrobe');
+            }
         }
 
         function sendCurrentInput() {
