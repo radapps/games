@@ -327,6 +327,36 @@
             transform: translateX(2px);
         }
 
+        /* Map Image Popup */
+        .map-image-container {
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow: auto;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .map-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+
+        .map-image.zoomed {
+            cursor: zoom-out;
+            transform: scale(1.5);
+            transform-origin: center;
+        }
+
+        @media (max-width: 768px) {
+            .map-image.zoomed {
+                transform: scale(2);
+            }
+        }
+
         /* Input Row */
         .input-row {
             display: flex;
@@ -625,11 +655,11 @@
                             <div class="button-spacer"></div>
                         </div>
 
-                        <!-- Row 4: Shop, Equip, <empty>, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: Shop, Equip, Map, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
                             <button class="control-btn" onclick="handleEquipButton()" title="Equip">🛡️</button>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="handleMapButton()" title="Map">🌎</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -1207,6 +1237,9 @@
             const searchText = 'You are holding';
             const lastIndex = recentTerminalText.lastIndexOf(searchText);
             
+            console.log('Equip: Looking for inventory, lastIndex:', lastIndex);
+            console.log('Equip: Recent text length:', recentTerminalText.length);
+            
             if (lastIndex !== -1) {
                 // Extract text after "You are holding"
                 const afterText = recentTerminalText.substring(lastIndex + searchText.length);
@@ -1216,6 +1249,7 @@
                 
                 if (match) {
                     const itemString = match[1];
+                    console.log('Equip: Raw item string:', itemString);
                     
                     // Split by commas and "and", then clean up
                     const items = itemString
@@ -1225,6 +1259,8 @@
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
                         .filter(item => item.length > 0)
                         .filter(item => !['a', 'an'].includes(item.toLowerCase())); // Filter out standalone "a" or "an"
+                    
+                    console.log('Equip: Parsed items:', items);
                     
                     if (items.length > 0) {
                         if (waitingForArmItems) {
@@ -1505,13 +1541,47 @@
             });
         }
 
+        function handleMapButton() {
+            // Detect if mobile or desktop
+            const isMobile = window.innerWidth <= 768;
+            const mapImage = isMobile ? 'xroads-town-map-small.png' : 'xroads-town-map-medium.png';
+            
+            showMapPopup(mapImage);
+        }
+
+        function showMapPopup(imagePath) {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            
+            titleEl.textContent = 'Town Map';
+            
+            // Create image container with zoom capability
+            listEl.innerHTML = `
+                <div class="map-image-container">
+                    <img src="${imagePath}" alt="Town Map" class="map-image" id="mapImage" onclick="toggleMapZoom()">
+                </div>
+            `;
+            
+            overlay.classList.add('active');
+        }
+
+        function toggleMapZoom() {
+            const img = document.getElementById('mapImage');
+            if (img) {
+                img.classList.toggle('zoomed');
+            }
+        }
+
         function handleEquipAction(action) {
             if (action === 'Arm') {
+                // Always refresh inventory before showing items
                 waitingForArmItems = true;
                 sendCommand('i');
             } else if (action === 'Disarm') {
                 sendCommand('disarm');
             } else if (action === 'Wear') {
+                // Always refresh inventory before showing items
                 waitingForWearItems = true;
                 sendCommand('i');
             } else if (action === 'Disrobe') {
