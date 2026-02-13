@@ -688,8 +688,12 @@
                 btn.className = 'popup-list-btn';
                 btn.textContent = button.label || button;
                 btn.onclick = () => {
-                    onClickCallback(button.value || button);
+                    const value = button.value || button;
                     closePopup();
+                    // Call callback AFTER popup is closed to prevent race conditions
+                    setTimeout(() => {
+                        onClickCallback(value);
+                    }, 50);
                 };
                 listEl.appendChild(btn);
             });
@@ -1049,9 +1053,9 @@
 
         function extractTargets(text) {
             // First find the last occurrence of "...You" to get the most recent room description
-            const youIndex = text.lastIndexOf('You');
+            const youIndex = text.lastIndexOf('...You');
             
-            // If "You" is found, only look for targets after that point
+            // If "...You" is found, only look for targets after that point
             const searchText = youIndex !== -1 ? text.substring(youIndex) : text;
             
             // Look for pattern: "There is a ... here."
@@ -1379,23 +1383,21 @@
                     selectedSpell = spell;
                     console.log('Spell selected:', selectedSpell);
                     
-                    // Close the spell popup first
-                    closePopup();
-                    
-                    // Then show target popup after a small delay to ensure first popup is closed
-                    setTimeout(() => {
-                        if (currentTargets.length > 0) {
-                            showPopup('Select Target', currentTargets, (target) => {
-                                sendCommand('cast ' + selectedSpell + ' ' + target);
-                                selectedSpell = null;
-                                waitingForSpellRefresh = true;
-                                setTimeout(() => sendCommand('hits'), 100);
-                            });
-                        } else {
-                            sendCommand('cast ' + selectedSpell);
+                    // Popup already closed before this callback, so we can show target popup immediately
+                    if (currentTargets.length > 0) {
+                        console.log('Showing targets:', currentTargets);
+                        showPopup('Select Target', currentTargets, (target) => {
+                            console.log('Target selected:', target);
+                            sendCommand('cast ' + selectedSpell + ' ' + target);
                             selectedSpell = null;
-                        }
-                    }, 100);
+                            waitingForSpellRefresh = true;
+                            setTimeout(() => sendCommand('hits'), 100);
+                        });
+                    } else {
+                        console.log('No targets, casting directly');
+                        sendCommand('cast ' + selectedSpell);
+                        selectedSpell = null;
+                    }
                 });
             } else {
                 waitingForSpells = true;
