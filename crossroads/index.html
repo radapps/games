@@ -506,20 +506,38 @@
                                 <div class="target-buttons" id="potionList"></div>
                             </div>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
-                            <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
-                            <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
+                            </div>
                         </div>
                         
                         <!-- Row 2: I, LOOK, HITS, <empty>, W, EX, E -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
-                            <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
+                            </div>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
-                            <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
-                            <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
+                            </div>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
+                            </div>
                         </div>
                         
                         <!-- Row 3: Help, Social, Stats, <empty>, <empty>, S, <empty> -->
@@ -532,10 +550,14 @@
                                 <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
                                 <div class="spell-buttons" id="socialActions"></div>
                             </div>
-                            <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
+                            </div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
+                            <div style="position: relative;">
+                                <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
+                            </div>
                             <div class="button-spacer"></div>
                         </div>
 
@@ -552,6 +574,9 @@
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                         </div>
+                        
+                        <!-- Extra padding for scroll visibility -->
+                        <div style="height: 200px;"></div>
                     </div>
                 </div>
             </div>
@@ -1151,7 +1176,6 @@
             hideSpellButtons();
             hidePotionButtons();
             hideHelpTopics();
-            hideShopActions();
             hideSocialActions();
             
             // Toggle shop actions
