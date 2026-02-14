@@ -1204,8 +1204,8 @@
                 // Extract text after "You are holding"
                 const afterText = recentTerminalText.substring(lastIndex + searchText.length);
                 
-                // Take until newline or period
-                const match = afterText.match(/^([^\n.]+)/);
+                // Take until period (including newlines)
+                const match = afterText.match(/^([\s\S]+?)\./);
                 
                 if (match) {
                     const itemString = match[1];
@@ -1244,8 +1244,8 @@
                 // Extract text after "You are holding"
                 const afterText = recentTerminalText.substring(lastIndex + searchText.length);
                 
-                // Take until newline or period
-                const match = afterText.match(/^([^\n.]+)/);
+                // Take until period (including newlines)
+                const match = afterText.match(/^([\s\S]+?)\./);
                 
                 if (match) {
                     const itemString = match[1];
@@ -1341,8 +1341,8 @@
                 // Extract text after "You are holding"
                 const afterText = recentTerminalText.substring(lastIndex + searchText.length);
                 
-                // Take until newline or period
-                const match = afterText.match(/^([^\n.]+)/);
+                // Take until period (including newlines)
+                const match = afterText.match(/^([\s\S]+?)\./);
                 
                 if (match) {
                     const itemString = match[1];
@@ -1388,7 +1388,7 @@
                 // Extract text after "Visible exits are:"
                 const afterText = recentTerminalText.substring(lastIndex + searchText.length);
                 
-                // Take until newline or period
+                // Take until period (including newlines)
                 const match = afterText.match(/^([^\n.]+)/);
                 
                 if (match) {
