@@ -1239,12 +1239,12 @@
 
         function handleShopAction(action) {
             if (action === 'Buy') {
-                // Find shopkeeper and look at them
-                const shopkeeperMatch = recentTerminalText.match(/(\w+)\s+is here\./i);
-                if (shopkeeperMatch) {
-                    currentShopkeeper = shopkeeperMatch[1];
+                // Find shopkeeper using improved detection
+                const shopkeeper = findShopkeeper();
+                if (shopkeeper) {
+                    currentShopkeeper = shopkeeper;
                     waitingForShopItems = true;
-                    sendCommand('look ' + currentShopkeeper);
+                    sendCommand('look ' + shopkeeper);
                 } else {
                     alert('No shopkeeper found in the room');
                 }
@@ -1255,6 +1255,41 @@
                 waitingForAppraiseItems = true;
                 sendCommand('i');
             }
+        }
+
+        function findShopkeeper() {
+            // Known shopkeeper names
+            const shopkeeperNames = [
+                'monk', 'Oria', 'Zell', 'Hanrod', 'Wenzel', 'Izalig',
+                'Amaranth', 'Klemm', 'Hebezega', 'Black', 'Lor', 'Dara',
+                'Marna', 'Arond', 'Jomb', 'Mokkis', 'Roltima'
+            ];
+            
+            // Find last occurrence of "here."
+            const lastIndex = recentTerminalText.lastIndexOf('here.');
+            
+            if (lastIndex !== -1) {
+                // Get text before "here." to find the sentence
+                const beforeText = recentTerminalText.substring(0, lastIndex);
+                
+                // Find the start of this sentence (look for previous period or start of text)
+                const lastPeriod = beforeText.lastIndexOf('.');
+                const sentenceStart = lastPeriod !== -1 ? lastPeriod + 1 : 0;
+                const sentence = recentTerminalText.substring(sentenceStart, lastIndex + 5); // Include "here."
+                
+                console.log('Shopkeeper search - sentence:', sentence);
+                
+                // Check if any shopkeeper name is in this sentence
+                for (const name of shopkeeperNames) {
+                    if (sentence.includes(name)) {
+                        console.log('Found shopkeeper:', name);
+                        return name;
+                    }
+                }
+            }
+            
+            console.log('No shopkeeper found');
+            return null;
         }
 
         function extractShopItems() {
