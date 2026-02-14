@@ -357,6 +357,82 @@
             }
         }
 
+        /* Settings Controls */
+        .settings-group {
+            margin: 16px 0;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .settings-label {
+            display: block;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .settings-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .settings-toggle button {
+            flex: 1;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-toggle button.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        .settings-toggle button:hover:not(.active) {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .font-size-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .font-size-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .font-size-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .font-size-display {
+            flex: 1;
+            text-align: center;
+            font-size: 1em;
+            color: var(--text-secondary);
+        }
+
         /* Input Row */
         .input-row {
             display: flex;
@@ -622,14 +698,13 @@
                 <!-- Buttons Row -->
                 <div class="buttons-row">
                     <div class="all-buttons-container">
-                        <!-- Row 1: HIT, CAST, DRINK, <empty>, LOOK, D, N, U -->
+                        <!-- Row 1: HIT, CAST, DRINK, <empty>, LOOK, N, U -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
                             <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
                             <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
                             <div class="button-spacer"></div>
                             <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
-                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                             <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
                             <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
@@ -645,7 +720,7 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: SHOP, SOCIAL, STATS, <empty>, MAP, <empty>, S -->
+                        <!-- Row 3: SHOP, SOCIAL, STATS, <empty>, MAP, S, D -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
                             <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
@@ -653,13 +728,13 @@
                             <div class="button-spacer"></div>
                             <button class="control-btn" onclick="handleMapButton()" title="Map">🌎</button>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                         </div>
 
-                        <!-- Row 4: HELP, <empty>, <empty>, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: HELP, SETTINGS, <empty>, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="handleSettingsButton()" title="Settings">⚙️</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -707,6 +782,8 @@
         let currentUsername = ''; // Logged-in username
         let waitingForArmItems = false; // Waiting for arm inventory
         let waitingForWearItems = false; // Waiting for wear inventory
+        let terminalFontSize = 1.2; // Current terminal font size in em
+        let descriptionMode = 'long'; // 'short' or 'long'
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -814,6 +891,9 @@
             if (saved.wsUrl) document.getElementById('wsUrl').value = saved.wsUrl;
             if (saved.username) document.getElementById('username').value = saved.username;
             if (saved.password) document.getElementById('password').value = saved.password;
+            
+            // Load settings
+            loadSettings();
         });
 
         function connect() {
@@ -1552,6 +1632,91 @@
             const mapImage = isMobile ? 'xroads-town-map-small.png' : 'xroads-town-map-medium.png';
             
             showMapPopup(mapImage);
+        }
+
+        function handleSettingsButton() {
+            showSettingsPopup();
+        }
+
+        function showSettingsPopup() {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            
+            titleEl.textContent = 'Settings';
+            
+            listEl.innerHTML = `
+                <div class="settings-group">
+                    <span class="settings-label">Descriptions</span>
+                    <div class="settings-toggle">
+                        <button id="descShort" onclick="setDescriptionMode('short')" ${descriptionMode === 'short' ? 'class="active"' : ''}>Short</button>
+                        <button id="descLong" onclick="setDescriptionMode('long')" ${descriptionMode === 'long' ? 'class="active"' : ''}>Long</button>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <span class="settings-label">Terminal Font Size</span>
+                    <div class="font-size-controls">
+                        <button class="font-size-btn" onclick="decreaseFontSize()">🗚</button>
+                        <div class="font-size-display" id="fontSizeDisplay">${terminalFontSize.toFixed(1)}em</div>
+                        <button class="font-size-btn" onclick="increaseFontSize()">🗛</button>
+                    </div>
+                </div>
+            `;
+            
+            overlay.classList.add('active');
+        }
+
+        function setDescriptionMode(mode) {
+            descriptionMode = mode;
+            localStorage.setItem('bbs_description_mode', mode);
+            
+            // Update button states
+            document.getElementById('descShort').classList.toggle('active', mode === 'short');
+            document.getElementById('descLong').classList.toggle('active', mode === 'long');
+            
+            // Send command
+            if (mode === 'short') {
+                sendCommand('brief');
+            } else {
+                sendCommand('verbose');
+            }
+        }
+
+        function increaseFontSize() {
+            if (terminalFontSize < 2.0) {
+                terminalFontSize += 0.1;
+                applyFontSize();
+            }
+        }
+
+        function decreaseFontSize() {
+            if (terminalFontSize > 0.5) {
+                terminalFontSize -= 0.1;
+                applyFontSize();
+            }
+        }
+
+        function applyFontSize() {
+            const terminal = document.getElementById('terminal');
+            terminal.style.fontSize = terminalFontSize + 'em';
+            document.getElementById('fontSizeDisplay').textContent = terminalFontSize.toFixed(1) + 'em';
+            localStorage.setItem('bbs_terminal_font_size', terminalFontSize);
+        }
+
+        function loadSettings() {
+            // Load saved settings
+            const savedFontSize = localStorage.getItem('bbs_terminal_font_size');
+            if (savedFontSize) {
+                terminalFontSize = parseFloat(savedFontSize);
+                const terminal = document.getElementById('terminal');
+                terminal.style.fontSize = terminalFontSize + 'em';
+            }
+            
+            const savedDescMode = localStorage.getItem('bbs_description_mode');
+            if (savedDescMode) {
+                descriptionMode = savedDescMode;
+            }
         }
 
         function showMapPopup(imagePath) {
