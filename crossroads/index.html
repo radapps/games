@@ -622,21 +622,22 @@
                 <!-- Buttons Row -->
                 <div class="buttons-row">
                     <div class="all-buttons-container">
-                        <!-- Row 1: HIT, CAST, DRINK, <empty>, D, N, U -->
+                        <!-- Row 1: HIT, CAST, DRINK, <empty>, LOOK, D, N, U -->
                         <div class="button-row">
                             <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
                             <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
                             <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
                             <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
                             <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                             <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
                             <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
                         
-                        <!-- Row 2: I, LOOK, HITS, <empty>, W, EX, E -->
+                        <!-- Row 2: I, EQUIP, HITS, <empty>, W, EX, E -->
                         <div class="button-row">
                             <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
+                            <button class="control-btn" onclick="handleEquipButton()" title="Equip">🛡️</button>
                             <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
                             <div class="button-spacer"></div>
                             <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
@@ -644,22 +645,22 @@
                             <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
-                        <!-- Row 3: Help, Social, Stats, <empty>, <empty>, S, <empty> -->
+                        <!-- Row 3: SHOP, SOCIAL, STATS, <empty>, MAP, <empty>, S -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
+                            <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
                             <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
                             <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
                             <div class="button-spacer"></div>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn" onclick="handleMapButton()" title="Map">🌎</button>
                             <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                             <div class="button-spacer"></div>
                         </div>
 
-                        <!-- Row 4: Shop, Equip, Map, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: HELP, <empty>, <empty>, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
-                            <button class="control-btn" onclick="handleEquipButton()" title="Equip">🛡️</button>
-                            <button class="control-btn" onclick="handleMapButton()" title="Map">🌎</button>
+                            <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
+                            <div class="button-spacer"></div>
+                            <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -1111,6 +1112,7 @@
                     .split(/(?:\s+and\s+|,\s*)/)
                     .map(t => t.trim())
                     .map(t => t.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .map(item => item.replace(/^suit of /i, '')) // Remove "suit of" prefix
                     .filter(t => t.length > 0);
                 
                 return targets;
@@ -1216,6 +1218,7 @@
                         .split(/[,]/)
                         .map(item => item.trim())
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .map(item => item.replace(/^suit of /i, '')) // Remove "suit of" prefix
                         .filter(item => item.length > 0)
                         .filter(item => !['a', 'an'].includes(item.toLowerCase())); // Filter out standalone "a" or "an"
                     
@@ -1257,6 +1260,7 @@
                         .split(/[,]/)
                         .map(item => item.trim())
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .map(item => item.replace(/^suit of /i, '')) // Remove "suit of" prefix
                         .filter(item => item.length > 0)
                         .filter(item => !['a', 'an'].includes(item.toLowerCase())); // Filter out standalone "a" or "an"
                     
@@ -1354,6 +1358,7 @@
                         .split(/[,]/)
                         .map(item => item.trim())
                         .map(item => item.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
+                        .map(item => item.replace(/^suit of /i, '')) // Remove "suit of" prefix
                         .filter(item => item.length > 0);
                     
                     // Filter only items ending with "potion"
