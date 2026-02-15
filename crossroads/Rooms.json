@@ -2676,14 +2676,7 @@
       "z":0
    },
    "5000":{
-      "long":"You're standing in the center of the city of Crossroads, at the\\nintersection of the town's main streets.  All around you, large brick\\nbuildings rise from the paved ground, many of them covered and patched\\nwith boards.  The cobblestones here are very worn, often tread by the\\ncity's inhabitants.  A giant tower rises from the center of the\\nintersection, standing on four stone pillars.  Between the pillars\\nlies a slightly worn fountain.  You also notice a large, wooden sign\\nstuck on a post in the cobblestones.  You can exit in any direction or\\nclimb the stairs into the tower.",
       "short":"...You're in the towne square.",
-      "east":"5007",
-      "west":"5001",
-      "south":"5019",
-      "north":"5013",
-      "up":"2",
-      "down":"0",
       "x":0,
       "y":0,
       "z":0
