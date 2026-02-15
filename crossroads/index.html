@@ -1108,6 +1108,37 @@
         }
 
         function processANSI(text) {
+            // XP table for level progression
+            const xpTable = [
+                0, 121, 301, 587, 1082, 1866, 3180, 5251, 8674, 14042,
+                22826, 36551, 58772, 93324, 148854, 234910, 372322, 584686,
+                921970, 1441931, 2264012, 3528732, 5520666, 8579686, 13381636,
+                20744626, 32269282, 49916387, 77467454, 119604354
+            ];
+            
+            // Process Experience line to show next level XP
+            text = text.replace(/Experience\s+:\s+(\d+)/g, (match, currentXP) => {
+                const xp = parseInt(currentXP.replace(/,/g, ''));
+                
+                // Find next level XP
+                let nextLevelXP = null;
+                for (let i = 0; i < xpTable.length; i++) {
+                    if (xpTable[i] > xp) {
+                        nextLevelXP = xpTable[i];
+                        break;
+                    }
+                }
+                
+                if (nextLevelXP !== null) {
+                    // Format with commas
+                    const formattedNextXP = nextLevelXP.toLocaleString();
+                    return `Experience  : ${currentXP} / ${formattedNextXP}`;
+                } else {
+                    // Max level reached
+                    return match;
+                }
+            });
+            
             // Apply color rules based on line endings BEFORE HTML escaping
             // Split by any line ending (CRLF, CR, or LF)
             const lines = text.split(/\r\n|\r|\n/);
