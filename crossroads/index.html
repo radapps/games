@@ -784,6 +784,10 @@
         let waitingForWearItems = false; // Waiting for wear inventory
         let terminalFontSize = 1.2; // Current terminal font size in em
         let descriptionMode = 'long'; // 'short' or 'long'
+        let waitingForShopDetection = false; // Waiting to detect shopkeeper before showing shop menu
+        let waitingForGoldCheck = false; // Waiting to check player gold before buying
+        let playerGold = 0; // Current player gold
+        let currentShopItems = []; // Items in shop with prices
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -1010,6 +1014,16 @@
                         // Extract arm/wear items if waiting
                         if (waitingForArmItems || waitingForWearItems) {
                             extractInventoryForEquip();
+                        }
+                        
+                        // Check for shopkeeper detection
+                        if (waitingForShopDetection) {
+                            checkForShopkeeper();
+                        }
+                        
+                        // Check for gold amount
+                        if (waitingForGoldCheck) {
+                            extractPlayerGold();
                         }
                     }
                 };
@@ -1239,15 +1253,9 @@
 
         function handleShopAction(action) {
             if (action === 'Buy') {
-                // Find shopkeeper using improved detection
-                const shopkeeper = findShopkeeper();
-                if (shopkeeper) {
-                    currentShopkeeper = shopkeeper;
-                    waitingForShopItems = true;
-                    sendCommand('look ' + shopkeeper);
-                } else {
-                    alert('No shopkeeper found in the room');
-                }
+                // Check player gold first, then look at shopkeeper
+                waitingForGoldCheck = true;
+                sendCommand('i');
             } else if (action === 'Sell') {
                 waitingForSellItems = true;
                 sendCommand('i');
@@ -1292,6 +1300,89 @@
             return null;
         }
 
+        function checkForShopkeeper() {
+            waitingForShopDetection = false;
+            const shopkeeper = findShopkeeper();
+            
+            if (shopkeeper) {
+                currentShopkeeper = shopkeeper;
+                // Show shop menu
+                const actions = ['Buy', 'Sell', 'Appraise'];
+                showPopup('Shop', actions, (action) => {
+                    handleShopAction(action);
+                });
+            } else {
+                alert('No shopkeeper found in this room');
+            }
+        }
+
+        function extractPlayerGold() {
+            // Look for "You have X gold pieces."
+            const match = recentTerminalText.match(/You have (\d+) gold piece/i);
+            
+            if (match) {
+                playerGold = parseInt(match[1]);
+                console.log('Player gold:', playerGold);
+                waitingForGoldCheck = false;
+                
+                // Now look at shopkeeper to get shop items
+                if (currentShopkeeper) {
+                    waitingForShopItems = true;
+                    sendCommand('look ' + currentShopkeeper);
+                }
+            }
+        }
+
+        function showShopItemsWithPrices() {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            
+            // Create header showing player gold
+            titleEl.innerHTML = `Buy Items - Gold: <span style="color: gold">${playerGold}</span>`;
+            
+            listEl.innerHTML = '';
+            
+            currentShopItems.forEach(item => {
+                const canAfford = playerGold >= item.price;
+                const btn = document.createElement('button');
+                btn.className = 'popup-list-btn';
+                btn.style.display = 'flex';
+                btn.style.justifyContent = 'space-between';
+                btn.style.alignItems = 'center';
+                
+                // Create name span
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = item.name;
+                if (!canAfford) {
+                    nameSpan.style.color = '#ff4444'; // Red for unaffordable
+                }
+                
+                // Create price span
+                const priceSpan = document.createElement('span');
+                priceSpan.textContent = item.price + 'g';
+                priceSpan.style.color = 'gold';
+                priceSpan.style.marginLeft = '16px';
+                
+                btn.appendChild(nameSpan);
+                btn.appendChild(priceSpan);
+                
+                if (canAfford) {
+                    btn.onclick = () => {
+                        sendCommand('buy ' + item.name);
+                        closePopup();
+                    };
+                } else {
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+                
+                listEl.appendChild(btn);
+            });
+            
+            overlay.classList.add('active');
+        }
+
         function extractShopItems() {
             // Look for shop inventory format: "Qty  Price  <item>"
             const lines = recentTerminalText.split('\n');
@@ -1300,15 +1391,20 @@
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 // Match lines with numbers (qty and price) followed by item name
-                const match = line.match(/^\d+\s+\d+\s+(.+)$/);
+                const match = line.match(/^\d+\s+(\d+)\s+(.+)$/);
                 if (match) {
-                    items.push(match[1].trim());
+                    items.push({
+                        name: match[2].trim(),
+                        price: parseInt(match[1])
+                    });
                 }
             }
             
             if (items.length > 0) {
                 waitingForShopItems = false;
-                showShopItemButtons(items, 'buy');
+                currentShopItems = items;
+                // Gold check already done, show items
+                showShopItemsWithPrices();
             }
         }
 
@@ -1648,10 +1744,9 @@
         }
 
         function handleShopButton() {
-            const actions = ['Buy', 'Sell', 'Appraise'];
-            showPopup('Shop', actions, (action) => {
-                handleShopAction(action);
-            });
+            // Send LOOK command to refresh room info
+            waitingForShopDetection = true;
+            sendCommand('look');
         }
 
         function handleEquipButton() {
@@ -1692,9 +1787,9 @@
                 <div class="settings-group">
                     <span class="settings-label">Terminal Font Size</span>
                     <div class="font-size-controls">
-                        <button class="font-size-btn" onclick="decreaseFontSize()">🗚</button>
+                        <button class="font-size-btn" onclick="decreaseFontSize()">⏬</button>
                         <div class="font-size-display" id="fontSizeDisplay">${terminalFontSize.toFixed(1)}em</div>
-                        <button class="font-size-btn" onclick="increaseFontSize()">🗛</button>
+                        <button class="font-size-btn" onclick="increaseFontSize()">⏫</button>
                     </div>
                 </div>
             `;
