@@ -82,15 +82,19 @@ const infoPanel = document.getElementById("infoPanel");
 let rooms = {};
 let currentZ = 0;
 
-let scale = 40; // pixels per tile
+let scale = 40;
 let offsetX = 0;
 let offsetY = 0;
 
 let dragging = false;
 let lastX, lastY;
 
-resizeCanvas();
+// cached transform data (IMPORTANT)
+let levelRooms = [];
+let minX = 0;
+let maxY = 0;
 
+resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 function resizeCanvas() {
@@ -132,20 +136,30 @@ function getRoomsForLevel() {
 }
 
 function centerMap() {
-    const levelRooms = getRoomsForLevel();
+    levelRooms = getRoomsForLevel();
+    if(levelRooms.length === 0) return;
+
     const xs = levelRooms.map(r=>r.x);
     const ys = levelRooms.map(r=>r.y);
 
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
+    minX = Math.min(...xs);
+    maxY = Math.max(...ys);
 
-    const mapWidth = (maxX - minX + 1) * scale;
-    const mapHeight = (maxY - minY + 1) * scale;
+    const originRoom = levelRooms.find(r => r.x === 0 && r.y === 0);
 
-    offsetX = canvas.width/2 - mapWidth/2;
-    offsetY = canvas.height/2 - mapHeight/2;
+    if(originRoom) {
+        const originDrawX = (originRoom.x - minX) * scale;
+        const originDrawY = (maxY - originRoom.y) * scale;
+
+        offsetX = canvas.width / 2 - originDrawX - scale/2;
+        offsetY = canvas.height / 2 - originDrawY - scale/2;
+    } else {
+        const mapWidth = (Math.max(...xs) - minX + 1) * scale;
+        const mapHeight = (maxY - Math.min(...ys) + 1) * scale;
+
+        offsetX = canvas.width/2 - mapWidth/2;
+        offsetY = canvas.height/2 - mapHeight/2;
+    }
 }
 
 function getRoomColor(text) {
@@ -161,13 +175,14 @@ function getRoomColor(text) {
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    const levelRooms = getRoomsForLevel();
+    levelRooms = getRoomsForLevel();
     if(levelRooms.length === 0) return;
 
     const xs = levelRooms.map(r=>r.x);
     const ys = levelRooms.map(r=>r.y);
-    const minX = Math.min(...xs);
-    const maxY = Math.max(...ys);
+
+    minX = Math.min(...xs);
+    maxY = Math.max(...ys);
 
     levelRooms.forEach(room => {
         const drawX = (room.x - minX) * scale + offsetX;
@@ -182,7 +197,7 @@ function draw() {
     });
 }
 
-/* Mouse + Touch Controls */
+/* Dragging */
 canvas.addEventListener("mousedown", e=>{
     dragging = true;
     lastX = e.clientX;
@@ -217,17 +232,11 @@ canvas.addEventListener("touchmove", e=>{
 
 canvas.addEventListener("touchend", ()=> dragging=false);
 
-/* Click detection */
+/* Click detection (fixed) */
 canvas.addEventListener("click", e=>{
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-
-    const levelRooms = getRoomsForLevel();
-    const xs = levelRooms.map(r=>r.x);
-    const ys = levelRooms.map(r=>r.y);
-    const minX = Math.min(...xs);
-    const maxY = Math.max(...ys);
 
     for(const room of levelRooms) {
         const x = (room.x - minX) * scale + offsetX;
@@ -236,7 +245,7 @@ canvas.addEventListener("click", e=>{
         if(mouseX >= x && mouseX <= x+scale &&
            mouseY >= y && mouseY <= y+scale) {
             showInfo(room);
-            break;
+            return;
         }
     }
 });
@@ -251,11 +260,13 @@ function showInfo(room) {
 
 function zoomIn() {
     scale += 5;
+    centerMap();
     draw();
 }
 
 function zoomOut() {
     scale = Math.max(10, scale-5);
+    centerMap();
     draw();
 }
 </script>
