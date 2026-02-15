@@ -1111,8 +1111,29 @@
             // Escape HTML
             text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             
-            // Highlight "The spell fizzled!" in red
-            text = text.replace(/(The spell fizzled!)/g, '<span style="color: #ff4444">$1</span>');
+            // Apply color rules based on line endings
+            // Split into lines, apply rules, then rejoin
+            const lines = text.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Check line endings and apply colors
+                if (line.endsWith('points!')) {
+                    lines[i] = '<span style="color: #d29922">' + line + '</span>';
+                } else if (line.endsWith('black smoke!')) {
+                    lines[i] = '<span style="color: #3fb950">' + line + '</span>';
+                } else if (line.endsWith('but misses!')) {
+                    lines[i] = '<span style="color: #ffffff">' + line + '</span>';
+                } else if (line.endsWith('you!')) {
+                    lines[i] = '<span style="color: #ff4444">' + line + '</span>';
+                } else if (line.endsWith('falls to the ground!')) {
+                    lines[i] = '<span style="color: #bc8cff">' + line + '</span>';
+                } else if (line.includes('The spell fizzled!')) {
+                    // Keep the existing fizzle highlighting
+                    lines[i] = line.replace(/(The spell fizzled!)/g, '<span style="color: #ff4444">$1</span>');
+                }
+            }
+            text = lines.join('\n');
 
             // Process ANSI escape codes
             const regex = /\x1b\[([0-9;]*)m/g;
