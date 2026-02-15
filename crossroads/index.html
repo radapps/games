@@ -788,6 +788,8 @@
         let waitingForGoldCheck = false; // Waiting to check player gold before buying
         let playerGold = 0; // Current player gold
         let currentShopItems = []; // Items in shop with prices
+        let waitingForTargetDetection = false; // Waiting for LOOK to detect targets
+        let targetDetectionForSpell = false; // Track if target detection is for spell casting
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -1025,6 +1027,11 @@
                         if (waitingForGoldCheck) {
                             extractPlayerGold();
                         }
+                        
+                        // Check for target detection
+                        if (waitingForTargetDetection) {
+                            detectTargetsFromLook();
+                        }
                     }
                 };
 
@@ -1103,6 +1110,9 @@
         function processANSI(text) {
             // Escape HTML
             text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // Highlight "The spell fizzled!" in red
+            text = text.replace(/(The spell fizzled!)/g, '<span style="color: #ff4444">$1</span>');
 
             // Process ANSI escape codes
             const regex = /\x1b\[([0-9;]*)m/g;
@@ -1300,7 +1310,80 @@
             return null;
         }
 
-        function checkForShopkeeper() {
+        function detectTargetsFromLook() {
+            waitingForTargetDetection = false;
+            
+            // Extract targets from the recent LOOK output
+            currentTargets = extractTargets(recentTerminalText);
+            
+            if (targetDetectionForSpell) {
+                // Show spell selection, which will then show targets
+                showPopup('Select Spell', currentSpells, (spell) => {
+                    selectedSpell = spell;
+                    console.log('Spell selected:', selectedSpell);
+                    
+                    // Show targets including username for self-casting
+                    if (currentTargets.length > 0 || currentUsername) {
+                        const targets = [...currentTargets];
+                        if (currentUsername) {
+                            targets.push(currentUsername);
+                        }
+                        console.log('Showing targets:', targets);
+                        showTargetPopup(targets, (target) => {
+                            console.log('Target selected:', target);
+                            sendCommand('cast ' + selectedSpell + ' ' + target);
+                            selectedSpell = null;
+                            waitingForSpellRefresh = true;
+                            setTimeout(() => sendCommand('hits'), 100);
+                        });
+                    } else {
+                        console.log('No targets, casting directly');
+                        sendCommand('cast ' + selectedSpell);
+                        selectedSpell = null;
+                    }
+                });
+            } else {
+                // Show targets for HIT
+                if (currentTargets.length > 0) {
+                    showTargetPopup(currentTargets, (target) => {
+                        sendCommand('hit ' + target);
+                        setTimeout(() => sendCommand('hits'), 100);
+                    });
+                } else {
+                    sendCommand('hit');
+                }
+            }
+        }
+
+        function showTargetPopup(targets, onClickCallback) {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            
+            titleEl.textContent = 'Select Target';
+            listEl.innerHTML = '';
+            
+            targets.forEach(target => {
+                const btn = document.createElement('button');
+                btn.className = 'popup-list-btn';
+                btn.textContent = target;
+                
+                // Color targets in red except for player's own name
+                if (target !== currentUsername) {
+                    btn.style.color = '#ff4444';
+                }
+                
+                btn.onclick = () => {
+                    closePopup();
+                    setTimeout(() => {
+                        onClickCallback(target);
+                    }, 50);
+                };
+                listEl.appendChild(btn);
+            });
+            
+            overlay.classList.add('active');
+        }
             waitingForShopDetection = false;
             const shopkeeper = findShopkeeper();
             
@@ -1585,6 +1668,7 @@
                         currentPotions = potions;
                         showPopup('Select Potion', potions, (potion) => {
                             sendCommand('drink ' + potion);
+                            setTimeout(() => sendCommand('hits'), 100);
                         });
                     } else {
                         // No potions, just send DRINK
@@ -1672,43 +1756,18 @@
         }
 
         function handleHitButton() {
-            if (currentTargets.length > 0) {
-                showPopup('Select Target', currentTargets, (target) => {
-                    sendCommand('hit ' + target);
-                    setTimeout(() => sendCommand('hits'), 100);
-                });
-            } else {
-                sendCommand('hit');
-            }
+            // Send LOOK to get fresh target list
+            waitingForTargetDetection = true;
+            targetDetectionForSpell = false;
+            sendCommand('look');
         }
 
         function handleCastButton() {
             if (currentSpells.length > 0) {
-                showPopup('Select Spell', currentSpells, (spell) => {
-                    selectedSpell = spell;
-                    console.log('Spell selected:', selectedSpell);
-                    
-                    // Popup already closed before this callback, so we can show target popup immediately
-                    if (currentTargets.length > 0 || currentUsername) {
-                        // Add username as a target option for self-casting
-                        const targets = [...currentTargets];
-                        if (currentUsername) {
-                            targets.push(currentUsername);
-                        }
-                        console.log('Showing targets:', targets);
-                        showPopup('Select Target', targets, (target) => {
-                            console.log('Target selected:', target);
-                            sendCommand('cast ' + selectedSpell + ' ' + target);
-                            selectedSpell = null;
-                            waitingForSpellRefresh = true;
-                            setTimeout(() => sendCommand('hits'), 100);
-                        });
-                    } else {
-                        console.log('No targets, casting directly');
-                        sendCommand('cast ' + selectedSpell);
-                        selectedSpell = null;
-                    }
-                });
+                // Send LOOK to get fresh target list before showing spell selection
+                waitingForTargetDetection = true;
+                targetDetectionForSpell = true;
+                sendCommand('look');
             } else {
                 waitingForSpells = true;
                 sendCommand('spells');
