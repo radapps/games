@@ -1322,25 +1322,23 @@
                     selectedSpell = spell;
                     console.log('Spell selected:', selectedSpell);
                     
-                    // Show targets including username for self-casting
-                    if (currentTargets.length > 0 || currentUsername) {
-                        const targets = [...currentTargets];
-                        if (currentUsername) {
-                            targets.push(currentUsername);
-                        }
-                        console.log('Showing targets:', targets);
-                        showTargetPopup(targets, (target) => {
-                            console.log('Target selected:', target);
+                    // Show targets including "(no target)" for self-casting
+                    const targets = [...currentTargets];
+                    targets.push('(no target)'); // Always add no-target option
+                    
+                    console.log('Showing targets:', targets);
+                    showTargetPopup(targets, (target) => {
+                        console.log('Target selected:', target);
+                        if (target === '(no target)') {
+                            // Cast without target (game defaults to self)
+                            sendCommand('cast ' + selectedSpell);
+                        } else {
                             sendCommand('cast ' + selectedSpell + ' ' + target);
-                            selectedSpell = null;
-                            waitingForSpellRefresh = true;
-                            setTimeout(() => sendCommand('hits'), 100);
-                        });
-                    } else {
-                        console.log('No targets, casting directly');
-                        sendCommand('cast ' + selectedSpell);
+                        }
                         selectedSpell = null;
-                    }
+                        waitingForSpellRefresh = true;
+                        setTimeout(() => sendCommand('hits'), 100);
+                    });
                 });
             } else {
                 // Show targets for HIT
@@ -1368,8 +1366,8 @@
                 btn.className = 'popup-list-btn';
                 btn.textContent = target;
                 
-                // Color targets in red except for player's own name
-                if (target !== currentUsername) {
+                // Color targets in red except for "(no target)"
+                if (target !== '(no target)') {
                     btn.style.color = '#ff4444';
                 }
                 
@@ -1384,6 +1382,8 @@
             
             overlay.classList.add('active');
         }
+
+        function checkForShopkeeper() {
             waitingForShopDetection = false;
             const shopkeeper = findShopkeeper();
             
