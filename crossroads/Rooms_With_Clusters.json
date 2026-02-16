@@ -1041,7 +1041,7 @@
             "z": 0
         },
         "193": {
-            "keyword": "// FIRE\r\n\r\nF193GAT",
+            "keyword": "F193GAT",
             "short": "...Gateway to Fire.",
             "long": "Twin columns of fire rise before you, each a raging pillar of flame.\r\nThe heat on your face and skin is palpable, and you think twice about\r\npassing into the Realm of Fire.  Through the flames, you can see a\r\ndistorted, hellish vision of a barren landscape.  A region of vast\r\ndesert, overshadowed by ashen skies, and finally dominated by an\r\nenormous, ebon volcano.  Just beyond the gateway, a rough black road\r\nstretches to the horizon.  You can follow this road west, or head back\r\ntoward Crossroads, to the east.",
             "item": "near the inferno.",
@@ -3036,7 +3036,7 @@
             "z": 0
         },
         "400": {
-            "keyword": "// WATER\r\n\r\nW400GAT",
+            "keyword": "W400GAT",
             "short": "...Gateway to Water.",
             "long": "Two great, gushing fountains of water shoot high into the air and\r\nshower this place with constant rain, soon soaking you from head to\r\nfoot.  A few inches of water flow across the stone floor, and finally\r\ndrain at the edges of the portal.  Regarding the land beyond the\r\ndelimiting fountains, you can see a valley of verdant marsh which\r\neventually turns into a large river.  A well worn path leads east\r\njust beyond the gateway into the fen below, or you can head back west\r\ntoward Crossroads.",
             "item": "resting in the water.",
@@ -4926,7 +4926,7 @@
             "z": 0
         },
         "600": {
-            "keyword": "// AIR\r\n\r\nA600APL",
+            "keyword": "A600APL",
             "short": "...Gateway to Air.",
             "long": "Two gigantic cyclones twist and writhe above you, marking the entrance\r\nto the realm of Air.  The wind shrieks about you unchecked, pulling at\r\nyour body and mind.  You gaze up into the sky, and see clouds,\r\nwhirlwinds, and floating islands drifting above you.  Birds and\r\nwinged beasts move between the clouds, oblivious to your presence far\r\nbelow.  To the north, a large wind funnel churns away at the sandy\r\nsoil.  To the south lies the Neutral Realm.",
             "item": "on the windswept ground.",
@@ -6906,7 +6906,7 @@
             "z": 2
         },
         "750": {
-            "keyword": "// EARTH\r\n\r\nE750EEN",
+            "keyword": "E750EEN",
             "short": "...Gateway to Earth.",
             "long": "Two monstrous pillars of granite rise high into the air, marking the\r\nentrance to the realm of Earth.  Dust rises into the air as you move,\r\nand the ground is cold and hard.  There is a cliff wall to your east,\r\nwhich stretches off towards the forest to your south.  Through the\r\ngranite pillars to the north, you see Iron Street heading into the\r\ncity.",
             "item": "lying in the dust.",
