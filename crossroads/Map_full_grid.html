@@ -80,7 +80,7 @@
     let selectedGroup = null;
     let activeInGroupIndex = 0;
 
-    // Mobile Zoom/Pan State
+    // Mobile Control State
     let isDragging = false;
     let lastPos = { x: 0, y: 0 };
     let lastDist = 0;
@@ -98,7 +98,8 @@
         .then(data => {
             allData = data;
             populateDropdown();
-            loadArea(data.clusters.find(c => c.is_main)?.id || data.clusters[0].id);
+            const startId = data.clusters.find(c => c.is_main)?.id || data.clusters[0].id;
+            loadArea(startId);
         });
 
     function populateDropdown() {
@@ -144,10 +145,12 @@
     function getRoomStyle(keyword) {
         const char = keyword ? keyword.charAt(0).toUpperCase() : '';
         if (char === 'A') return { bg: '#898989', text: '#fff' }; // Gray
+        if (char === 'F') return { bg: '#fa5252', text: '#fff' }; // Red
+        if (char === 'W') return { bg: '#228be6', text: '#fff' }; // Blue
+        if (char === 'E') return { bg: '#40c057', text: '#fff' }; // Green
         return { bg: '#ffd43b', text: '#000' }; // Default Yellow
     }
 
-    // New Icon Logic
     function getRoomIcon(id) {
         const icons = {
             "5054": "🪄", "5055": "📚", "5051": "🛡", "5050": "⚔",
@@ -170,7 +173,7 @@
             groups[key].push(r);
         });
 
-        // 1. Lines
+        // 1. Connection Lines
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 1;
         visibleRooms.forEach(r => {
@@ -186,7 +189,7 @@
             });
         });
 
-        // 2. Boxes
+        // 2. Room Boxes
         Object.values(groups).forEach(group => {
             const r = group[0];
             const vx = r.x * scale + offset.x;
@@ -216,13 +219,13 @@
                 ctx.fillStyle = style.text;
                 ctx.textAlign = 'center';
                 
-                // Draw ID
-                const fontSize = Math.max(7, Math.floor(scale/6));
+                // Room Number
+                const fontSize = Math.max(7, Math.floor(scale/6.5));
                 ctx.font = `bold ${fontSize}px sans-serif`;
                 const label = group.map(rm => rm._id).join('/');
-                ctx.fillText(label, vx, vy - (scale/10));
+                ctx.fillText(label, vx, vy - (scale/12));
 
-                // Draw Icon if applicable
+                // Icon
                 const icon = getRoomIcon(r._id);
                 if (icon) {
                     ctx.font = `${fontSize * 1.5}px sans-serif`;
@@ -232,14 +235,22 @@
         });
     }
 
-    // Touch/Mouse Controls
+    // Touch/Mouse logic for Pan & Zoom
     const getDist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-    const startAction = (e) => {
+    
+    const onStart = (e) => {
         const t = e.touches;
-        if (t && t.length === 2) { isDragging = false; lastDist = getDist(t[0], t[1]); }
-        else { isDragging = true; const p = t ? t[0] : e; lastPos = { x: p.clientX, y: p.clientY }; }
+        if (t && t.length === 2) { 
+            isDragging = false; 
+            lastDist = getDist(t[0], t[1]); 
+        } else { 
+            isDragging = true; 
+            const p = t ? t[0] : e; 
+            lastPos = { x: p.clientX, y: p.clientY }; 
+        }
     };
-    const moveAction = (e) => {
+
+    const onMove = (e) => {
         const t = e.touches;
         if (t && t.length === 2) {
             e.preventDefault();
@@ -253,10 +264,10 @@
         }
     };
 
-    canvas.addEventListener('mousedown', startAction);
-    canvas.addEventListener('touchstart', startAction, { passive: false });
-    window.addEventListener('mousemove', moveAction);
-    window.addEventListener('touchmove', moveAction, { passive: false });
+    canvas.addEventListener('mousedown', onStart);
+    canvas.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchend', (e) => { if(!e.touches || e.touches.length < 2) lastDist = 0; if(!e.touches || e.touches.length === 0) isDragging = false; });
 
