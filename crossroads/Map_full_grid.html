@@ -102,7 +102,8 @@
     function getRoomStyle(keyword) {
         const char = keyword ? keyword.charAt(0).toUpperCase() : '';
         if (char === 'N') return { bg: '#ffd43b', text: '#000' };
-        if (char === 'A' || char === 'W') return { bg: '#228be6', text: '#fff' };
+        if (char === 'A') return { bg: '#898989', text: '#fff' };
+        if (char === 'W') return { bg: '#228be6', text: '#fff' };
         if (char === 'F') return { bg: '#fa5252', text: '#fff' };
         if (char === 'E') return { bg: '#40c057', text: '#fff' };
         return { bg: '#1971c2', text: '#fff' };
@@ -210,3 +211,4 @@
 </script>
 </body>
 </html>
+
