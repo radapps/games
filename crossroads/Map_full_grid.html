@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crossroads Mapper - Multi-Area</title>
+    <title>Crossroads Mapper</title>
     <style>
         body { margin: 0; background: #121212; color: #e0e0e0; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #canvas-container { width: 100vw; height: 100vh; cursor: grab; }
@@ -11,11 +11,13 @@
         
         .ui-panel { position: absolute; background: rgba(30, 30, 30, 0.9); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
         
-        #top-bar { top: 20px; left: 20px; right: 20px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; flex-grow: 1; max-width: 400px; }
+        #top-bar { top: 10px; left: 10px; right: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; flex-grow: 1; min-width: 200px; }
         
-        .lvl-btn { background: #444; color: white; border: 1px solid #666; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        #level-display { font-weight: bold; min-width: 80px; text-align: center; }
+        .lvl-btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        #level-display { font-weight: bold; min-width: 60px; text-align: center; font-size: 14px; }
+
+        .filter-wrap { font-size: 12px; display: flex; align-items: center; gap: 5px; background: #222; padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
 
         #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 15px; max-height: 35vh; overflow-y: auto; display: none; }
         #info-panel.active { display: block; }
@@ -28,6 +30,12 @@
 
 <div id="top-bar" class="ui-panel">
     <select id="area-select"></select>
+    
+    <div class="filter-wrap">
+        <input type="checkbox" id="show-single-rooms">
+        <label for="show-single-rooms">Show Isolated (1-room) areas</label>
+    </div>
+
     <div style="display:flex; align-items:center; gap:5px;">
         <button class="lvl-btn" id="lvl-down">−</button>
         <div id="level-display">Lvl: 0</div>
@@ -50,6 +58,7 @@
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const areaSelect = document.getElementById('area-select');
+    const singleRoomsCheckbox = document.getElementById('show-single-rooms');
     
     let allData = null;
     let currentAreaRooms = [];
@@ -66,29 +75,41 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 1. Load the clustered data
     fetch('Rooms_With_Clusters.json')
         .then(res => res.json())
         .then(data => {
             allData = data;
-            
-            // Populate Dropdown
-            data.clusters.forEach(cluster => {
-                const opt = document.createElement('option');
-                opt.value = cluster.id;
-                opt.textContent = cluster.name;
-                if (cluster.is_main) opt.selected = true;
-                areaSelect.appendChild(opt);
-            });
-
+            populateDropdown();
             loadArea(data.clusters.find(c => c.is_main).id);
         });
 
+    function populateDropdown() {
+        const showAll = singleRoomsCheckbox.checked;
+        const currentVal = areaSelect.value;
+        areaSelect.innerHTML = '';
+        
+        allData.clusters.forEach(cluster => {
+            // Count rooms in cluster. You might need to adjust this depending on how your JSON is formatted
+            // Assuming cluster.rooms is an array of room IDs
+            const roomCount = cluster.rooms.length;
+            
+            if (showAll || roomCount > 1 || cluster.is_main) {
+                const opt = document.createElement('option');
+                opt.value = cluster.id;
+                opt.textContent = cluster.name;
+                if (cluster.id == currentVal) opt.selected = true;
+                areaSelect.appendChild(opt);
+            }
+        });
+    }
+
+    singleRoomsCheckbox.onchange = populateDropdown;
+
     function loadArea(clusterId) {
         const cluster = allData.clusters.find(c => c.id == clusterId);
+        if(!cluster) return;
         currentAreaRooms = cluster.rooms.map(id => allData.rooms[id]);
         
-        // Reset view
         currentZ = 0;
         offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         document.getElementById('level-display').innerText = `Lvl: ${currentZ}`;
@@ -101,11 +122,11 @@
 
     function getRoomStyle(keyword) {
         const char = keyword ? keyword.charAt(0).toUpperCase() : '';
-        if (char === 'N') return { bg: '#ffd43b', text: '#000' };
-        if (char === 'A') return { bg: '#898989', text: '#fff' };
-        if (char === 'W') return { bg: '#228be6', text: '#fff' };
-        if (char === 'F') return { bg: '#fa5252', text: '#fff' };
-        if (char === 'E') return { bg: '#40c057', text: '#fff' };
+        if (char === 'A') return { bg: '#898989', text: '#fff' }; // Gray for Air
+        if (char === 'N') return { bg: '#ffd43b', text: '#000' }; // Yellow
+        if (char === 'W') return { bg: '#228be6', text: '#fff' }; // Blue
+        if (char === 'F') return { bg: '#fa5252', text: '#fff' }; // Red
+        if (char === 'E') return { bg: '#40c057', text: '#fff' }; // Green
         return { bg: '#1971c2', text: '#fff' };
     }
 
@@ -116,7 +137,7 @@
         const roomSize = scale * 0.8;
         const visibleRooms = currentAreaRooms.filter(r => r.z === currentZ);
 
-        // Draw Exits
+        // Connections
         ctx.strokeStyle = '#444';
         visibleRooms.forEach(r => {
             ['n','e','s','w'].forEach(dir => {
@@ -131,7 +152,7 @@
             });
         });
 
-        // Draw Rooms
+        // Rooms
         visibleRooms.forEach(r => {
             const vx = r.x * scale + offset.x;
             const vy = -r.y * scale + offset.y;
@@ -151,7 +172,7 @@
             if (scale > 25) {
                 ctx.shadowBlur = 0;
                 ctx.fillStyle = style.text;
-                ctx.font = `bold ${Math.floor(scale/4)}px sans-serif`;
+                ctx.font = `bold ${Math.floor(scale/4.5)}px sans-serif`;
                 ctx.textAlign = 'center';
                 const id = Object.keys(allData.rooms).find(k => allData.rooms[k] === r);
                 ctx.fillText(id, vx, vy + (scale/12));
@@ -159,7 +180,7 @@
         });
     }
 
-    // Interaction (Dragging)
+    // Touch/Mouse logic remains the same
     let isDragging = false;
     let lastPos = { x: 0, y: 0 };
     const start = (x, y) => { isDragging = true; lastPos = { x, y }; };
@@ -175,7 +196,6 @@
     window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchend', () => isDragging = false);
 
-    // Selection
     canvas.addEventListener('click', e => {
         const mx = e.clientX; const my = e.clientY;
         const clicked = currentAreaRooms.find(r => {
@@ -198,7 +218,6 @@
         document.getElementById('info-panel').classList.add('active');
     }
 
-    // Level Controls
     document.getElementById('lvl-up').onclick = () => { currentZ++; updateLvl(); };
     document.getElementById('lvl-down').onclick = () => { currentZ--; updateLvl(); };
     function updateLvl() { document.getElementById('level-display').innerText = `Lvl: ${currentZ}`; draw(); }
@@ -211,4 +230,3 @@
 </script>
 </body>
 </html>
-
