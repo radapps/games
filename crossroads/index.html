@@ -1532,16 +1532,21 @@
 
         function extractShopItems() {
             // Look for shop inventory format: "Qty  Price  <item>"
+            // Qty can be a number OR a period (.) for services
             const lines = recentTerminalText.split('\n');
             const items = [];
             
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                // Match lines with numbers (qty and price) followed by item name
-                const match = line.match(/^\d+\s+(\d+)\s+(.+)$/);
+                // Match lines with (number or period) for qty, then price (number), then item name
+                // Format: "   .   100    CURE - description" or "  65   15     pink potion"
+                const match = line.match(/^[.\d]+\s+(\d+)\s+(.+)$/);
                 if (match) {
+                    const itemName = match[2].trim();
+                    // Only take the item name before any dash or extra description
+                    const cleanName = itemName.split(/\s+-\s+/)[0].trim();
                     items.push({
-                        name: match[2].trim(),
+                        name: cleanName,
                         price: parseInt(match[1])
                     });
                 }
