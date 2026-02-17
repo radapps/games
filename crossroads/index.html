@@ -1135,18 +1135,22 @@
                 
                 // Check line endings and wrap with color markers
                 let colorCode = null;
-                if (trimmedLine.endsWith('points!')) {
+                //if (trimmedLine.endsWith('points!')) {
+                //    colorCode = '#d29922';
+                //} else if (trimmedLine.endsWith('black smoke!')) {
+                //    colorCode = '#3fb950';
+                //} else if (trimmedLine.endsWith('but misses!')) {
+                //    colorCode = '#ffffff';
+                //} else if (trimmedLine.endsWith('you!')) {
+                //    colorCode = '#ff4444';
+                //} else if (trimmedLine.endsWith('falls to the ground!')) {
+                //    colorCode = '#bc8cff';
+                //} else if (trimmedLine.includes('The spell fizzled!')) {
+                //    colorCode = '#ff4444';
+                if (trimmedLine.endsWith(' is here.')) {
+                    colorCode = '#ff4444';
+                } else if (trimmedLine.startsWith('There is a ') && trimmedLine.endsWith(' here.')) {
                     colorCode = '#d29922';
-                } else if (trimmedLine.endsWith('black smoke!')) {
-                    colorCode = '#3fb950';
-                } else if (trimmedLine.endsWith('but misses!')) {
-                    colorCode = '#ffffff';
-                } else if (trimmedLine.endsWith('you!')) {
-                    colorCode = '#ff4444';
-                } else if (trimmedLine.endsWith('falls to the ground!')) {
-                    colorCode = '#bc8cff';
-                } else if (trimmedLine.includes('The spell fizzled!')) {
-                    colorCode = '#ff4444';
                 }
                 
                 if (colorCode) {
