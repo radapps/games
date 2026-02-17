@@ -160,9 +160,13 @@
             font-family: 'VT323', monospace;
             font-size: 1.2em;
             line-height: 1.3;
-            color: #ffffff;
+            color: #a8a8a8;
             white-space: pre-wrap;
             word-wrap: break-word;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         .terminal::-webkit-scrollbar {
@@ -844,23 +848,25 @@
 
         // ANSI color map
         const ANSI_COLORS = {
-            '0': 'color: #ffffff',      // Reset to white
-            '30': 'color: #484f58',     // Black
-            '31': 'color: #ff7b72',     // Red
-            '32': 'color: #3fb950',     // Green
-            '33': 'color: #d29922',     // Yellow
-            '34': 'color: #58a6ff',     // Blue
-            '35': 'color: #bc8cff',     // Magenta
-            '36': 'color: #76e3ea',     // Cyan
-            '37': 'color: #ffffff',     // White
-            '90': 'color: #6e7681',     // Bright Black (Gray)
-            '91': 'color: #ffa198',     // Bright Red
-            '92': 'color: #56d364',     // Bright Green
-            '93': 'color: #e3b341',     // Bright Yellow
-            '94': 'color: #79c0ff',     // Bright Blue
-            '95': 'color: #d2a8ff',     // Bright Magenta
-            '96': 'color: #b3f0ff',     // Bright Cyan
-            '97': 'color: #f0f6fc',     // Bright White
+            '0': 'color: #a8a8a8',     // Reset to default gray
+            '30': 'color: #000000',     // Black        (Colour 0)
+            '31': 'color: #a80000',     // Red          (Colour 4)
+            '32': 'color: #00a800',     // Green        (Colour 2)
+            '33': 'color: #a85400',     // Brown/Yellow (Colour 6)
+            '34': 'color: #0000a8',     // Blue         (Colour 1)
+            '35': 'color: #a800a8',     // Magenta      (Colour 5)
+            '36': 'color: #00a8a8',     // Cyan         (Colour 3)
+            '37': 'color: #a8a8a8',     // Gray         (Colour 7)
+            '90': 'color: #545454',     // Dark Gray    (Colour 8)
+            '91': 'color: #ff5454',     // Bright Red   (Colour 12)
+            '92': 'color: #54ff54',     // Bright Green (Colour 10)
+            '93': 'color: #ffff54',     // Bright Yellow(Colour 14)
+            '94': 'color: #5454ff',     // Bright Blue  (Colour 9)
+            '95': 'color: #ff54ff',     // Bright Magenta(Colour 13)
+            '96': 'color: #54ffff',     // Bright Cyan  (Colour 11)
+            '97': 'color: #ffffff',     // Bright White (Colour 15)
+            '1':  'font-weight: bold',
+            '5':  'animation: blink 1s step-start infinite',
         };
 
         // Dynamic button rules
@@ -1118,6 +1124,10 @@
                 }
             });
             
+            // Strip non-color ANSI control sequences (clear screen, cursor movement, etc.)
+            text = text.replace(/\x1b\[[\d;]*[ABCDEFGHJKLMPSTXZfhilmnsu]/g, '');
+            text = text.replace(/\x1b[^[]/g, '');
+
             // Apply color rules based on line endings BEFORE HTML escaping
             // Split by any line ending (CRLF, CR, or LF)
             const lines = text.split(/\r\n|\r|\n/);
@@ -1136,17 +1146,17 @@
                 // Check line endings and wrap with color markers
                 let colorCode = null;
                 //if (trimmedLine.endsWith('points!')) {
-                //    colorCode = '#d29922';
+                //   colorCode = '#d29922';
                 //} else if (trimmedLine.endsWith('black smoke!')) {
-                //    colorCode = '#3fb950';
+                //    colorCode = '#54ff54';
                 //} else if (trimmedLine.endsWith('but misses!')) {
-                //    colorCode = '#ffffff';
+                //    colorCode = '#a8a8a8';
                 //} else if (trimmedLine.endsWith('you!')) {
-                //    colorCode = '#ff4444';
+                //    colorCode = '#ff5454';
                 //} else if (trimmedLine.endsWith('falls to the ground!')) {
                 //    colorCode = '#bc8cff';
                 //} else if (trimmedLine.includes('The spell fizzled!')) {
-                //    colorCode = '#ff4444';
+                //    colorCode = '#ff5454';
                 if (trimmedLine.endsWith(' is here.')) {
                     colorCode = '#bc8cff';
                 } else if (trimmedLine.startsWith('There is a ') && trimmedLine.endsWith(' here.')) {
