@@ -843,27 +843,69 @@
         const SE = 240;   // 0xF0 - Subnegotiation End
 
         // ANSI color map
+        // CP437 (DOS) character mapping for proper ANSI art display
+        const CP437_MAP = new Array(256);
+        for (let i = 0; i < 256; i++) {
+            if (i < 32) {
+                // Control characters mapped to CP437 glyphs
+                const cp437Controls = ['☺','☻','♥','♦','♣','♠','•','◘','○','◙','♂','♀','♪','♫','☼',
+                                       '►','◄','↕','‼','¶','§','▬','↨','↑','↓','→','←','∟','↔','▲','▼'];
+                CP437_MAP[i] = cp437Controls[i] || String.fromCharCode(i);
+            } else if (i < 127) {
+                CP437_MAP[i] = String.fromCharCode(i);
+            } else if (i === 127) {
+                CP437_MAP[i] = '⌂';
+            } else {
+                // High ASCII characters (128-255)
+                const highChars = 'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»' +
+                                '░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌' +
+                                '█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
+                CP437_MAP[i] = highChars[i - 128] || String.fromCharCode(i);
+            }
+        }
+
+        // ANSI-BBS color palette (authentic DOS colors)
         const ANSI_COLORS = {
-            '0': 'color: #ffffff',      // Reset to white
-            '30': 'color: #484f58',     // Black
-            '31': 'color: #ff7b72',     // Red
-            '32': 'color: #3fb950',     // Green
-            '33': 'color: #d29922',     // Yellow
-            '34': 'color: #58a6ff',     // Blue
-            '35': 'color: #bc8cff',     // Magenta
-            '36': 'color: #76e3ea',     // Cyan
-            '37': 'color: #ffffff',     // White
-            '90': 'color: #6e7681',     // Bright Black (Gray)
-            '91': 'color: #ffa198',     // Bright Red
-            '92': 'color: #56d364',     // Bright Green
-            '93': 'color: #e3b341',     // Bright Yellow
-            '94': 'color: #79c0ff',     // Bright Blue
-            '95': 'color: #d2a8ff',     // Bright Magenta
-            '96': 'color: #b3f0ff',     // Bright Cyan
-            '97': 'color: #f0f6fc',     // Bright White
+            '0': '',  // Reset
+            '30': 'color: #000000',     // Black
+            '31': 'color: #AA0000',     // Red
+            '32': 'color: #00AA00',     // Green
+            '33': 'color: #AA5500',     // Yellow/Brown
+            '34': 'color: #0000AA',     // Blue
+            '35': 'color: #AA00AA',     // Magenta
+            '36': 'color: #00AAAA',     // Cyan
+            '37': 'color: #AAAAAA',     // White/Gray
+            '90': 'color: #555555',     // Bright Black (Dark Gray)
+            '91': 'color: #FF5555',     // Bright Red
+            '92': 'color: #55FF55',     // Bright Green
+            '93': 'color: #FFFF55',     // Bright Yellow
+            '94': 'color: #5555FF',     // Bright Blue
+            '95': 'color: #FF55FF',     // Bright Magenta
+            '96': 'color: #55FFFF',     // Bright Cyan
+            '97': 'color: #FFFFFF',     // Bright White
+            // Background colors
+            '40': 'background-color: #000000',
+            '41': 'background-color: #AA0000',
+            '42': 'background-color: #00AA00',
+            '43': 'background-color: #AA5500',
+            '44': 'background-color: #0000AA',
+            '45': 'background-color: #AA00AA',
+            '46': 'background-color: #00AAAA',
+            '47': 'background-color: #AAAAAA',
+            '100': 'background-color: #555555',
+            '101': 'background-color: #FF5555',
+            '102': 'background-color: #55FF55',
+            '103': 'background-color: #FFFF55',
+            '104': 'background-color: #5555FF',
+            '105': 'background-color: #FF55FF',
+            '106': 'background-color: #55FFFF',
+            '107': 'background-color: #FFFFFF',
+            // Text attributes
+            '1': 'font-weight: bold',
+            '4': 'text-decoration: underline',
+            '7': 'filter: invert(1)',  // Reverse video
         };
 
-        // Dynamic button rules
         // Load saved credentials
         window.addEventListener('DOMContentLoaded', () => {
             const saved = {
@@ -935,7 +977,12 @@
                     if (event.data instanceof ArrayBuffer) {
                         const bytes = new Uint8Array(event.data);
                         const filtered = filterTelnetIAC(bytes);
-                        data = new TextDecoder('utf-8').decode(filtered);
+                        // Use CP437 decoding instead of UTF-8 for authentic ANSI art
+                        let cp437String = '';
+                        for (let i = 0; i < filtered.length; i++) {
+                            cp437String += CP437_MAP[filtered[i]];
+                        }
+                        data = cp437String;
                     } else {
                         data = event.data;
                     }
@@ -1192,14 +1239,22 @@
                 } else if (match === '\x1b[COLOREND]') {
                     customColor = null;
                 } else if (codes !== undefined) {
-                    // Update ANSI style based on codes
+                    // Update ANSI style based on codes - handle multiple attributes
                     const codeList = codes.split(';').filter(c => c);
+                    const styles = [];
+                    
                     for (const code of codeList) {
-                        if (ANSI_COLORS[code]) {
-                            currentANSIStyle = ANSI_COLORS[code];
-                        } else if (code === '0' || code === '') {
-                            currentANSIStyle = 'color: #ffffff'; // Reset to white
+                        if (code === '0' || code === '') {
+                            // Reset all
+                            currentANSIStyle = '';
+                            break;
+                        } else if (ANSI_COLORS[code]) {
+                            styles.push(ANSI_COLORS[code]);
                         }
+                    }
+                    
+                    if (styles.length > 0) {
+                        currentANSIStyle = styles.join('; ');
                     }
                 }
 
