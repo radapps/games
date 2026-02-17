@@ -776,6 +776,9 @@
         let recentTerminalText = '';
         let currentTargets = []; // Store current targets from "There is a ... here."
         let currentANSIStyle = ''; // Persist ANSI color state across chunks
+        let ansiFg = '';       // Current foreground color hex
+        let ansiBold = false;  // Current bold state
+        let ansiBlink = false; // Current blink state
         let currentSpells = []; // Store user's spells
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
@@ -848,25 +851,30 @@
 
         // ANSI color map
         const ANSI_COLORS = {
-            '0': 'color: #a8a8a8',     // Reset to default gray
-            '30': 'color: #000000',     // Black        (Colour 0)
-            '31': 'color: #a80000',     // Red          (Colour 4)
-            '32': 'color: #00a800',     // Green        (Colour 2)
-            '33': 'color: #a85400',     // Brown/Yellow (Colour 6)
-            '34': 'color: #0000a8',     // Blue         (Colour 1)
-            '35': 'color: #a800a8',     // Magenta      (Colour 5)
-            '36': 'color: #00a8a8',     // Cyan         (Colour 3)
-            '37': 'color: #a8a8a8',     // Gray         (Colour 7)
-            '90': 'color: #545454',     // Dark Gray    (Colour 8)
-            '91': 'color: #ff5454',     // Bright Red   (Colour 12)
-            '92': 'color: #54ff54',     // Bright Green (Colour 10)
-            '93': 'color: #ffff54',     // Bright Yellow(Colour 14)
-            '94': 'color: #5454ff',     // Bright Blue  (Colour 9)
-            '95': 'color: #ff54ff',     // Bright Magenta(Colour 13)
-            '96': 'color: #54ffff',     // Bright Cyan  (Colour 11)
-            '97': 'color: #ffffff',     // Bright White (Colour 15)
-            '1':  'font-weight: bold',
-            '5':  'animation: blink 1s step-start infinite',
+            // Standard colors (30-37)
+            '30': '#000000',  // Black        (Colour 0)
+            '31': '#a80000',  // Red          (Colour 4)
+            '32': '#00a800',  // Green        (Colour 2)
+            '33': '#a85400',  // Brown/Yellow (Colour 6)
+            '34': '#0000a8',  // Blue         (Colour 1)
+            '35': '#a800a8',  // Magenta      (Colour 5)
+            '36': '#00a8a8',  // Cyan         (Colour 3)
+            '37': '#a8a8a8',  // Gray         (Colour 7)
+            // Bright colors (90-97) — also triggered by bold+standard
+            '90': '#545454',  // Dark Gray    (Colour 8)
+            '91': '#ff5454',  // Bright Red   (Colour 12)
+            '92': '#54ff54',  // Bright Green (Colour 10)
+            '93': '#ffff54',  // Bright Yellow(Colour 14)
+            '94': '#5454ff',  // Bright Blue  (Colour 9)
+            '95': '#ff54ff',  // Bright Magenta(Colour 13)
+            '96': '#54ffff',  // Bright Cyan  (Colour 11)
+            '97': '#ffffff',  // Bright White (Colour 15)
+        };
+
+        // Bold shifts standard colors to their bright equivalents (SyncTERM behaviour)
+        const BOLD_COLOR_MAP = {
+            '30': '90', '31': '91', '32': '92', '33': '93',
+            '34': '94', '35': '95', '36': '96', '37': '97'
         };
 
         // Dynamic button rules
@@ -1092,6 +1100,20 @@
             return text.replace(/\x1b\[[0-9;]*m/g, '').replace(/\x1b\[.*?[@-~]/g, '');
         }
 
+        function buildAnsiStyle() {
+            // Build CSS style string from current ANSI state
+            let color = ansiFg;
+            // Bold shifts standard colors to bright equivalents
+            if (ansiBold && BOLD_COLOR_MAP[ansiFg]) {
+                color = BOLD_COLOR_MAP[ansiFg];
+            }
+            const hex = ANSI_COLORS[color] || '';
+            let style = hex ? `color: ${hex}` : '';
+            if (ansiBold && !hex) style += (style ? '; ' : '') + 'font-weight: bold';
+            if (ansiBlink) style += (style ? '; ' : '') + 'animation: blink 1s step-start infinite';
+            return style;
+        }
+
         function processANSI(text) {
             // XP table for level progression
             const xpTable = [
@@ -1100,53 +1122,39 @@
                 921970, 1441931, 2264012, 3528732, 5520666, 8579686, 13381636,
                 20744626, 32269282, 49916387, 77467454, 119604354
             ];
-            
+
             // Process Experience line to show next level XP
             text = text.replace(/Experience\s+:\s+(\d+)/g, (match, currentXP) => {
                 const xp = parseInt(currentXP.replace(/,/g, ''));
-                
-                // Find next level XP
                 let nextLevelXP = null;
                 for (let i = 0; i < xpTable.length; i++) {
-                    if (xpTable[i] > xp) {
-                        nextLevelXP = xpTable[i];
-                        break;
-                    }
+                    if (xpTable[i] > xp) { nextLevelXP = xpTable[i]; break; }
                 }
-                
-                if (nextLevelXP !== null) {
-                    // Format with commas
-                    const formattedNextXP = nextLevelXP.toLocaleString();
-                    return `Experience  : ${currentXP} / ${formattedNextXP}`;
-                } else {
-                    // Max level reached
-                    return match;
-                }
+                return nextLevelXP !== null
+                    ? `Experience  : ${currentXP} / ${nextLevelXP.toLocaleString()}`
+                    : match;
             });
-            
-            // Strip non-color ANSI control sequences (clear screen, cursor movement, etc.)
-            text = text.replace(/\x1b\[[\d;]*[ABCDEFGHJKLMPSTXZfhilmnsu]/g, '');
-            text = text.replace(/\x1b[^[]/g, '');
 
-            // Apply color rules based on line endings BEFORE HTML escaping
-            // Split by any line ending (CRLF, CR, or LF)
+            // Strip all non-color ANSI sequences FIRST
+            // ESC [ <digits/semicolons> <non-m letter>  — cursor, erase, etc.
+            text = text.replace(/\x1b\[[\d;]*[ABCDEFGHJKLMPSTXZfhinsu]/g, '');
+            // ESC [ ! <anything>  — telnet/terminal reset sequences like ESC[!
+            text = text.replace(/\x1b\[![\x00-\xff]*/g, '');
+            // ESC <single non-[ char>  — ESC c, ESC 7, ESC 8, etc.
+            text = text.replace(/\x1b[^\[]/g, '');
+
+            // Apply our custom line-color rules BEFORE HTML escaping
             const lines = text.split(/\r\n|\r|\n/);
             const coloredLines = [];
-            
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i];
                 const trimmedLine = line.trim();
-                
-                // Skip empty lines
-                if (!trimmedLine) {
-                    coloredLines.push(line);
-                    continue;
-                }
-                
+                if (!trimmedLine) { coloredLines.push(line); continue; }
+
                 // Check line endings and wrap with color markers
                 let colorCode = null;
                 //if (trimmedLine.endsWith('points!')) {
-                //   colorCode = '#d29922';
+                //    colorCode = '#d29922';
                 //} else if (trimmedLine.endsWith('black smoke!')) {
                 //    colorCode = '#54ff54';
                 //} else if (trimmedLine.endsWith('but misses!')) {
@@ -1162,53 +1170,57 @@
                 } else if (trimmedLine.startsWith('There is a ') && trimmedLine.endsWith(' here.')) {
                     colorCode = '#d29922';
                 }
-                
+
                 if (colorCode) {
                     line = `\x1b[COLOR:${colorCode}]${line}\x1b[COLOREND]`;
                 }
-                
                 coloredLines.push(line);
             }
             text = coloredLines.join('\n');
-            
+
             // Escape HTML
             text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-            // Process ANSI escape codes and our color markers
+            // Match ANSI color codes (ESC[...m) and our custom COLOR markers
             const regex = /\x1b\[([0-9;]*)m|\x1b\[COLOR:(#[0-9a-fA-F]{6})\]|\x1b\[COLOREND\]/g;
             let result = '';
             let lastIndex = 0;
             let customColor = null;
 
             text.replace(regex, (match, codes, color, offset) => {
-                // Add text before this code
+                // Emit text before this escape code
                 if (offset > lastIndex) {
                     const textBefore = text.substring(lastIndex, offset);
-                    let style = customColor || currentANSIStyle;
-                    if (style) {
-                        if (style.startsWith('#')) {
-                            result += `<span style="color: ${style}">${textBefore}</span>`;
-                        } else {
-                            result += `<span style="${style}">${textBefore}</span>`;
-                        }
-                    } else {
-                        result += textBefore;
-                    }
+                    const style = customColor
+                        ? `color: ${customColor}`
+                        : buildAnsiStyle();
+                    result += style
+                        ? `<span style="${style}">${textBefore}</span>`
+                        : textBefore;
                 }
 
-                // Handle our custom color markers
                 if (color) {
+                    // Our custom line color override
                     customColor = color;
                 } else if (match === '\x1b[COLOREND]') {
                     customColor = null;
                 } else if (codes !== undefined) {
-                    // Update ANSI style based on codes
-                    const codeList = codes.split(';').filter(c => c);
-                    for (const code of codeList) {
-                        if (ANSI_COLORS[code]) {
-                            currentANSIStyle = ANSI_COLORS[code];
-                        } else if (code === '0' || code === '') {
-                            currentANSIStyle = 'color: #ffffff'; // Reset to white
+                    // Parse semicolon-separated ANSI codes
+                    const codeList = codes.split(';').map(c => c.trim()).filter(c => c !== '');
+                    if (codeList.length === 0 || codeList[0] === '0') {
+                        // Full reset
+                        ansiFg = '';
+                        ansiBold = false;
+                        ansiBlink = false;
+                    } else {
+                        for (const code of codeList) {
+                            if (code === '1') {
+                                ansiBold = true;
+                            } else if (code === '5') {
+                                ansiBlink = true;
+                            } else if (ANSI_COLORS[code] !== undefined) {
+                                ansiFg = code; // Store the code, not the hex
+                            }
                         }
                     }
                 }
@@ -1217,19 +1229,15 @@
                 return '';
             });
 
-            // Add remaining text with current style
+            // Emit any remaining text
             if (lastIndex < text.length) {
                 const textAfter = text.substring(lastIndex);
-                let style = customColor || currentANSIStyle;
-                if (style) {
-                    if (style.startsWith('#')) {
-                        result += `<span style="color: ${style}">${textAfter}</span>`;
-                    } else {
-                        result += `<span style="${style}">${textAfter}</span>`;
-                    }
-                } else {
-                    result += textAfter;
-                }
+                const style = customColor
+                    ? `color: ${customColor}`
+                    : buildAnsiStyle();
+                result += style
+                    ? `<span style="${style}">${textAfter}</span>`
+                    : textAfter;
             }
 
             return result;
