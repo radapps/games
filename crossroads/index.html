@@ -157,10 +157,11 @@
             border-radius: 8px;
             padding: 16px;
             overflow-y: auto;
-            font-family: 'VT323', monospace;
+            font-family: 'Perfect DOS VGA 437', 'Px437 IBM VGA8', 'DOS', 'Consolas', 'Courier New', monospace;
             font-size: 1.2em;
-            line-height: 1.3;
-            color: #ffffff;
+            line-height: 1.0;
+            letter-spacing: 0;
+            color: #a8a8a8;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
@@ -877,42 +878,42 @@
             }
         }
 
-        // ANSI-BBS color palette (authentic DOS colors)
+        // ANSI-BBS color palette (exact SyncTERM colors)
         const ANSI_COLORS = {
             '0': '',  // Reset
-            '30': 'color: #000000',     // Black
-            '31': 'color: #AA0000',     // Red
-            '32': 'color: #00AA00',     // Green
-            '33': 'color: #AA5500',     // Yellow/Brown
-            '34': 'color: #0000AA',     // Blue
-            '35': 'color: #AA00AA',     // Magenta
-            '36': 'color: #00AAAA',     // Cyan
-            '37': 'color: #AAAAAA',     // White/Gray
-            '90': 'color: #555555',     // Bright Black (Dark Gray)
-            '91': 'color: #FF5555',     // Bright Red
-            '92': 'color: #55FF55',     // Bright Green
-            '93': 'color: #FFFF55',     // Bright Yellow
-            '94': 'color: #5555FF',     // Bright Blue
-            '95': 'color: #FF55FF',     // Bright Magenta
-            '96': 'color: #55FFFF',     // Bright Cyan
-            '97': 'color: #FFFFFF',     // Bright White
+            '30': 'color: #000000',     // Black (Colour 0)
+            '31': 'color: #a80000',     // Red (Colour 4)
+            '32': 'color: #00a800',     // Green (Colour 2)
+            '33': 'color: #a85400',     // Yellow/Brown (Colour 6)
+            '34': 'color: #0000a8',     // Blue (Colour 1)
+            '35': 'color: #a800a8',     // Magenta (Colour 5)
+            '36': 'color: #00a8a8',     // Cyan (Colour 3)
+            '37': 'color: #a8a8a8',     // White/Gray (Colour 7)
+            '90': 'color: #545454',     // Bright Black/Dark Gray (Colour 8)
+            '91': 'color: #ff5454',     // Bright Red (Colour 12)
+            '92': 'color: #54ff54',     // Bright Green (Colour 10)
+            '93': 'color: #ffff54',     // Bright Yellow (Colour 14)
+            '94': 'color: #5454ff',     // Bright Blue (Colour 9)
+            '95': 'color: #ff54ff',     // Bright Magenta (Colour 13)
+            '96': 'color: #54ffff',     // Bright Cyan (Colour 11)
+            '97': 'color: #ffffff',     // Bright White (Colour 15)
             // Background colors
             '40': 'background-color: #000000',
-            '41': 'background-color: #AA0000',
-            '42': 'background-color: #00AA00',
-            '43': 'background-color: #AA5500',
-            '44': 'background-color: #0000AA',
-            '45': 'background-color: #AA00AA',
-            '46': 'background-color: #00AAAA',
-            '47': 'background-color: #AAAAAA',
-            '100': 'background-color: #555555',
-            '101': 'background-color: #FF5555',
-            '102': 'background-color: #55FF55',
-            '103': 'background-color: #FFFF55',
-            '104': 'background-color: #5555FF',
-            '105': 'background-color: #FF55FF',
-            '106': 'background-color: #55FFFF',
-            '107': 'background-color: #FFFFFF',
+            '41': 'background-color: #a80000',
+            '42': 'background-color: #00a800',
+            '43': 'background-color: #a85400',
+            '44': 'background-color: #0000a8',
+            '45': 'background-color: #a800a8',
+            '46': 'background-color: #00a8a8',
+            '47': 'background-color: #a8a8a8',
+            '100': 'background-color: #545454',
+            '101': 'background-color: #ff5454',
+            '102': 'background-color: #54ff54',
+            '103': 'background-color: #ffff54',
+            '104': 'background-color: #5454ff',
+            '105': 'background-color: #ff54ff',
+            '106': 'background-color: #54ffff',
+            '107': 'background-color: #ffffff',
             // Text attributes
             '1': 'font-weight: bold',
             '4': 'text-decoration: underline',
