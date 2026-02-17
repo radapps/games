@@ -351,6 +351,13 @@
             transform-origin: center;
         }
 
+        /* Blink animation for ANSI code 5 */
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
         @media (max-width: 768px) {
             .map-image.zoomed {
                 transform: scale(2);
@@ -847,10 +854,16 @@
         const CP437_MAP = new Array(256);
         for (let i = 0; i < 256; i++) {
             if (i < 32) {
-                // Control characters mapped to CP437 glyphs
-                const cp437Controls = ['☺','☻','♥','♦','♣','♠','•','◘','○','◙','♂','♀','♪','♫','☼',
-                                       '►','◄','↕','‼','¶','§','▬','↨','↑','↓','→','←','∟','↔','▲','▼'];
-                CP437_MAP[i] = cp437Controls[i] || String.fromCharCode(i);
+                // Keep control codes that are used in ANSI/terminal sequences
+                if (i === 0x1B || i === 0x0D || i === 0x0A || i === 0x08 || i === 0x09 || i === 0x07) {
+                    // ESC (0x1B), CR (0x0D), LF (0x0A), BS (0x08), TAB (0x09), BEL (0x07)
+                    CP437_MAP[i] = String.fromCharCode(i);
+                } else {
+                    // Other control characters mapped to CP437 glyphs
+                    const cp437Controls = ['☺','☻','♥','♦','♣','♠','•','◘','○','◙','♂','♀','♪','♫','☼',
+                                           '►','◄','↕','‼','¶','§','▬','↨','↑','↓','→','←','∟','↔','▲','▼'];
+                    CP437_MAP[i] = cp437Controls[i] || String.fromCharCode(i);
+                }
             } else if (i < 127) {
                 CP437_MAP[i] = String.fromCharCode(i);
             } else if (i === 127) {
@@ -903,6 +916,7 @@
             // Text attributes
             '1': 'font-weight: bold',
             '4': 'text-decoration: underline',
+            '5': 'animation: blink 1s step-start infinite',  // Blink
             '7': 'filter: invert(1)',  // Reverse video
         };
 
