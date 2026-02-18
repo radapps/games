@@ -2121,7 +2121,7 @@
                 // Stop at prompt or empty line before prompt
                 if (trimmed === ')' || trimmed === '') break;
                 // Accumulate lines
-                if (longDesc) longDesc += '\r\n'; // BBS uses CRLF
+                if (longDesc) longDesc += ' ';
                 longDesc += trimmed;
             }
             
@@ -2130,14 +2130,19 @@
                 return;
             }
             
-            console.log('Looking for room with long desc starting with:', longDesc.substring(0, 100));
+            // Normalize: remove ALL whitespace for comparison
+            const normalizedBBS = longDesc.replace(/\s+/g, '');
             
-            // Search all rooms for matching long description (startsWith)
+            console.log('Looking for room (first 100 chars):', longDesc.substring(0, 100));
+            console.log('Normalized BBS:', normalizedBBS.substring(0, 100));
+            
+            // Search all rooms for matching long description (startsWith after normalization)
             let foundRoomId = null;
             for (const [roomId, room] of Object.entries(mapData.rooms)) {
-                // Normalize both: trim and compare
-                const roomLong = room.long.replace(/\r\n/g, '\r\n').trim();
-                if (roomLong.startsWith(longDesc.trim())) {
+                // Normalize room long desc: remove all whitespace
+                const normalizedRoom = room.long.replace(/\s+/g, '');
+                
+                if (normalizedRoom.startsWith(normalizedBBS)) {
                     foundRoomId = roomId;
                     console.log('Matched room:', roomId, 'short:', room.short);
                     break;
@@ -2145,7 +2150,8 @@
             }
             
             if (!foundRoomId) {
-                console.log('Room not found in map data. Long desc:', longDesc);
+                console.log('Room not found in map data');
+                console.log('Searched for (normalized):', normalizedBBS);
                 alert('Current room not found in map database');
                 return;
             }
