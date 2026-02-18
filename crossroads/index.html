@@ -779,8 +779,6 @@
         let ansiFg = '';       // Current foreground color hex
         let ansiBold = false;  // Current bold state
         let ansiBlink = false; // Current blink state
-        let waitingForMapLook = false;  // Waiting for LOOK to match room
-        let mapData = null;    // Cached map JSON data
         let currentSpells = []; // Store user's spells
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
@@ -1073,11 +1071,6 @@
                         // Check for target detection
                         if (waitingForTargetDetection) {
                             detectTargetsFromLook();
-                        }
-                        
-                        // Check for map room matching
-                        if (waitingForMapLook) {
-                            detectAndShowMap();
                         }
                     }
                 };
@@ -1969,9 +1962,11 @@
         }
 
         function handleMapButton() {
-            // Send LOOK and wait for map data
-            waitingForMapLook = true;
-            sendCommand('look');
+            // Detect if mobile or desktop
+            const isMobile = window.innerWidth <= 768;
+            const mapImage = isMobile ? 'xroads-town-map-small.png' : 'xroads-town-map-medium.png';
+            
+            showMapPopup(mapImage);
         }
 
         function handleSettingsButton() {
@@ -2082,266 +2077,6 @@
                 img.classList.toggle('zoomed');
             }
         }
-
-        async function detectAndShowMap() {
-            waitingForMapLook = false;
-            
-            // Load map data if not cached
-            if (!mapData) {
-                try {
-                    const response = await fetch('Rooms_With_Clusters.json');
-                    mapData = await response.json();
-                } catch (e) {
-                    console.error('Failed to load map data:', e);
-                    alert('Map data file not found. Please ensure Rooms_With_Clusters.json is in the same directory.');
-                    return;
-                }
-            }
-            
-            // Extract long description from recent text
-            // Format: "...You're on/in [short].\n[long description starts here]"
-            // The long desc ends when we hit items/NPCs/players or the prompt ")"
-            
-            const shortMatch = recentTerminalText.match(/\.\.\.You're (?:in|on) (.+?)\.\s*/);
-            if (!shortMatch) {
-                console.log('No room short description found');
-                return;
-            }
-            
-            // Get text after the short description
-            const afterShort = recentTerminalText.substring(shortMatch.index + shortMatch[0].length);
-            
-            // Extract until we hit the prompt ")" or end of text
-            // The long desc is everything between short and prompt
-            const lines = afterShort.split('\n');
-            let longDesc = '';
-            
-            for (const line of lines) {
-                const trimmed = line.trim();
-                // Stop at prompt or empty line before prompt
-                if (trimmed === ')' || trimmed === '') break;
-                // Accumulate lines
-                if (longDesc) longDesc += ' ';
-                longDesc += trimmed;
-            }
-            
-            if (!longDesc) {
-                console.log('No long description extracted');
-                return;
-            }
-            
-            // Normalize: remove ALL whitespace for comparison
-            const normalizedBBS = longDesc.replace(/\s+/g, '');
-            
-            console.log('Looking for room (first 100 chars):', longDesc.substring(0, 100));
-            console.log('Normalized BBS:', normalizedBBS.substring(0, 100));
-            
-            // Search all rooms for matching long description (startsWith after normalization)
-            let foundRoomId = null;
-            for (const [roomId, room] of Object.entries(mapData.rooms)) {
-                // Normalize room long desc: remove all whitespace
-                const normalizedRoom = room.long.replace(/\s+/g, '');
-                
-                if (normalizedRoom.startsWith(normalizedBBS)) {
-                    foundRoomId = roomId;
-                    console.log('Matched room:', roomId, 'short:', room.short);
-                    break;
-                }
-            }
-            
-            if (!foundRoomId) {
-                console.log('Room not found in map data');
-                console.log('Searched for (normalized):', normalizedBBS);
-                alert('Current room not found in map database');
-                return;
-            }
-            
-            // Show interactive map centered on this room
-            showInteractiveMap(foundRoomId);
-        }
-
-        function showInteractiveMap(centerRoomId) {
-            const room = mapData.rooms[centerRoomId];
-            if (!room) return;
-            
-            const overlay = document.getElementById('popupOverlay');
-            const titleEl = document.getElementById('popupTitle');
-            const listEl = document.getElementById('popupButtonList');
-            
-            titleEl.textContent = 'Interactive Map';
-            listEl.innerHTML = `
-                <canvas id="mapCanvas" width="800" height="600" style="display: block; background: #121212; cursor: grab; touch-action: none;"></canvas>
-                <div id="mapControls" style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
-                    <button onclick="mapZoomIn()" style="padding: 8px 16px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;">Zoom In</button>
-                    <button onclick="mapZoomOut()" style="padding: 8px 16px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;">Zoom Out</button>
-                    <button onclick="mapRecenter()" style="padding: 8px 16px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;">Recenter</button>
-                    <span id="mapLevelDisplay" style="padding: 8px 16px; background: #333; color: white; border: 1px solid #555; border-radius: 4px;">Level: ${room.z || 0}</span>
-                    <button onclick="mapLevelUp()" style="padding: 8px 16px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;">Level +</button>
-                    <button onclick="mapLevelDown()" style="padding: 8px 16px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer;">Level -</button>
-                </div>
-            `;
-            
-            overlay.classList.add('active');
-            
-            // Initialize map rendering after DOM update
-            setTimeout(() => initializeMap(centerRoomId), 50);
-        }
-
-        // Map rendering state
-        let mapCanvas, mapCtx, mapScale = 50, mapOffset = {x: 0, y: 0}, mapCurrentZ = 0, mapCenterRoom = null;
-        let mapIsDragging = false, mapLastPos = {x: 0, y: 0};
-
-        function initializeMap(centerRoomId) {
-            mapCanvas = document.getElementById('mapCanvas');
-            if (!mapCanvas) return;
-            
-            mapCtx = mapCanvas.getContext('2d');
-            mapCenterRoom = centerRoomId;
-            const room = mapData.rooms[centerRoomId];
-            mapCurrentZ = room.z || 0;
-            
-            // Center on the room
-            mapOffset = {
-                x: mapCanvas.width / 2 - room.x * mapScale,
-                y: mapCanvas.height / 2 + room.y * mapScale
-            };
-            
-            drawMap();
-            setupMapControls();
-        }
-
-        function drawMap() {
-            if (!mapCanvas || !mapCtx || !mapData) return;
-            
-            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-            
-            const roomSize = mapScale * 0.85;
-            const visibleRooms = Object.entries(mapData.rooms)
-                .filter(([id, r]) => (r.z || 0) === mapCurrentZ)
-                .map(([id, r]) => ({...r, _id: id}));
-            
-            // Draw connections first
-            mapCtx.strokeStyle = '#444';
-            mapCtx.lineWidth = 1;
-            visibleRooms.forEach(r => {
-                ['n','e','s','w','u','d'].forEach(dir => {
-                    const targetId = r[dir];
-                    if (!targetId) return;
-                    const target = mapData.rooms[targetId];
-                    if (target && (target.z || 0) === mapCurrentZ) {
-                        mapCtx.beginPath();
-                        mapCtx.moveTo(r.x * mapScale + mapOffset.x, -r.y * mapScale + mapOffset.y);
-                        mapCtx.lineTo(target.x * mapScale + mapOffset.x, -target.y * mapScale + mapOffset.y);
-                        mapCtx.stroke();
-                    }
-                });
-            });
-            
-            // Draw rooms
-            visibleRooms.forEach(r => {
-                const vx = r.x * mapScale + mapOffset.x;
-                const vy = -r.y * mapScale + mapOffset.y;
-                
-                // Skip if offscreen
-                if (vx < -roomSize || vx > mapCanvas.width + roomSize || vy < -roomSize || vy > mapCanvas.height + roomSize) return;
-                
-                const isCenter = r._id === mapCenterRoom;
-                const style = getRoomMapStyle(r.keyword);
-                
-                mapCtx.save();
-                mapCtx.fillStyle = style.bg;
-                
-                if (isCenter) {
-                    mapCtx.shadowBlur = 15;
-                    mapCtx.shadowColor = '#fff';
-                    mapCtx.strokeStyle = '#fff';
-                    mapCtx.lineWidth = 3;
-                } else {
-                    mapCtx.strokeStyle = 'rgba(0,0,0,0.3)';
-                    mapCtx.lineWidth = 1;
-                }
-                
-                mapCtx.fillRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
-                mapCtx.strokeRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
-                mapCtx.restore();
-                
-                // Draw room ID if zoomed in
-                if (mapScale > 20) {
-                    mapCtx.fillStyle = style.text;
-                    mapCtx.textAlign = 'center';
-                    mapCtx.font = `bold ${Math.max(8, Math.floor(mapScale/5))}px sans-serif`;
-                    mapCtx.fillText(r._id, vx, vy + 4);
-                }
-            });
-        }
-
-        function getRoomMapStyle(keyword) {
-            if (!keyword) return {bg: '#ffd43b', text: '#000'};
-            const char = keyword.charAt(0).toUpperCase();
-            if (char === 'A') return {bg: '#898989', text: '#fff'};
-            if (char === 'F') return {bg: '#fa5252', text: '#fff'};
-            if (char === 'W') return {bg: '#228be6', text: '#fff'};
-            if (char === 'E') return {bg: '#40c057', text: '#fff'};
-            return {bg: '#ffd43b', text: '#000'};
-        }
-
-        function setupMapControls() {
-            mapCanvas.addEventListener('mousedown', (e) => {
-                mapIsDragging = true;
-                mapLastPos = {x: e.clientX, y: e.clientY};
-            });
-            
-            mapCanvas.addEventListener('mousemove', (e) => {
-                if (!mapIsDragging) return;
-                mapOffset.x += e.clientX - mapLastPos.x;
-                mapOffset.y += e.clientY - mapLastPos.y;
-                mapLastPos = {x: e.clientX, y: e.clientY};
-                drawMap();
-            });
-            
-            mapCanvas.addEventListener('mouseup', () => { mapIsDragging = false; });
-            mapCanvas.addEventListener('mouseleave', () => { mapIsDragging = false; });
-            
-            mapCanvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const factor = e.deltaY > 0 ? 0.9 : 1.1;
-                mapScale = Math.min(Math.max(10, mapScale * factor), 200);
-                drawMap();
-            }, {passive: false});
-        }
-
-        function mapZoomIn() {
-            mapScale = Math.min(mapScale * 1.2, 200);
-            drawMap();
-        }
-
-        function mapZoomOut() {
-            mapScale = Math.max(mapScale * 0.8, 10);
-            drawMap();
-        }
-
-        function mapRecenter() {
-            if (!mapCenterRoom) return;
-            const room = mapData.rooms[mapCenterRoom];
-            mapOffset = {
-                x: mapCanvas.width / 2 - room.x * mapScale,
-                y: mapCanvas.height / 2 + room.y * mapScale
-            };
-            drawMap();
-        }
-
-        function mapLevelUp() {
-            mapCurrentZ++;
-            document.getElementById('mapLevelDisplay').textContent = `Level: ${mapCurrentZ}`;
-            drawMap();
-        }
-
-        function mapLevelDown() {
-            mapCurrentZ--;
-            document.getElementById('mapLevelDisplay').textContent = `Level: ${mapCurrentZ}`;
-            drawMap();
-        }
-
 
         function handleEquipAction(action) {
             if (action === 'Arm') {
