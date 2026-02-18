@@ -84,7 +84,7 @@
         const room = allData.rooms[id];
         if (!room) return;
         const clusterId = allData.clusters.find(c => c.rooms.includes(id))?.id;
-        if (!clusterId) return;
+        if (clusterId == null) return;
 
         areaSelect.value = clusterId;
         loadArea(clusterId);
@@ -225,3 +225,4 @@
 </script>
 </body>
 </html>
+
