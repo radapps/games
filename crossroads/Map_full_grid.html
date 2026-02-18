@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crossroads Mapper - Full Grid</title>
+    <title>Crossroads Mapper</title>
     <style>
         body { margin: 0; background: #121212; color: #e0e0e0; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #canvas-container { width: 100vw; height: 100vh; cursor: grab; }
         canvas { display: block; }
-        
         .ui-panel { position: absolute; background: rgba(30, 30, 30, 0.95); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
         #top-bar { top: 10px; left: 10px; right: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
         select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; flex-grow: 1; min-width: 150px; cursor: pointer; }
         .btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .btn:active { background: #1971c2; }
-        .filter-wrap { font-size: 12px; display: flex; align-items: center; gap: 5px; background: #222; padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
-
         #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 15px; max-height: 40vh; overflow-y: auto; display: none; border-bottom: 5px solid #1971c2; }
         #info-panel.active { display: block; }
         .room-selector { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .sel-btn { background: #333; border: 1px solid #555; color: white; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .sel-btn.active { background: #1971c2; border-color: #4dabf7; font-weight: bold; }
-
         h3 { margin: 0 0 5px 0; color: #4dabf7; font-size: 18px; }
         p { font-size: 14px; margin: 8px 0; color: #ccc; line-height: 1.5; white-space: pre-wrap; }
         .tag { display: inline-block; background: #222; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 5px; border: 1px solid #444; color: #888; }
@@ -32,10 +27,6 @@
 
 <div id="top-bar" class="ui-panel">
     <select id="area-select"></select>
-    <div class="filter-wrap">
-        <input type="checkbox" id="show-single-rooms">
-        <label for="show-single-rooms">Isolated</label>
-    </div>
     <div style="display:flex; align-items:center; gap:5px;">
         <button class="btn" id="lvl-down">−</button>
         <div id="level-display">Lvl: 0</div>
@@ -58,19 +49,12 @@
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const areaSelect = document.getElementById('area-select');
-    const singleRoomsCheckbox = document.getElementById('show-single-rooms');
     const infoPanel = document.getElementById('info-panel');
     const roomSelectorContainer = document.getElementById('room-selector-container');
     const levelDisplay = document.getElementById('level-display');
     
-    let allData = null;
-    let currentAreaRooms = [];
-    let currentZ = 0;
-    let scale = 55;
-    let offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let selectedGroup = null;
-    let activeInGroupIndex = 0;
-
+    let allData = null, currentAreaRooms = [], currentZ = 0, scale = 55, offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let selectedGroup = null, activeInGroupIndex = 0;
     let isDragging = false, lastPos = { x: 0, y: 0 }, lastDist = 0;
 
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; draw(); }
@@ -80,82 +64,57 @@
     fetch('Rooms_With_Clusters.json').then(res => res.json()).then(data => {
         allData = data;
         populateDropdown();
-        loadArea(data.clusters.find(c => c.is_main)?.id || data.clusters[0].id);
-    });
-
-    // --- LOGIC TO SYNC FROM GAME ---
-    window.addEventListener('message', (event) => {
-        if (event.data.type === 'SYNC_ROOM') {
-            findAndFocusRoom(event.data.description);
+        
+        // Check URL for room ID on load
+        const urlParams = new URLSearchParams(window.location.search);
+        const startId = urlParams.get('roomId');
+        if (startId) {
+            focusRoom(startId);
+        } else {
+            loadArea(data.clusters[0].id);
         }
     });
 
-    function findAndFocusRoom(gameDesc) {
-        const cleanGameDesc = gameDesc.replace(/\s+/g, ' ').trim();
-        let foundRoom = null;
-        let foundClusterId = null;
+    // Listen for GOTO messages from index.html
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'GOTO_ROOM') focusRoom(e.data.roomId);
+    });
 
-        for (const [id, room] of Object.entries(allData.rooms)) {
-            const cleanJsonDesc = room.long.replace(/\s+/g, ' ').trim();
-            if (cleanGameDesc.startsWith(cleanJsonDesc)) {
-                foundRoom = { ...room, _id: id };
-                // Find which cluster this room belongs to
-                foundClusterId = allData.clusters.find(c => c.rooms.includes(id))?.id;
-                break;
-            }
-        }
+    function focusRoom(id) {
+        const room = allData.rooms[id];
+        if (!room) return;
+        const clusterId = allData.clusters.find(c => c.rooms.includes(id))?.id;
+        if (!clusterId) return;
 
-        if (foundRoom && foundClusterId) {
-            areaSelect.value = foundClusterId;
-            loadArea(foundClusterId);
-            currentZ = foundRoom.z;
-            levelDisplay.innerText = `Lvl: ${currentZ}`;
-            
-            // Group the room for selection logic (in case of overlaps)
-            selectedGroup = currentAreaRooms.filter(r => r.x === foundRoom.x && r.y === foundRoom.y && r.z === foundRoom.z);
-            activeInGroupIndex = selectedGroup.findIndex(r => r._id === foundRoom._id);
-            
-            // Center the map on the room
-            offset.x = (window.innerWidth / 2) - (foundRoom.x * scale);
-            offset.y = (window.innerHeight / 2) + (foundRoom.y * scale);
-            
-            showInfo();
-            draw();
-        }
+        areaSelect.value = clusterId;
+        loadArea(clusterId);
+        currentZ = room.z;
+        levelDisplay.innerText = `Lvl: ${currentZ}`;
+        
+        // Center view
+        offset.x = (window.innerWidth / 2) - (room.x * scale);
+        offset.y = (window.innerHeight / 2) + (room.y * scale);
+        
+        // Select room
+        selectedGroup = currentAreaRooms.filter(r => r.x === room.x && r.y === room.y && r.z === room.z);
+        activeInGroupIndex = selectedGroup.findIndex(r => r._id === id);
+        showInfo();
+        draw();
     }
 
     function populateDropdown() {
-        const showAll = singleRoomsCheckbox.checked;
-        const currentVal = areaSelect.value;
-        areaSelect.innerHTML = '';
-        allData.clusters.forEach(cluster => {
-            if (showAll || cluster.rooms.length > 1 || cluster.is_main) {
-                const opt = document.createElement('option');
-                opt.value = cluster.id; opt.textContent = cluster.name;
-                if (cluster.id == currentVal) opt.selected = true;
-                areaSelect.appendChild(opt);
-            }
+        allData.clusters.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id; opt.textContent = c.name;
+            areaSelect.appendChild(opt);
         });
     }
 
     function loadArea(clusterId) {
         const cluster = allData.clusters.find(c => c.id == clusterId);
-        if(!cluster) return;
         currentAreaRooms = cluster.rooms.map(id => ({ ...allData.rooms[id], _id: id }));
         draw();
     }
-
-    function recenter() {
-        offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        scale = 55;
-        levelDisplay.innerText = `Lvl: ${currentZ}`;
-        selectedGroup = null;
-        infoPanel.classList.remove('active');
-        draw();
-    }
-
-    areaSelect.onchange = (e) => loadArea(e.target.value);
-    document.getElementById('recenter-btn').onclick = recenter;
 
     function getRoomStyle(keyword) {
         const char = keyword ? keyword.charAt(0).toUpperCase() : '';
@@ -176,21 +135,17 @@
         const groups = {};
         visibleRooms.forEach(r => { const k = `${r.x},${r.y}`; if(!groups[k]) groups[k]=[]; groups[k].push(r); });
 
-        // Lines (Thicker)
         ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
         visibleRooms.forEach(r => {
             ['n','e','s','w'].forEach(d => {
                 const t = allData.rooms[r[d]];
                 if (t && t.z === currentZ && currentAreaRooms.some(cr => cr._id == r[d])) {
-                    ctx.beginPath();
-                    ctx.moveTo(r.x * scale + offset.x, -r.y * scale + offset.y);
-                    ctx.lineTo(t.x * scale + offset.x, -t.y * scale + offset.y);
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(r.x * scale + offset.x, -r.y * scale + offset.y);
+                    ctx.lineTo(t.x * scale + offset.x, -t.y * scale + offset.y); ctx.stroke();
                 }
             });
         });
 
-        // Boxes
         Object.values(groups).forEach(g => {
             const r = g[0], vx = r.x * scale + offset.x, vy = -r.y * scale + offset.y;
             const style = getRoomStyle(r.keyword);
@@ -213,7 +168,7 @@
         });
     }
 
-    // Touch/Mouse Controls
+    // Touch/Mouse Controls (Pinch zoom etc)
     const getDist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     const onStart = (e) => {
         const t = e.touches;
@@ -260,9 +215,10 @@
         document.getElementById('room-name').innerText = activeRoom.short.replace(/^\.+/, '');
         document.getElementById('room-desc').innerText = activeRoom.long;
         document.getElementById('room-meta').innerHTML = `<span class="tag">ID: ${activeRoom._id}</span><span class="tag">${activeRoom.keyword}</span>`;
-        infoPanel.classList.add('active'); infoPanel.scrollTo(0,0);
+        infoPanel.classList.add('active');
     }
 
+    document.getElementById('recenter-btn').onclick = () => { offset = { x: canvas.width/2, y: canvas.height/2 }; draw(); };
     document.getElementById('lvl-up').onclick = () => { currentZ++; levelDisplay.innerText = `Lvl: ${currentZ}`; draw(); };
     document.getElementById('lvl-down').onclick = () => { currentZ--; levelDisplay.innerText = `Lvl: ${currentZ}`; draw(); };
     canvas.addEventListener('wheel', e => { e.preventDefault(); scale = Math.min(Math.max(10, scale * (e.deltaY > 0 ? 0.9 : 1.1)), 400); draw(); }, { passive: false });
