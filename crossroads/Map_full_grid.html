@@ -8,29 +8,55 @@
         body { margin: 0; background: #121212; color: #e0e0e0; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #canvas-container { width: 100vw; height: 100vh; cursor: grab; }
         canvas { display: block; }
+        
         .ui-panel { position: absolute; background: rgba(30, 30, 30, 0.95); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
-        #top-bar { top: 10px; left: 10px; right: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; flex-grow: 1; min-width: 150px; cursor: pointer; }
-        .btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 15px; max-height: 40vh; overflow-y: auto; display: none; border-bottom: 5px solid #1971c2; }
+        
+        /* Top Bar & Hamburger Menu */
+        #top-bar { top: 10px; left: 10px; padding: 5px; display: flex; flex-direction: column; gap: 5px; }
+        #menu-toggle { font-size: 20px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; }
+        #menu-content { display: none; padding: 10px; border-top: 1px solid #444; flex-direction: column; gap: 10px; }
+        #menu-content.active { display: flex; }
+        
+        select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; width: 180px; cursor: pointer; }
+        .level-controls { display: flex; align-items: center; gap: 8px; justify-content: center; background: #222; padding: 5px; border-radius: 4px; border: 1px solid #444; }
+
+        /* Buttons */
+        .btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .btn:hover { background: #555; }
+        .btn:active { background: #1971c2; }
+
+        /* Info Panel & Collapsible */
+        #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 12px; max-height: 50vh; overflow-y: auto; display: none; border-bottom: 5px solid #1971c2; }
         #info-panel.active { display: block; }
+        
+        h3 { margin: 0 0 8px 0; color: #4dabf7; font-size: 16px; border-left: 3px solid #4dabf7; padding-left: 8px; }
+        
+        #details-toggle { width: 100%; font-size: 11px; padding: 4px; background: #222; margin-top: 5px; color: #888; border-color: #333; text-transform: uppercase; letter-spacing: 1px; }
+        
+        #collapsible-content { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #444; }
+        #collapsible-content.active { display: block; }
+        
         .room-selector { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .sel-btn { background: #333; border: 1px solid #555; color: white; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .sel-btn { background: #333; border: 1px solid #555; color: white; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
         .sel-btn.active { background: #1971c2; border-color: #4dabf7; font-weight: bold; }
-        h3 { margin: 0 0 5px 0; color: #4dabf7; font-size: 18px; }
-        p { font-size: 14px; margin: 8px 0; color: #ccc; line-height: 1.5; white-space: pre-wrap; }
-        .tag { display: inline-block; background: #222; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 5px; border: 1px solid #444; color: #888; }
-        #recenter-btn { position: absolute; bottom: 30px; right: 20px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+        p { font-size: 13px; margin: 8px 0; color: #bbb; line-height: 1.4; white-space: pre-wrap; }
+        .tag { display: inline-block; background: #111; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-right: 5px; border: 1px solid #333; color: #79c0ff; font-family: monospace; }
+        
+        #recenter-btn { position: absolute; bottom: 30px; right: 20px; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
     </style>
 </head>
 <body>
 
 <div id="top-bar" class="ui-panel">
-    <select id="area-select"></select>
-    <div style="display:flex; align-items:center; gap:5px;">
-        <button class="btn" id="lvl-down">−</button>
-        <div id="level-display">Lvl: 0</div>
-        <button class="btn" id="lvl-up">+</button>
+    <button id="menu-toggle" class="btn">☰</button>
+    <div id="menu-content">
+        <select id="area-select"></select>
+        <div class="level-controls">
+            <button class="btn" id="lvl-down">−</button>
+            <div id="level-display">Lvl: 0</div>
+            <button class="btn" id="lvl-up">+</button>
+        </div>
     </div>
 </div>
 
@@ -39,8 +65,13 @@
 <div id="info-panel" class="ui-panel">
     <div id="room-selector-container" class="room-selector"></div>
     <h3 id="room-name"></h3>
-    <div id="room-meta"></div>
-    <p id="room-desc"></p>
+    
+    <button id="details-toggle" class="btn">Show Room Details</button>
+    
+    <div id="collapsible-content">
+        <div id="room-meta"></div>
+        <p id="room-desc"></p>
+    </div>
 </div>
 
 <div id="canvas-container"><canvas id="mapCanvas"></canvas></div>
@@ -52,6 +83,9 @@
     const infoPanel = document.getElementById('info-panel');
     const roomSelectorContainer = document.getElementById('room-selector-container');
     const levelDisplay = document.getElementById('level-display');
+    const menuContent = document.getElementById('menu-content');
+    const collapsible = document.getElementById('collapsible-content');
+    const detailsBtn = document.getElementById('details-toggle');
     
     let allData = null, currentAreaRooms = [], currentZ = 0, scale = 55, offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let selectedGroup = null, activeInGroupIndex = 0;
@@ -61,21 +95,23 @@
     window.addEventListener('resize', resize);
     resize();
 
+    // UI Toggles
+    document.getElementById('menu-toggle').onclick = () => menuContent.classList.toggle('active');
+    detailsBtn.onclick = () => {
+        const isOpen = collapsible.classList.toggle('active');
+        detailsBtn.innerText = isOpen ? 'Hide Room Details' : 'Show Room Details';
+    };
+
     fetch('Rooms_With_Clusters.json').then(res => res.json()).then(data => {
         allData = data;
         populateDropdown();
         
-        // Check URL for room ID on load
         const urlParams = new URLSearchParams(window.location.search);
         const startId = urlParams.get('roomId');
-        if (startId) {
-            focusRoom(startId);
-        } else {
-            loadArea(data.clusters[0].id);
-        }
+        if (startId) focusRoom(startId);
+        else loadArea(data.clusters[0].id);
     });
 
-    // Listen for GOTO messages from index.html
     window.addEventListener('message', (e) => {
         if (e.data.type === 'GOTO_ROOM') focusRoom(e.data.roomId);
     });
@@ -84,18 +120,16 @@
         const room = allData.rooms[id];
         if (!room) return;
         const clusterId = allData.clusters.find(c => c.rooms.includes(id))?.id;
-        if (clusterId == null) return;
+        if (clusterId == null) return; // Fix for ID 0
 
         areaSelect.value = clusterId;
         loadArea(clusterId);
         currentZ = room.z;
         levelDisplay.innerText = `Lvl: ${currentZ}`;
         
-        // Center view
         offset.x = (window.innerWidth / 2) - (room.x * scale);
         offset.y = (window.innerHeight / 2) + (room.y * scale);
         
-        // Select room
         selectedGroup = currentAreaRooms.filter(r => r.x === room.x && r.y === room.y && r.z === room.z);
         activeInGroupIndex = selectedGroup.findIndex(r => r._id === id);
         showInfo();
@@ -156,7 +190,6 @@
             else { ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; }
             ctx.fillRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
             ctx.strokeRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
-            if(g.length > 1) { ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.strokeRect(vx - roomSize/2 + 4, vy - roomSize/2 + 4, roomSize - 8, roomSize - 8); }
             ctx.restore();
             if (scale > 15) {
                 ctx.fillStyle = style.text; ctx.textAlign = 'center';
@@ -168,7 +201,32 @@
         });
     }
 
-    // Touch/Mouse Controls (Pinch zoom etc)
+    function showInfo() {
+        const activeRoom = selectedGroup[activeInGroupIndex];
+        roomSelectorContainer.innerHTML = '';
+        if (selectedGroup.length > 1) {
+            selectedGroup.forEach((r, i) => {
+                const b = document.createElement('button');
+                b.className = `sel-btn ${i === activeInGroupIndex ? 'active' : ''}`;
+                b.innerText = `Room ${r._id}`;
+                b.onclick = (e) => { e.stopPropagation(); activeInGroupIndex = i; showInfo(); };
+                roomSelectorContainer.appendChild(b);
+            });
+            roomSelectorContainer.style.display = 'flex';
+        } else { roomSelectorContainer.style.display = 'none'; }
+
+        document.getElementById('room-name').innerText = activeRoom.short.replace(/^\.+/, '');
+        document.getElementById('room-desc').innerText = activeRoom.long;
+        document.getElementById('room-meta').innerHTML = `<span class="tag">ID: ${activeRoom._id}</span><span class="tag">${activeRoom.keyword || 'None'}</span>`;
+        
+        // Reset collapsible on new room selection
+        collapsible.classList.remove('active');
+        detailsBtn.innerText = 'Show Room Details';
+        
+        infoPanel.classList.add('active');
+    }
+
+    // Touch/Mouse Controls
     const getDist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     const onStart = (e) => {
         const t = e.touches;
@@ -199,25 +257,6 @@
         draw();
     });
 
-    function showInfo() {
-        const activeRoom = selectedGroup[activeInGroupIndex];
-        roomSelectorContainer.innerHTML = '';
-        if (selectedGroup.length > 1) {
-            selectedGroup.forEach((r, i) => {
-                const b = document.createElement('button');
-                b.className = `sel-btn ${i === activeInGroupIndex ? 'active' : ''}`;
-                b.innerText = `Room ${r._id}`;
-                b.onclick = (e) => { e.stopPropagation(); activeInGroupIndex = i; showInfo(); };
-                roomSelectorContainer.appendChild(b);
-            });
-            roomSelectorContainer.style.display = 'flex';
-        } else { roomSelectorContainer.style.display = 'none'; }
-        document.getElementById('room-name').innerText = activeRoom.short.replace(/^\.+/, '');
-        document.getElementById('room-desc').innerText = activeRoom.long;
-        document.getElementById('room-meta').innerHTML = `<span class="tag">ID: ${activeRoom._id}</span><span class="tag">${activeRoom.keyword}</span>`;
-        infoPanel.classList.add('active');
-    }
-
     document.getElementById('recenter-btn').onclick = () => { offset = { x: canvas.width/2, y: canvas.height/2 }; draw(); };
     document.getElementById('lvl-up').onclick = () => { currentZ++; levelDisplay.innerText = `Lvl: ${currentZ}`; draw(); };
     document.getElementById('lvl-down').onclick = () => { currentZ--; levelDisplay.innerText = `Lvl: ${currentZ}`; draw(); };
@@ -225,4 +264,3 @@
 </script>
 </body>
 </html>
-
