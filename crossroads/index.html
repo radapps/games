@@ -803,6 +803,7 @@
         let currentShopItems = []; // Items in shop with prices
         let waitingForTargetDetection = false; // Waiting for LOOK to detect targets
         let targetDetectionForSpell = false; // Track if target detection is for spell casting
+        let mapWindow = null;
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
