@@ -24,6 +24,7 @@
         #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 15px; max-height: 40vh; overflow-y: auto; display: none; border-bottom: 5px solid #1971c2; }
         #info-panel.active { display: block; }
         
+        /* Room Group Selector */
         .room-selector { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .sel-btn { background: #333; border: 1px solid #555; color: white; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .sel-btn.active { background: #1971c2; border-color: #4dabf7; font-weight: bold; }
@@ -173,9 +174,9 @@
             groups[key].push(r);
         });
 
-        // 1. Connection Lines
+        // 1. Connection Lines - THICKER VERSION
         ctx.strokeStyle = '#444';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2; // Increased from 1 for better visibility
         visibleRooms.forEach(r => {
             ['n','e','s','w'].forEach(dir => {
                 const targetId = r[dir];
