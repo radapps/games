@@ -1359,17 +1359,25 @@
         }
 
         function extractSpells() {
-            // Look for "You have the ability to cast:" followed by spell names
-            const regex = /You have the ability to cast:\s*([^\n]+)/i;
-            const match = recentTerminalText.match(regex);
+            // Look for "You have the ability to cast:" followed by spell names across multiple lines
+            // The spell list ends when we hit a prompt ")" or another command
+            const startMatch = recentTerminalText.match(/You have the ability to cast:\s*/i);
             
-            if (match) {
-                const spellString = match[1];
-                // Split by spaces and/or tabs
-                const spells = spellString
-                    .split(/[\s\t]+/)
+            if (startMatch) {
+                const startPos = startMatch.index + startMatch[0].length;
+                const afterCast = recentTerminalText.substring(startPos);
+                
+                // Extract everything until we hit a prompt ")" or end of text
+                const endMatch = afterCast.match(/\n\s*\)/);
+                const spellBlock = endMatch 
+                    ? afterCast.substring(0, endMatch.index)
+                    : afterCast;
+                
+                // Split by whitespace (spaces, tabs, newlines) to get individual spell names
+                const spells = spellBlock
+                    .split(/\s+/)
                     .map(s => s.trim())
-                    .filter(s => s.length > 0);
+                    .filter(s => s.length > 0 && s !== ')');
                 
                 if (spells.length > 0) {
                     currentSpells = spells;
