@@ -3,28 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crossroads Mapper</title>
+    <title>Crossroads Mapper - Full Grid</title>
     <style>
         body { margin: 0; background: #121212; color: #e0e0e0; font-family: sans-serif; overflow: hidden; touch-action: none; }
         #canvas-container { width: 100vw; height: 100vh; cursor: grab; }
         canvas { display: block; }
         
-        /* UI Panels */
         .ui-panel { position: absolute; background: rgba(30, 30, 30, 0.95); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
-        
         #top-bar { top: 10px; left: 10px; right: 10px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
         select { background: #333; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; flex-grow: 1; min-width: 150px; cursor: pointer; }
-        
-        .btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-        .btn:hover { background: #555; }
+        .btn { background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .btn:active { background: #1971c2; }
-
         .filter-wrap { font-size: 12px; display: flex; align-items: center; gap: 5px; background: #222; padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
 
         #info-panel { bottom: 20px; left: 20px; right: 20px; padding: 15px; max-height: 40vh; overflow-y: auto; display: none; border-bottom: 5px solid #1971c2; }
         #info-panel.active { display: block; }
-        
-        /* Room Group Selector */
         .room-selector { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .sel-btn { background: #333; border: 1px solid #555; color: white; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .sel-btn.active { background: #1971c2; border-color: #4dabf7; font-weight: bold; }
@@ -32,7 +25,6 @@
         h3 { margin: 0 0 5px 0; color: #4dabf7; font-size: 18px; }
         p { font-size: 14px; margin: 8px 0; color: #ccc; line-height: 1.5; white-space: pre-wrap; }
         .tag { display: inline-block; background: #222; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 5px; border: 1px solid #444; color: #888; }
-        
         #recenter-btn { position: absolute; bottom: 30px; right: 20px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     </style>
 </head>
@@ -60,9 +52,7 @@
     <p id="room-desc"></p>
 </div>
 
-<div id="canvas-container">
-    <canvas id="mapCanvas"></canvas>
-</div>
+<div id="canvas-container"><canvas id="mapCanvas"></canvas></div>
 
 <script>
     const canvas = document.getElementById('mapCanvas');
@@ -76,32 +66,63 @@
     let allData = null;
     let currentAreaRooms = [];
     let currentZ = 0;
-    let scale = 50;
+    let scale = 55;
     let offset = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let selectedGroup = null;
     let activeInGroupIndex = 0;
 
-    // Mobile Control State
-    let isDragging = false;
-    let lastPos = { x: 0, y: 0 };
-    let lastDist = 0;
+    let isDragging = false, lastPos = { x: 0, y: 0 }, lastDist = 0;
 
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        draw();
-    }
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; draw(); }
     window.addEventListener('resize', resize);
     resize();
 
-    fetch('Rooms_With_Clusters.json')
-        .then(res => res.json())
-        .then(data => {
-            allData = data;
-            populateDropdown();
-            const startId = data.clusters.find(c => c.is_main)?.id || data.clusters[0].id;
-            loadArea(startId);
-        });
+    fetch('Rooms_With_Clusters.json').then(res => res.json()).then(data => {
+        allData = data;
+        populateDropdown();
+        loadArea(data.clusters.find(c => c.is_main)?.id || data.clusters[0].id);
+    });
+
+    // --- LOGIC TO SYNC FROM GAME ---
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'SYNC_ROOM') {
+            findAndFocusRoom(event.data.description);
+        }
+    });
+
+    function findAndFocusRoom(gameDesc) {
+        const cleanGameDesc = gameDesc.replace(/\s+/g, ' ').trim();
+        let foundRoom = null;
+        let foundClusterId = null;
+
+        for (const [id, room] of Object.entries(allData.rooms)) {
+            const cleanJsonDesc = room.long.replace(/\s+/g, ' ').trim();
+            if (cleanGameDesc.startsWith(cleanJsonDesc)) {
+                foundRoom = { ...room, _id: id };
+                // Find which cluster this room belongs to
+                foundClusterId = allData.clusters.find(c => c.rooms.includes(id))?.id;
+                break;
+            }
+        }
+
+        if (foundRoom && foundClusterId) {
+            areaSelect.value = foundClusterId;
+            loadArea(foundClusterId);
+            currentZ = foundRoom.z;
+            levelDisplay.innerText = `Lvl: ${currentZ}`;
+            
+            // Group the room for selection logic (in case of overlaps)
+            selectedGroup = currentAreaRooms.filter(r => r.x === foundRoom.x && r.y === foundRoom.y && r.z === foundRoom.z);
+            activeInGroupIndex = selectedGroup.findIndex(r => r._id === foundRoom._id);
+            
+            // Center the map on the room
+            offset.x = (window.innerWidth / 2) - (foundRoom.x * scale);
+            offset.y = (window.innerHeight / 2) + (foundRoom.y * scale);
+            
+            showInfo();
+            draw();
+        }
+    }
 
     function populateDropdown() {
         const showAll = singleRoomsCheckbox.checked;
@@ -110,25 +131,18 @@
         allData.clusters.forEach(cluster => {
             if (showAll || cluster.rooms.length > 1 || cluster.is_main) {
                 const opt = document.createElement('option');
-                opt.value = cluster.id;
-                opt.textContent = cluster.name;
+                opt.value = cluster.id; opt.textContent = cluster.name;
                 if (cluster.id == currentVal) opt.selected = true;
                 areaSelect.appendChild(opt);
             }
         });
     }
-    singleRoomsCheckbox.onchange = populateDropdown;
 
     function loadArea(clusterId) {
         const cluster = allData.clusters.find(c => c.id == clusterId);
         if(!cluster) return;
-        currentAreaRooms = cluster.rooms.map(id => {
-            const r = allData.rooms[id];
-            r._id = id;
-            return r;
-        });
-        currentZ = 0;
-        recenter();
+        currentAreaRooms = cluster.rooms.map(id => ({ ...allData.rooms[id], _id: id }));
+        draw();
     }
 
     function recenter() {
@@ -145,130 +159,80 @@
 
     function getRoomStyle(keyword) {
         const char = keyword ? keyword.charAt(0).toUpperCase() : '';
-        if (char === 'A') return { bg: '#898989', text: '#fff' }; // Gray
-        if (char === 'F') return { bg: '#fa5252', text: '#fff' }; // Red
-        if (char === 'W') return { bg: '#228be6', text: '#fff' }; // Blue
-        if (char === 'E') return { bg: '#40c057', text: '#fff' }; // Green
-        return { bg: '#ffd43b', text: '#000' }; // Default Yellow
+        const styles = { 'A': '#898989', 'F': '#fa5252', 'W': '#228be6', 'E': '#40c057' };
+        return { bg: styles[char] || '#ffd43b', text: styles[char] ? '#fff' : '#000' };
     }
 
     function getRoomIcon(id) {
-        const icons = {
-            "5054": "🪄", "5055": "📚", "5051": "🛡", "5050": "⚔",
-            "5057": "❤‍🩹", "5056": "🍺", "5053": "💎", "5052": "🛖", "5000": "🏛"
-        };
+        const icons = { "5054":"🪄","5055":"📚","5051":"🛡","5050":"⚔","5057":"❤‍🩹","5056":"🍺","5053":"💎","5052":"🛖","5000":"🏛" };
         return icons[id] || null;
     }
 
     function draw() {
         if (!currentAreaRooms.length) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
         const roomSize = scale * 0.85;
         const visibleRooms = currentAreaRooms.filter(r => r.z === currentZ);
-        
         const groups = {};
-        visibleRooms.forEach(r => {
-            const key = `${r.x},${r.y}`;
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(r);
-        });
+        visibleRooms.forEach(r => { const k = `${r.x},${r.y}`; if(!groups[k]) groups[k]=[]; groups[k].push(r); });
 
-        // 1. Connection Lines - THICKER VERSION
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 2; // Increased from 1 for better visibility
+        // Lines (Thicker)
+        ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
         visibleRooms.forEach(r => {
-            ['n','e','s','w'].forEach(dir => {
-                const targetId = r[dir];
-                const target = allData.rooms[targetId];
-                if (target && target.z === currentZ && currentAreaRooms.some(cr => cr._id == targetId)) {
+            ['n','e','s','w'].forEach(d => {
+                const t = allData.rooms[r[d]];
+                if (t && t.z === currentZ && currentAreaRooms.some(cr => cr._id == r[d])) {
                     ctx.beginPath();
                     ctx.moveTo(r.x * scale + offset.x, -r.y * scale + offset.y);
-                    ctx.lineTo(target.x * scale + offset.x, -target.y * scale + offset.y);
+                    ctx.lineTo(t.x * scale + offset.x, -t.y * scale + offset.y);
                     ctx.stroke();
                 }
             });
         });
 
-        // 2. Room Boxes
-        Object.values(groups).forEach(group => {
-            const r = group[0];
-            const vx = r.x * scale + offset.x;
-            const vy = -r.y * scale + offset.y;
+        // Boxes
+        Object.values(groups).forEach(g => {
+            const r = g[0], vx = r.x * scale + offset.x, vy = -r.y * scale + offset.y;
             const style = getRoomStyle(r.keyword);
             const isSelected = selectedGroup && selectedGroup[0].x === r.x && selectedGroup[0].y === r.y;
-
             ctx.save();
             ctx.fillStyle = style.bg;
-            if (isSelected) {
-                ctx.shadowBlur = 15; ctx.shadowColor = "white";
-                ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
-            } else {
-                ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1;
-            }
-
+            if (isSelected) { ctx.shadowBlur = 15; ctx.shadowColor = "white"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; }
+            else { ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; }
             ctx.fillRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
             ctx.strokeRect(vx - roomSize/2, vy - roomSize/2, roomSize, roomSize);
-            
-            if (group.length > 1) {
-                ctx.strokeStyle = "rgba(0,0,0,0.2)";
-                ctx.strokeRect(vx - roomSize/2 + 4, vy - roomSize/2 + 4, roomSize - 8, roomSize - 8);
-            }
+            if(g.length > 1) { ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.strokeRect(vx - roomSize/2 + 4, vy - roomSize/2 + 4, roomSize - 8, roomSize - 8); }
             ctx.restore();
-
             if (scale > 15) {
-                ctx.fillStyle = style.text;
-                ctx.textAlign = 'center';
-                
-                // Room Number
-                const fontSize = Math.max(7, Math.floor(scale/6.5));
-                ctx.font = `bold ${fontSize}px sans-serif`;
-                const label = group.map(rm => rm._id).join('/');
-                ctx.fillText(label, vx, vy - (scale/12));
-
-                // Icon
+                ctx.fillStyle = style.text; ctx.textAlign = 'center';
+                const fz = Math.max(7, Math.floor(scale/6.5)); ctx.font = `bold ${fz}px sans-serif`;
+                ctx.fillText(g.map(rm => rm._id).join('/'), vx, vy - (scale/12));
                 const icon = getRoomIcon(r._id);
-                if (icon) {
-                    ctx.font = `${fontSize * 1.5}px sans-serif`;
-                    ctx.fillText(icon, vx, vy + (scale/4));
-                }
+                if (icon) { ctx.font = `${fz * 1.5}px sans-serif`; ctx.fillText(icon, vx, vy + (scale/4)); }
             }
         });
     }
 
-    // Touch/Mouse logic for Pan & Zoom
+    // Touch/Mouse Controls
     const getDist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-    
     const onStart = (e) => {
         const t = e.touches;
-        if (t && t.length === 2) { 
-            isDragging = false; 
-            lastDist = getDist(t[0], t[1]); 
-        } else { 
-            isDragging = true; 
-            const p = t ? t[0] : e; 
-            lastPos = { x: p.clientX, y: p.clientY }; 
-        }
+        if (t && t.length === 2) { isDragging = false; lastDist = getDist(t[0], t[1]); }
+        else { isDragging = true; const p = t ? t[0] : e; lastPos = { x: p.clientX, y: p.clientY }; }
     };
-
     const onMove = (e) => {
         const t = e.touches;
         if (t && t.length === 2) {
-            e.preventDefault();
-            const d = getDist(t[0], t[1]);
-            scale = Math.min(Math.max(10, scale * (d / lastDist)), 400);
-            lastDist = d; draw();
+            e.preventDefault(); const d = getDist(t[0], t[1]);
+            scale = Math.min(Math.max(10, scale * (d / lastDist)), 400); lastDist = d; draw();
         } else if (isDragging) {
             const p = t ? t[0] : e;
             offset.x += p.clientX - lastPos.x; offset.y += p.clientY - lastPos.y;
             lastPos = { x: p.clientX, y: p.clientY }; draw();
         }
     };
-
-    canvas.addEventListener('mousedown', onStart);
-    canvas.addEventListener('touchstart', onStart, { passive: false });
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchmove', onMove, { passive: false });
+    canvas.addEventListener('mousedown', onStart); canvas.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchend', (e) => { if(!e.touches || e.touches.length < 2) lastDist = 0; if(!e.touches || e.touches.length === 0) isDragging = false; });
 
@@ -293,12 +257,10 @@
             });
             roomSelectorContainer.style.display = 'flex';
         } else { roomSelectorContainer.style.display = 'none'; }
-
         document.getElementById('room-name').innerText = activeRoom.short.replace(/^\.+/, '');
         document.getElementById('room-desc').innerText = activeRoom.long;
         document.getElementById('room-meta').innerHTML = `<span class="tag">ID: ${activeRoom._id}</span><span class="tag">${activeRoom.keyword}</span>`;
-        infoPanel.classList.add('active');
-        infoPanel.scrollTo(0,0);
+        infoPanel.classList.add('active'); infoPanel.scrollTo(0,0);
     }
 
     document.getElementById('lvl-up').onclick = () => { currentZ++; levelDisplay.innerText = `Lvl: ${currentZ}`; draw(); };
