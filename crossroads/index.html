@@ -2167,11 +2167,11 @@
 
             // If window is already open, just send the message
             if (mapWindow && !mapWindow.closed) {
-                mapWindow.postMessage({ type: 'GOTO_ROOM', roomId: roomId }, '*');
+                mapWindow.postMessage({ type: 'GOTO_ROOM', roomId: centerRoomId }, '*');
                 mapWindow.focus();
             } else {
                 // Open new window and pass ID via URL parameter
-                mapWindow = window.open(`Map_full_grid.html?roomId=${roomId}`, 'CrossroadsMapper', 'width=1000,height=800');
+                mapWindow = window.open(`Map_full_grid.html?roomId=${centerRoomId}`, 'CrossroadsMapper', 'width=1000,height=800');
             }
             
             //const overlay = document.getElementById('popupOverlay');
