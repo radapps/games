@@ -833,7 +833,18 @@
 
         function closePopup() {
             const overlay = document.getElementById('popupOverlay');
+            const container = overlay.querySelector('.popup-container');
+            const listEl = document.getElementById('popupButtonList');
+            
             overlay.classList.remove('active');
+            
+            // Reset popup container styles to defaults
+            container.style.maxWidth = '';
+            container.style.maxHeight = '';
+            container.style.width = '';
+            container.style.height = '';
+            listEl.style.overflow = '';
+            listEl.style.flex = '';
         }
 
         function closePopupIfClickedOutside(event) {
@@ -2098,22 +2109,19 @@
                 }
             }
             
-            // Find the most recent LOOK output
-            // LOOK output format:
-            // ...You're in/on [short description].
-            // [long description - multiple lines]
-            // [optional: items, NPCs, players]
-            // )
-            
-            // Find last occurrence of "...You're"
-            const lastYoureIndex = recentTerminalText.lastIndexOf('...You');
-            if (lastYoureIndex === -1) {
-                console.log('No room description found');
-                return;
+            // Find the most recent LOOK output by finding last line starting with "..."
+            const lastDotIndex = recentTerminalText.lastIndexOf('\n...');
+            if (lastDotIndex === -1) {
+                // Try without newline (might be at start of buffer)
+                const startDotIndex = recentTerminalText.indexOf('...');
+                if (startDotIndex === -1) {
+                    console.log('No room description found (no "..." line)');
+                    return;
+                }
+                var lookOutput = recentTerminalText.substring(startDotIndex);
+            } else {
+                var lookOutput = recentTerminalText.substring(lastDotIndex + 1); // +1 to skip the \n
             }
-            
-            // Get text from that point forward
-            const lookOutput = recentTerminalText.substring(lastYoureIndex);
             
             // Extract short description line (first line)
             const shortMatch = lookOutput.match(/\.\.\.You're (?:in|on) (.+?)\.\s*/);
@@ -2148,16 +2156,18 @@
             // Normalize: remove ALL whitespace for comparison
             const normalizedBBS = longDesc.replace(/\s+/g, '');
             
-            console.log('Looking for room (first 100 chars):', longDesc.substring(0, 100));
-            console.log('Normalized BBS:', normalizedBBS.substring(0, 100));
+            console.log('Looking for room (first 1000 chars):', longDesc.substring(0, 1000));
+            console.log('Normalized BBS (first 1000):', normalizedBBS.substring(0, 1000));
             
-            // Search all rooms for matching long description (startsWith after normalization)
+            // Search all rooms - BBS output STARTS WITH room.long (room.long may be shorter)
             let foundRoomId = null;
             for (const [roomId, room] of Object.entries(mapData.rooms)) {
                 // Normalize room long desc: remove all whitespace
                 const normalizedRoom = room.long.replace(/\s+/g, '');
                 
-                if (normalizedRoom.startsWith(normalizedBBS)) {
+                // BBS output includes room desc + items/NPCs/players
+                // So: normalizedBBS.startsWith(normalizedRoom)
+                if (normalizedBBS.startsWith(normalizedRoom)) {
                     foundRoomId = roomId;
                     console.log('Matched room:', roomId, 'short:', room.short);
                     break;
@@ -2166,7 +2176,7 @@
             
             if (!foundRoomId) {
                 console.log('Room not found in map data');
-                console.log('Searched for (normalized):', normalizedBBS);
+                console.log('Searched for (normalized, first 1000):', normalizedBBS.substring(0, 1000));
                 alert('Current room not found in map database');
                 return;
             }
@@ -2182,19 +2192,28 @@
             const overlay = document.getElementById('popupOverlay');
             const titleEl = document.getElementById('popupTitle');
             const listEl = document.getElementById('popupButtonList');
+            const container = overlay.querySelector('.popup-container');
             
             titleEl.textContent = 'Crossroads Map';
             
+            // Expand popup container for map and prevent scrolling
+            container.style.maxWidth = '95vw';
+            container.style.maxHeight = '95vh';
+            container.style.width = '95vw';
+            container.style.height = '95vh';
+            
             // Map_full_grid.html already handles ?roomId parameter
             listEl.innerHTML = `
-                <div style="width: 90vw; max-width: 1200px; height: 80vh; position: relative;">
+                <div style="width: 100%; height: 100%; overflow: hidden; position: relative;">
                     <iframe 
                         id="mapIframe" 
                         src="Map_full_grid.html?roomId=${centerRoomId}" 
-                        style="width: 100%; height: 100%; border: none; border-radius: 4px; background: #121212;">
+                        style="width: 100%; height: 100%; border: none; display: block; overflow: hidden;">
                     </iframe>
                 </div>
             `;
+            listEl.style.overflow = 'hidden';
+            listEl.style.flex = '1';
             
             overlay.classList.add('active');
         }
