@@ -528,6 +528,11 @@
             height: 48px;
         }
 
+        .no-zoom {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         .control-btn {
             padding: 4px;
             background: var(--bg-tertiary);
@@ -729,41 +734,41 @@
                     <div class="all-buttons-container">
                         <!-- Row 1: HIT, CAST, DRINK, <empty>, LOOK, N, U -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="handleHitButton()" title="Hit">⚔️</button>
-                            <button class="control-btn" onclick="handleCastButton()" title="Cast">📖</button>
-                            <button class="control-btn" onclick="handleDrinkButton()" title="Drink">💧</button>
+                            <button class="control-btn no-zoom" onclick="handleHitButton()" title="Hit">⚔️</button>
+                            <button class="control-btn no-zoom" onclick="handleCastButton()" title="Cast">📖</button>
+                            <button class="control-btn no-zoom" onclick="handleDrinkButton()" title="Drink">💧</button>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" onclick="sendCommand('look')" title="Look">👁️</button>
-                            <button class="control-btn" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
-                            <button class="control-btn" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
+                            <button class="control-btn no-zoom" onclick="sendCommand('look')" title="Look">👁️</button>
+                            <button class="control-btn no-zoom" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
+                            <button class="control-btn no-zoom" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
                         </div>
                         
                         <!-- Row 2: I, EQUIP, HITS, <empty>, W, EX, E -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="sendCommand('i')" title="Inventory">👜</button>
-                            <button class="control-btn" onclick="handleEquipButton()" title="Equip">🛡️</button>
-                            <button class="control-btn" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
+                            <button class="control-btn no-zoom" onclick="sendCommand('i')" title="Inventory">👜</button>
+                            <button class="control-btn no-zoom" onclick="handleEquipButton()" title="Equip">🛡️</button>
+                            <button class="control-btn no-zoom" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
-                            <button class="control-btn" onclick="handleExitsButton()" title="Exits">🚪</button>
-                            <button class="control-btn" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
+                            <button class="control-btn no-zoom" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
+                            <button class="control-btn no-zoom" onclick="handleExitsButton()" title="Exits">🚪</button>
+                            <button class="control-btn no-zoom" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
                         </div>
                         
                         <!-- Row 3: SHOP, SOCIAL, STATS, <empty>, MAP, S, D -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="handleShopButton()" title="Shop">💲</button>
-                            <button class="control-btn" onclick="handleSocialButton()" title="Social">😀</button>
-                            <button class="control-btn" onclick="sendCommand('stats')" title="Stats">📊</button>
+                            <button class="control-btn no-zoom" onclick="handleShopButton()" title="Shop">💲</button>
+                            <button class="control-btn no-zoom" onclick="handleSocialButton()" title="Social">😀</button>
+                            <button class="control-btn no-zoom" onclick="sendCommand('stats')" title="Stats">📊</button>
                             <div class="button-spacer"></div>
-                            <button class="control-btn" onclick="handleMapButton()" title="Map">🌎</button>
-                            <button class="control-btn" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
-                            <button class="control-btn" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
+                            <button class="control-btn no-zoom" onclick="handleMapButton()" title="Map">🌎</button>
+                            <button class="control-btn no-zoom" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
+                            <button class="control-btn no-zoom" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                         </div>
 
                         <!-- Row 4: HELP, SETTINGS, <empty>, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
-                            <button class="control-btn" onclick="handleHelpButton()" title="Help">❓</button>
-                            <button class="control-btn" onclick="handleSettingsButton()" title="Settings">⚙️</button>
+                            <button class="control-btn no-zoom" onclick="handleHelpButton()" title="Help">❓</button>
+                            <button class="control-btn no-zoom" onclick="handleSettingsButton()" title="Settings">⚙️</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
