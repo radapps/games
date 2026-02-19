@@ -833,19 +833,7 @@
 
         function closePopup() {
             const overlay = document.getElementById('popupOverlay');
-            const container = overlay.querySelector('.popup-container');
-            const listEl = document.getElementById('popupButtonList');
-            
             overlay.classList.remove('active');
-            
-            // Reset popup container styles to defaults
-            container.style.maxWidth = '';
-            container.style.maxHeight = '';
-            container.style.width = '';
-            container.style.height = '';
-            listEl.style.overflow = '';
-            listEl.style.flex = '';
-            listEl.style.minHeight = '';
         }
 
         function closePopupIfClickedOutside(event) {
@@ -2124,7 +2112,7 @@
                 var lookOutput = recentTerminalText.substring(lastDotIndex + 1); // +1 to skip the \n
             }
             
-            // Skip the first line (short description) - just find the first newline 
+            // Skip the first line (short description) - just find the first newline
             const firstNewline = lookOutput.indexOf('\n');
             if (firstNewline === -1) {
                 console.log('No long description found (no lines after short desc)');
@@ -2193,29 +2181,19 @@
             const overlay = document.getElementById('popupOverlay');
             const titleEl = document.getElementById('popupTitle');
             const listEl = document.getElementById('popupButtonList');
-            const container = overlay.querySelector('.popup-container');
             
             titleEl.textContent = 'Crossroads Map';
             
-            // Make popup nearly fullscreen for map
-            container.style.width = '95vw';
-            container.style.height = '95vh';
-            container.style.maxWidth = '95vw';
-            container.style.maxHeight = '95vh';
-            
-            // Map iframe - make it fill the available space
+            // Map_full_grid.html already handles ?roomId parameter
             listEl.innerHTML = `
-                <iframe 
-                    id="mapIframe" 
-                    src="Map_full_grid.html?roomId=${centerRoomId}" 
-                    style="width: 100%; height: 100%; border: none; display: block;">
-                </iframe>
+                <div style="width: 90vw; max-width: 1200px; height: 80vh;">
+                    <iframe 
+                        id="mapIframe" 
+                        src="Map_full_grid.html?roomId=${centerRoomId}" 
+                        style="width: 100%; height: 100%; border: none; border-radius: 4px; background: #121212; overflow: hidden;">
+                    </iframe>
+                </div>
             `;
-            
-            // Critical: make listEl fill remaining space in the flex container
-            listEl.style.flex = '1 1 auto';
-            listEl.style.overflow = 'hidden';
-            listEl.style.minHeight = '0'; // Important for flex children
             
             overlay.classList.add('active');
         }
