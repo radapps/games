@@ -845,6 +845,7 @@
             container.style.height = '';
             listEl.style.overflow = '';
             listEl.style.flex = '';
+            listEl.style.minHeight = '';
         }
 
         function closePopupIfClickedOutside(event) {
@@ -2123,15 +2124,15 @@
                 var lookOutput = recentTerminalText.substring(lastDotIndex + 1); // +1 to skip the \n
             }
             
-            // Extract short description line (first line)
-            const shortMatch = lookOutput.match(/\.\.\.You're (?:in|on) (.+?)\.\s*/);
-            if (!shortMatch) {
-                console.log('No room short description found');
+            // Skip the first line (short description) - just find the first newline
+            const firstNewline = lookOutput.indexOf('\n');
+            if (firstNewline === -1) {
+                console.log('No long description found (no lines after short desc)');
                 return;
             }
             
-            // Get text after the short description line
-            const afterShort = lookOutput.substring(shortMatch.index + shortMatch[0].length);
+            // Get text after the first line (skip short description)
+            const afterShort = lookOutput.substring(firstNewline + 1);
             
             // Extract long description (everything until prompt ")" or end)
             const lines = afterShort.split('\n');
@@ -2196,24 +2197,25 @@
             
             titleEl.textContent = 'Crossroads Map';
             
-            // Expand popup container for map and prevent scrolling
-            container.style.maxWidth = '95vw';
-            container.style.maxHeight = '95vh';
+            // Make popup nearly fullscreen for map
             container.style.width = '95vw';
             container.style.height = '95vh';
+            container.style.maxWidth = '95vw';
+            container.style.maxHeight = '95vh';
             
-            // Map_full_grid.html already handles ?roomId parameter
+            // Map iframe - make it fill the available space
             listEl.innerHTML = `
-                <div style="width: 100%; height: 100%; overflow: hidden; position: relative;">
-                    <iframe 
-                        id="mapIframe" 
-                        src="Map_full_grid.html?roomId=${centerRoomId}" 
-                        style="width: 100%; height: 100%; border: none; display: block; overflow: hidden;">
-                    </iframe>
-                </div>
+                <iframe 
+                    id="mapIframe" 
+                    src="Map_full_grid.html?roomId=${centerRoomId}" 
+                    style="width: 100%; height: 100%; border: none; display: block;">
+                </iframe>
             `;
+            
+            // Critical: make listEl fill remaining space in the flex container
+            listEl.style.flex = '1 1 auto';
             listEl.style.overflow = 'hidden';
-            listEl.style.flex = '1';
+            listEl.style.minHeight = '0'; // Important for flex children
             
             overlay.classList.add('active');
         }
