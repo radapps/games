@@ -523,11 +523,11 @@
         }
 
         .button-spacer {
-            width: 100%;
-            max-width: 48px;
+            width: 48px;
             height: 48px;
         }
 
+        /* Prevent iOS double-tap zoom ONLY on control buttons */
         .no-zoom {
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
@@ -1052,8 +1052,8 @@
                         if (currentTerminalText.length > 10000) {
                             currentTerminalText = currentTerminalText.slice(-10000);
                         }
-                        if (recentTerminalText.length > 1000) {
-                            recentTerminalText = recentTerminalText.slice(-1000);
+                        if (recentTerminalText.length > 3000) {
+                            recentTerminalText = recentTerminalText.slice(-3000);
                         }
                         
                         // Extract targets from recent text
@@ -2006,6 +2006,8 @@
         }
 
         function handleMapButton() {
+            // Clear recent text buffer to ensure we only capture the fresh LOOK
+            recentTerminalText = '';
             // Send LOOK and wait for map data
             waitingForMapLook = true;
             sendCommand('look');
@@ -2038,6 +2040,12 @@
                         <div class="font-size-display" id="fontSizeDisplay">${terminalFontSize.toFixed(1)}em</div>
                         <button class="font-size-btn" onclick="increaseFontSize()">⏫</button>
                     </div>
+                </div>
+                
+                <div class="settings-group" style="margin-top: 20px; border-top: 1px solid var(--border-default); padding-top: 20px;">
+                    <button class="popup-list-btn" onclick="handleLogoff()" style="background: var(--accent-danger); color: white; text-align: center;">
+                        Logoff
+                    </button>
                 </div>
             `;
             
@@ -2079,6 +2087,17 @@
             terminal.style.fontSize = terminalFontSize + 'em';
             document.getElementById('fontSizeDisplay').textContent = terminalFontSize.toFixed(1) + 'em';
             localStorage.setItem('bbs_terminal_font_size', terminalFontSize);
+        }
+
+        function handleLogoff() {
+            // Close the settings popup
+            closePopup();
+            // Send logoff command
+            sendCommand('=x');
+            // Reload page after brief delay
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         }
 
         function loadSettings() {
