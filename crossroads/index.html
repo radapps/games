@@ -2202,8 +2202,8 @@
             // Normalize: remove ALL whitespace for comparison
             const normalizedBBS = longDesc.replace(/\s+/g, '');
             
-            console.log('Looking for room (first 1000 chars):', longDesc.substring(0, 1000));
-            console.log('Normalized BBS (first 1000):', normalizedBBS.substring(0, 1000));
+            console.log('Looking for room (first 3000 chars):', longDesc.substring(0, 3000));
+            console.log('Normalized BBS (first 3000):', normalizedBBS.substring(0, 3000));
             
             // Search all rooms - BBS output STARTS WITH room.long (room.long may be shorter)
             let foundRoomId = null;
@@ -2222,7 +2222,7 @@
             
             if (!foundRoomId) {
                 console.log('Room not found in map data');
-                console.log('Searched for (normalized, first 1000):', normalizedBBS.substring(0, 1000));
+                console.log('Searched for (normalized, first 3000):', normalizedBBS.substring(0, 3000));
                 alert('Current room not found in map database');
                 return;
             }
