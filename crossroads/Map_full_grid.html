@@ -165,12 +165,12 @@
     function getRoomStyle(room) {
         // Priority 1: Specifically requested Purple list
         if (purpleRooms.includes(parseInt(room._id))) {
-            return { bg: '#A865C9', text: '#fff' };
+            return { bg: '#A865C9', text: '#000' };
         }
         // Priority 2: Keyword based logic
         const char = room.keyword ? room.keyword.charAt(0).toUpperCase() : '';
         const styles = { 'A': '#898989', 'F': '#fa5252', 'W': '#228be6', 'E': '#40c057' };
-        return { bg: styles[char] || '#ffd43b', text: styles[char] ? '#fff' : '#000' };
+        return { bg: styles[char] || '#ffd43b', text: styles[char] ? '#000' : '#000' };
     }
 
     function getRoomIcon(id) {
@@ -288,3 +288,4 @@
 </script>
 </body>
 </html>
+
