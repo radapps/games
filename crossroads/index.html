@@ -1493,13 +1493,15 @@
                 const lastMatch = matches[matches.length - 1];
                 const targetString = lastMatch[1];
                 
-                // Split by "and" and commas to get individual targets
+                // Split by commas first, then strip leading "and", "a", "an"
                 const targets = targetString
-                    .split(/(?:\s+and\s+|,\s*)/)
+                    .split(/,\s*/)
                     .map(t => t.trim())
-                    .map(t => t.replace(/^(a |an )/i, '')) // Remove "a" or "an" prefix
-                        .map(item => item.replace(/^suit of /i, '')) // Remove "suit of" prefix
-                    .filter(t => t.length > 0);
+                    .map(t => t.replace(/^(and\s+)/i, ''))   // Remove leading "and "
+                    .map(t => t.replace(/^(a |an )/i, ''))   // Remove leading "a " or "an "
+                    .map(t => t.replace(/^suit of /i, ''))   // Remove "suit of" prefix
+                    .filter(t => t.length > 0)
+                    .filter(t => !/^(a|an|and)$/i.test(t)); // Remove bare "a", "an", "and"
                 
                 return targets;
             }
@@ -1621,6 +1623,11 @@
         }
 
         function detectTargetsFromLook() {
+            // Wait until the BBS prompt ")" appears on its own line, meaning the
+            // full LOOK response has arrived before we try to extract targets.
+            const promptReady = /\n\s*\)\s*$/.test(recentTerminalText) || recentTerminalText.trimEnd().endsWith('\n)');
+            if (!promptReady) return; // Keep waiting for more chunks
+            
             waitingForTargetDetection = false;
             
             // Extract targets from the recent LOOK output
