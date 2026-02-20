@@ -1493,15 +1493,15 @@
                 const lastMatch = matches[matches.length - 1];
                 const targetString = lastMatch[1];
                 
-                // Split by commas first, then strip leading "and", "a", "an"
+                // Split on commas and "and" as separators, then clean up articles
                 const targets = targetString
-                    .split(/,\s*/)
+                    .split(/\s+and\s+|,\s*/)           // split on "and" or comma
                     .map(t => t.trim())
-                    .map(t => t.replace(/^(and\s+)/i, ''))   // Remove leading "and "
-                    .map(t => t.replace(/^(a |an )/i, ''))   // Remove leading "a " or "an "
-                    .map(t => t.replace(/^suit of /i, ''))   // Remove "suit of" prefix
+                    .map(t => t.replace(/^(and\s+)/i, ''))  // strip any residual leading "and"
+                    .map(t => t.replace(/^(a |an )/i, ''))  // strip leading "a " or "an "
+                    .map(t => t.replace(/^suit of /i, ''))  // strip "suit of" prefix
                     .filter(t => t.length > 0)
-                    .filter(t => !/^(a|an|and)$/i.test(t)); // Remove bare "a", "an", "and"
+                    .filter(t => !/^(a|an|and)$/i.test(t)); // remove bare article words
                 
                 return targets;
             }
@@ -1674,9 +1674,13 @@
             const overlay = document.getElementById('popupOverlay');
             const titleEl = document.getElementById('popupTitle');
             const listEl = document.getElementById('popupButtonList');
+            const actionsEl = document.getElementById('popupHeaderActions');
             
             titleEl.textContent = 'Select Target';
             listEl.innerHTML = '';
+            
+            // Reset header actions to just the close button (no refresh icon)
+            actionsEl.innerHTML = '<button class="popup-close" onclick="closePopup()">✕</button>';
             
             targets.forEach(target => {
                 const btn = document.createElement('button');
