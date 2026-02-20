@@ -2166,6 +2166,7 @@
                 const startDotIndex = recentTerminalText.indexOf('...');
                 if (startDotIndex === -1) {
                     console.log('No room description found (no "..." line)');
+                    console.log('recentTerminalText:', recentTerminalText);
                     return;
                 }
                 var lookOutput = recentTerminalText.substring(startDotIndex);
