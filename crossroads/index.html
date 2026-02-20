@@ -1157,8 +1157,8 @@
                         if (currentTerminalText.length > 10000) {
                             currentTerminalText = currentTerminalText.slice(-10000);
                         }
-                        if (recentTerminalText.length > 1024) {
-                            recentTerminalText = recentTerminalText.slice(-1024);
+                        if (recentTerminalText.length > 2000) {
+                            recentTerminalText = recentTerminalText.slice(-2000);
                         }
                         
                         // Extract targets from recent text
@@ -2327,8 +2327,8 @@
             // Normalize: remove ALL whitespace for comparison
             const normalizedBBS = longDesc.replace(/\s+/g, '');
             
-            console.log('Looking for room (first 1024 chars):', longDesc.substring(0, 1024));
-            console.log('Normalized BBS (first 1024):', normalizedBBS.substring(0, 1024));
+            console.log('Looking for room (first 2000 chars):', longDesc.substring(0, 2000));
+            console.log('Normalized BBS (first 2000):', normalizedBBS.substring(0, 2000));
             
             // Search all rooms - BBS output STARTS WITH room.long (room.long may be shorter)
             let foundRoomId = null;
@@ -2347,7 +2347,7 @@
             
             if (!foundRoomId) {
                 console.log('Room not found in map data');
-                console.log('Searched for (normalized, first 1024):', normalizedBBS.substring(0, 1024));
+                console.log('Searched for (normalized, first 2000):', normalizedBBS.substring(0, 2000));
                 alert('Current room not found in map database');
                 return;
             }
