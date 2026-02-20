@@ -2213,7 +2213,7 @@
                 
                 // BBS output includes room desc + items/NPCs/players
                 // So: normalizedBBS.startsWith(normalizedRoom)
-                if (normalizedBBS.startsWith(normalizedRoom)) {
+                if (normalizedBBS.startsWith(normalizedRoom) || normalizedRoom.startsWith(normalizedBBS)) {
                     foundRoomId = roomId;
                     console.log('Matched room:', roomId, 'short:', room.short);
                     break;
@@ -2222,7 +2222,7 @@
             
             if (!foundRoomId) {
                 console.log('Room not found in map data');
-                console.log('Searched for (normalized, first 3000):', normalizedBBS.substring(0, 3000));
+                console.log('Searched for (normalized, first 1024):', normalizedBBS.substring(0, 1024));
                 alert('Current room not found in map database');
                 return;
             }
