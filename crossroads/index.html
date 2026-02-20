@@ -2243,11 +2243,11 @@
             const overlay = document.getElementById('mapPopupOverlay');
             const contentEl = document.getElementById('mapPopupContent');
             
-            // Map_full_grid.html already handles ?roomId parameter
+            // Map.html already handles ?roomId parameter
             contentEl.innerHTML = `
                 <iframe 
                     id="mapIframe" 
-                    src="Map_full_grid.html?roomId=${centerRoomId}" 
+                    src="Map.html?roomId=${centerRoomId}" 
                     style="width: 100%; height: 100%; border: none; background: #121212;">
                 </iframe>
             `;
