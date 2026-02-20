@@ -414,32 +414,43 @@
 
         /* Settings Controls */
         .settings-group {
-            margin: 16px 0;
-            padding: 16px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-muted);
+            gap: 16px;
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
         }
 
         .settings-label {
-            display: block;
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: var(--text-secondary);
-            margin-bottom: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .settings-toggle {
             display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 4px;
         }
 
         .settings-toggle button {
-            flex: 1;
-            padding: 8px 16px;
-            background: var(--bg-secondary);
+            padding: 4px 14px;
+            background: var(--bg-tertiary);
             border: 1px solid var(--border-default);
             border-radius: 4px;
             color: var(--text-primary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8em;
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -457,23 +468,24 @@
 
         .font-size-controls {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
         .font-size-btn {
-            width: 48px;
+            width: 28px;
             height: 48px;
             background: var(--bg-secondary);
             border: 1px solid var(--border-default);
             border-radius: 4px;
             color: var(--text-primary);
-            font-size: 1.5em;
+            font-size: 1em;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 28px;
         }
 
         .font-size-btn:hover {
@@ -482,9 +494,9 @@
         }
 
         .font-size-display {
-            flex: 1;
+            min-width: 44px;
             text-align: center;
-            font-size: 1em;
+            font-size: 0.85em;
             color: var(--text-secondary);
         }
 
@@ -2157,31 +2169,34 @@
             const overlay = document.getElementById('popupOverlay');
             const titleEl = document.getElementById('popupTitle');
             const listEl = document.getElementById('popupButtonList');
+            const actionsEl = document.getElementById('popupHeaderActions');
             
             titleEl.textContent = 'Settings';
+            actionsEl.innerHTML = '<button class="popup-close" onclick="closePopup()">✕</button>';
             
             listEl.innerHTML = `
                 <div class="settings-group">
-                    <span class="settings-label">Descriptions</span>
-                    <div class="settings-toggle">
-                        <button id="descShort" onclick="setDescriptionMode('short')" ${descriptionMode === 'short' ? 'class="active"' : ''}>Short</button>
-                        <button id="descLong" onclick="setDescriptionMode('long')" ${descriptionMode === 'long' ? 'class="active"' : ''}>Long</button>
+                    <div class="settings-row">
+                        <span class="settings-label">Descriptions</span>
+                        <div class="settings-toggle">
+                            <button id="descShort" onclick="setDescriptionMode('short')" ${descriptionMode === 'short' ? 'class="active"' : ''}>Short</button>
+                            <button id="descLong" onclick="setDescriptionMode('long')" ${descriptionMode === 'long' ? 'class="active"' : ''}>Long</button>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="settings-group">
-                    <span class="settings-label">Terminal Font Size</span>
-                    <div class="font-size-controls">
-                        <button class="font-size-btn" onclick="decreaseFontSize()">⏬</button>
-                        <div class="font-size-display" id="fontSizeDisplay">${terminalFontSize.toFixed(1)}em</div>
-                        <button class="font-size-btn" onclick="increaseFontSize()">⏫</button>
+                    <div class="settings-row">
+                        <span class="settings-label">Font Size</span>
+                        <div class="font-size-controls">
+                            <button class="font-size-btn" onclick="decreaseFontSize()">−</button>
+                            <div class="font-size-display" id="fontSizeDisplay">${terminalFontSize.toFixed(1)}em</div>
+                            <button class="font-size-btn" onclick="increaseFontSize()">+</button>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="settings-group" style="margin-top: 20px; border-top: 1px solid var(--border-default); padding-top: 20px;">
-                    <button class="popup-list-btn" onclick="handleLogoff()" style="background: var(--accent-danger); color: white; text-align: center;">
-                        Logoff
-                    </button>
+                    <div class="settings-row">
+                        <span class="settings-label">Session</span>
+                        <button onclick="handleLogoff()" style="padding: 4px 14px; background: var(--accent-danger); border: 1px solid var(--accent-danger); border-radius: 4px; color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 0.8em; cursor: pointer;">
+                            Logoff
+                        </button>
+                    </div>
                 </div>
             `;
             
