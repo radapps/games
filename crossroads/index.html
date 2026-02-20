@@ -2150,11 +2150,11 @@
             // Load map data if not cached
             if (!mapData) {
                 try {
-                    const response = await fetch('Rooms_With_Clusters.json');
+                    const response = await fetch('Rooms.json');
                     mapData = await response.json();
                 } catch (e) {
                     console.error('Failed to load map data:', e);
-                    alert('Map data file not found. Please ensure Rooms_With_Clusters.json is in the same directory.');
+                    alert('Map data file not found. Please ensure Rooms.json is in the same directory.');
                     return;
                 }
             }
