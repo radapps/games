@@ -283,6 +283,33 @@
             color: #ffffff;
         }
 
+        .popup-refresh {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            color: var(--accent-primary);
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .popup-refresh:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        .popup-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .popup-content {
             padding: 16px;
             overflow-y: auto;
@@ -791,7 +818,9 @@
         <div class="popup-container" onclick="event.stopPropagation()">
             <div class="popup-header">
                 <div class="popup-title" id="popupTitle">Select</div>
-                <button class="popup-close" onclick="closePopup()">✕</button>
+                <div class="popup-header-actions" id="popupHeaderActions">
+                    <button class="popup-close" onclick="closePopup()">✕</button>
+                </div>
             </div>
             <div class="popup-content">
                 <div class="popup-button-list" id="popupButtonList"></div>
@@ -824,12 +853,14 @@
         let waitingForMapLook = false;  // Waiting for LOOK to match room
         let mapData = null;    // Cached map JSON data
         let currentSpells = []; // Store user's spells
+        let spellUsageOrder = JSON.parse(localStorage.getItem('bbs_spell_usage') || '[]'); // MRU spell order
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
         let waitingForExits = false; // Waiting for exit list from server
         let currentPotions = []; // Store available potions
         let waitingForPotions = false; // Waiting for inventory to extract potions
         let waitingForSpellRefresh = false; // Waiting to check if CAST failed and needs spell list
+        let waitingForSpellRefreshAndShow = false; // Waiting for spell list to re-show the spell popup
         let waitingForShopItems = false; // Waiting for shop inventory
         let waitingForSellItems = false; // Waiting for sell inventory
         let waitingForAppraiseItems = false; // Waiting for appraise inventory
@@ -851,9 +882,13 @@
             const overlay = document.getElementById('popupOverlay');
             const titleEl = document.getElementById('popupTitle');
             const listEl = document.getElementById('popupButtonList');
+            const actionsEl = document.getElementById('popupHeaderActions');
             
             titleEl.textContent = title;
             listEl.innerHTML = '';
+            
+            // Reset header actions to just the close button
+            actionsEl.innerHTML = '<button class="popup-close" onclick="closePopup()">✕</button>';
             
             buttons.forEach(button => {
                 const btn = document.createElement('button');
@@ -871,6 +906,71 @@
             });
             
             overlay.classList.add('active');
+        }
+
+        function getSortedSpells() {
+            // Sort currentSpells by most recently used (spellUsageOrder[0] = most recent)
+            const sorted = [...currentSpells];
+            sorted.sort((a, b) => {
+                const ai = spellUsageOrder.indexOf(a);
+                const bi = spellUsageOrder.indexOf(b);
+                // Spells not in usage order go to end; otherwise sort by index (lower = more recent)
+                if (ai === -1 && bi === -1) return 0;
+                if (ai === -1) return 1;
+                if (bi === -1) return -1;
+                return ai - bi;
+            });
+            return sorted;
+        }
+
+        function recordSpellUsage(spell) {
+            // Remove existing entry and add to front
+            spellUsageOrder = spellUsageOrder.filter(s => s !== spell);
+            spellUsageOrder.unshift(spell);
+            // Keep only last 50 entries
+            if (spellUsageOrder.length > 50) spellUsageOrder = spellUsageOrder.slice(0, 50);
+            localStorage.setItem('bbs_spell_usage', JSON.stringify(spellUsageOrder));
+        }
+
+        function showSpellPopup(onSpellSelected) {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl = document.getElementById('popupButtonList');
+            const actionsEl = document.getElementById('popupHeaderActions');
+
+            titleEl.textContent = 'Select Spell';
+            listEl.innerHTML = '';
+
+            // Add refresh button before close button
+            actionsEl.innerHTML = `
+                <button class="popup-refresh" title="Refresh spell list" onclick="refreshSpellList()">↻</button>
+                <button class="popup-close" onclick="closePopup()">✕</button>
+            `;
+
+            const sorted = getSortedSpells();
+            sorted.forEach(spell => {
+                const btn = document.createElement('button');
+                btn.className = 'popup-list-btn';
+                btn.textContent = spell;
+                btn.onclick = () => {
+                    recordSpellUsage(spell);
+                    closePopup();
+                    setTimeout(() => {
+                        onSpellSelected(spell);
+                    }, 50);
+                };
+                listEl.appendChild(btn);
+            });
+
+            overlay.classList.add('active');
+        }
+
+        function refreshSpellList() {
+            closePopup();
+            // Re-request spells from server and re-show popup when received
+            waitingForSpells = true;
+            waitingForSpellRefreshAndShow = true;
+            sendCommand('SPELLS');
         }
 
         function closePopup() {
@@ -1432,21 +1532,41 @@
                     currentSpells = spells;
                     waitingForSpells = false;
                     console.log('Spells found:', spells);
-                    // Auto-show spell list in popup
-                    showPopup('Select Spell', currentSpells, (spell) => {
-                        selectedSpell = spell;
-                        if (currentTargets.length > 0) {
-                            showPopup('Select Target', currentTargets, (target) => {
-                                sendCommand('cast ' + selectedSpell + ' ' + target);
+
+                    if (waitingForSpellRefreshAndShow) {
+                        waitingForSpellRefreshAndShow = false;
+                        // Re-show spell popup (re-use the same cast flow without re-doing LOOK)
+                        showSpellPopup((spell) => {
+                            selectedSpell = spell;
+                            if (currentTargets.length > 0) {
+                                showPopup('Select Target', currentTargets, (target) => {
+                                    sendCommand('cast ' + selectedSpell + ' ' + target);
+                                    selectedSpell = null;
+                                    waitingForSpellRefresh = true;
+                                    setTimeout(() => sendCommand('hits'), 100);
+                                });
+                            } else {
+                                sendCommand('cast ' + selectedSpell);
                                 selectedSpell = null;
-                                waitingForSpellRefresh = true;
-                                setTimeout(() => sendCommand('hits'), 100);
-                            });
-                        } else {
-                            sendCommand('cast ' + selectedSpell);
-                            selectedSpell = null;
-                        }
-                    });
+                            }
+                        });
+                    } else {
+                        // Auto-show spell list in popup
+                        showSpellPopup((spell) => {
+                            selectedSpell = spell;
+                            if (currentTargets.length > 0) {
+                                showPopup('Select Target', currentTargets, (target) => {
+                                    sendCommand('cast ' + selectedSpell + ' ' + target);
+                                    selectedSpell = null;
+                                    waitingForSpellRefresh = true;
+                                    setTimeout(() => sendCommand('hits'), 100);
+                                });
+                            } else {
+                                sendCommand('cast ' + selectedSpell);
+                                selectedSpell = null;
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -1508,7 +1628,7 @@
             
             if (targetDetectionForSpell) {
                 // Show spell selection, which will then show targets
-                showPopup('Select Spell', currentSpells, (spell) => {
+                showSpellPopup((spell) => {
                     selectedSpell = spell;
                     console.log('Spell selected:', selectedSpell);
                     
