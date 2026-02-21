@@ -869,6 +869,8 @@
         let selectedSpell = null; // Currently selected spell for casting
         let waitingForSpells = false; // Waiting for spell list from server
         let waitingForExits = false; // Waiting for exit list from server
+        let waitingForExitLook = false; // Waiting for LOOK output to determine room for exits
+        let currentRoomId = null; // Currently known room ID (from Rooms.json)
         let currentPotions = []; // Store available potions
         let waitingForPotions = false; // Waiting for inventory to extract potions
         let waitingForSpellRefresh = false; // Waiting to check if CAST failed and needs spell list
@@ -1186,6 +1188,11 @@
                             extractExits();
                         }
                         
+                        // Process LOOK output to identify room and update exits from JSON
+                        if (waitingForExitLook) {
+                            extractExitsFromLook();
+                        }
+                        
                         // Extract potions if waiting for them
                         if (waitingForPotions) {
                             extractPotions();
@@ -1239,12 +1246,14 @@
                 ws.onerror = function(error) {
                     console.error('WebSocket error:', error);
                     isConnected = false;
+                    currentRoomId = null;
                     appendToTerminal('\n✗ Connection error\n');
                 };
 
                 ws.onclose = function(event) {
                     console.log('WebSocket closed:', event.code, event.reason);
                     isConnected = false;
+                    currentRoomId = null;
                     appendToTerminal('\n[Connection closed]\n');
                 };
             } catch (e) {
@@ -1470,23 +1479,89 @@
         function sendDirectional(direction) {
             // Clear targets when moving
             currentTargets = [];
-            
-            // Re-enable all nav buttons when moving
-            enableAllNavButtons();
-            
+
             // Send the directional command
             sendCommand(direction);
-            
-            // Auto-trigger exits check after a short delay
-            setTimeout(() => {
-                handleExitsButton();
-            }, 500);
+
+            // Update currentRoomId if we know it from the JSON map
+            if (currentRoomId && mapData) {
+                const room = mapData.rooms[currentRoomId];
+                if (room) {
+                    const dirKey = direction.toLowerCase(); // 'n','s','e','w','u','d'
+                    const nextRoomId = room[dirKey];
+                    if (nextRoomId && nextRoomId !== 0) {
+                        currentRoomId = String(nextRoomId);
+                        console.log('Predicted next room from JSON:', currentRoomId);
+                        updateExitsFromCurrentRoom();
+                        return;
+                    }
+                }
+            }
+
+            // Room unknown or no JSON entry for this direction — fall back to LOOK-based detection
+            currentRoomId = null;
+            handleExitsButton();
         }
 
         function handleExitsButton() {
-            // Request exits from server
-            waitingForExits = true;
-            sendCommand('ex');
+            if (currentRoomId && mapData) {
+                // Fast path: we know the room, read exits directly from JSON
+                updateExitsFromCurrentRoom();
+            } else {
+                // Unknown room: send LOOK and try to match it to a room in Rooms.json
+                waitingForExitLook = true;
+                recentTerminalText = '';
+                sendCommand('look');
+            }
+        }
+
+        // Apply exits from the currently known room in mapData
+        function updateExitsFromCurrentRoom() {
+            if (!currentRoomId || !mapData) return;
+            const room = mapData.rooms[currentRoomId];
+            if (!room) return;
+
+            const dirMap = { n: 'btnN', s: 'btnS', e: 'btnE', w: 'btnW', u: 'btnU', d: 'btnD' };
+            const available = [];
+            for (const [dir, btnId] of Object.entries(dirMap)) {
+                if (room[dir] && room[dir] !== 0) available.push(dir);
+            }
+            console.log('Exits from JSON for room', currentRoomId, ':', available);
+            updateNavButtons(available);
+        }
+
+        // Called when LOOK output is received and we need to match the room
+        async function extractExitsFromLook() {
+            // Wait for BBS prompt ")" indicating full LOOK response received
+            const promptReady = /\n\s*\)\s*$/.test(recentTerminalText) || recentTerminalText.trimEnd().endsWith('\n)');
+            if (!promptReady) return;
+
+            waitingForExitLook = false;
+
+            // Ensure map data is loaded
+            if (!mapData) {
+                try {
+                    const response = await fetch('Rooms.json');
+                    mapData = await response.json();
+                } catch (e) {
+                    console.error('Failed to load Rooms.json:', e);
+                    // Fall back to EX command
+                    waitingForExits = true;
+                    sendCommand('ex');
+                    return;
+                }
+            }
+
+            const roomId = matchRoomFromLookOutput(recentTerminalText);
+            if (roomId) {
+                currentRoomId = roomId;
+                console.log('Room identified from LOOK:', roomId);
+                updateExitsFromCurrentRoom();
+            } else {
+                console.log('Could not match room from LOOK — falling back to EX command');
+                waitingForExits = true;
+                sendCommand('ex');
+            }
         }
 
         function extractTargets(text) {
@@ -2290,6 +2365,59 @@
             }
         }
 
+        // Shared helper: extract and match a room from LOOK terminal output.
+        // Returns the roomId string if matched, or null.
+        function matchRoomFromLookOutput(text) {
+            // Find the most recent LOOK output by finding last line starting with "..."
+            const lastDotIndex = text.lastIndexOf('\n...');
+            let lookOutput;
+            if (lastDotIndex === -1) {
+                const startDotIndex = text.indexOf('...');
+                if (startDotIndex === -1) {
+                    console.log('matchRoomFromLookOutput: no "..." line found');
+                    return null;
+                }
+                lookOutput = text.substring(startDotIndex);
+            } else {
+                lookOutput = text.substring(lastDotIndex + 1);
+            }
+
+            // Skip the short description (first line)
+            const firstNewline = lookOutput.indexOf('\n');
+            if (firstNewline === -1) return null;
+            const afterShort = lookOutput.substring(firstNewline + 1);
+
+            // Accumulate long description lines until prompt ")" or end
+            const lines = afterShort.split('\n');
+            let longDesc = '';
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed === ')') break;
+                if (trimmed) {
+                    if (longDesc) longDesc += ' ';
+                    longDesc += trimmed;
+                }
+            }
+
+            if (!longDesc) {
+                console.log('matchRoomFromLookOutput: no long description extracted');
+                return null;
+            }
+
+            const normalizedBBS = longDesc.replace(/\s+/g, '');
+
+            for (const [roomId, room] of Object.entries(mapData.rooms)) {
+                const normalizedRoom = room.long.replace(/\s+/g, '');
+                if (normalizedBBS.startsWith(normalizedRoom) || normalizedRoom.startsWith(normalizedBBS)) {
+                    return roomId;
+                }
+            }
+
+            console.log('matchRoomFromLookOutput: no room matched');
+            console.log('  normalized BBS (first 2000):', normalizedBBS.substring(0, 2000));
+            return null;
+        }
+
         async function detectAndShowMap() {
             waitingForMapLook = false;
             
@@ -2305,79 +2433,21 @@
                 }
             }
             
-            // Find the most recent LOOK output by finding last line starting with "..."
-            const lastDotIndex = recentTerminalText.lastIndexOf('\n...');
-            if (lastDotIndex === -1) {
-                // Try without newline (might be at start of buffer)
-                const startDotIndex = recentTerminalText.indexOf('...');
-                if (startDotIndex === -1) {
-                    console.log('No room description found (no "..." line)');
-                    console.log('recentTerminalText:', recentTerminalText);
-                    return;
-                }
-                var lookOutput = recentTerminalText.substring(startDotIndex);
-            } else {
-                var lookOutput = recentTerminalText.substring(lastDotIndex + 1); // +1 to skip the \n
-            }
-            
-            // Skip the first line (short description) - just find the first newline
-            const firstNewline = lookOutput.indexOf('\n');
-            if (firstNewline === -1) {
-                console.log('No long description found (no lines after short desc)');
-                return;
-            }
-            
-            // Get text after the first line (skip short description)
-            const afterShort = lookOutput.substring(firstNewline + 1);
-            
-            // Extract long description (everything until prompt ")" or end)
-            const lines = afterShort.split('\n');
-            let longDesc = '';
-            
-            for (const line of lines) {
-                const trimmed = line.trim();
-                // Stop at prompt
-                if (trimmed === ')') break;
-                // Accumulate non-empty lines
-                if (trimmed) {
-                    if (longDesc) longDesc += ' ';
-                    longDesc += trimmed;
-                }
-            }
-            
-            if (!longDesc) {
-                console.log('No long description extracted');
-                return;
-            }
-            
-            // Normalize: remove ALL whitespace for comparison
-            const normalizedBBS = longDesc.replace(/\s+/g, '');
-            
-            console.log('Looking for room (first 2000 chars):', longDesc.substring(0, 2000));
-            console.log('Normalized BBS (first 2000):', normalizedBBS.substring(0, 2000));
-            
-            // Search all rooms - BBS output STARTS WITH room.long (room.long may be shorter)
-            let foundRoomId = null;
-            for (const [roomId, room] of Object.entries(mapData.rooms)) {
-                // Normalize room long desc: remove all whitespace
-                const normalizedRoom = room.long.replace(/\s+/g, '');
-                
-                // BBS output includes room desc + items/NPCs/players
-                // So: normalizedBBS.startsWith(normalizedRoom)
-                if (normalizedBBS.startsWith(normalizedRoom) || normalizedRoom.startsWith(normalizedBBS)) {
-                    foundRoomId = roomId;
-                    console.log('Matched room:', roomId, 'short:', room.short);
-                    break;
-                }
-            }
-            
+            const foundRoomId = matchRoomFromLookOutput(recentTerminalText);
+
             if (!foundRoomId) {
                 console.log('Room not found in map data');
-                console.log('Searched for (normalized, first 2000):', normalizedBBS.substring(0, 2000));
                 alert('Current room not found in map database');
                 return;
             }
-            
+
+            // Update currentRoomId so exits can use JSON from now on
+            currentRoomId = foundRoomId;
+            console.log('Matched room:', foundRoomId, 'short:', mapData.rooms[foundRoomId].short);
+
+            // Also update nav buttons while we're here
+            updateExitsFromCurrentRoom();
+
             // Show interactive map centered on this room
             showInteractiveMap(foundRoomId);
         }
