@@ -2317,6 +2317,7 @@
                 .map(t => t.trim())
                 .map(t => t.replace(/^(a |an |the )/i, ''))   // strip articles
                 .map(t => t.replace(/^(and\s+)/i, ''))         // strip residual "and"
+                .map(t => t.replace(/^suit of /i, ''))          // strip "suit of" prefix
                 .filter(t => t.length > 0)
                 .filter(t => !/^(a|an|and|the|there|is|are)$/i.test(t));
 
