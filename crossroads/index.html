@@ -892,6 +892,7 @@
         let targetDetectionForSpell = false; // Track if target detection is for spell casting
         let waitingForGetLook = false; // Waiting for LOOK to find room items to GET
         let waitingForDropInventory = false; // Waiting for inventory to show DROP list
+        let waitingForLoginRoom = false; // Waiting for initial room description after login
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -1133,6 +1134,9 @@
                         setTimeout(() => sendCommand('5'), 4200);  // 200ms after Q
                         setTimeout(() => sendCommand('p'), 4400);  // 200ms after 5
                     }
+                    
+                    // Watch for the initial room description after login (existing or new player)
+                    waitingForLoginRoom = true;
                 };
 
                 ws.onmessage = function(event) {
@@ -1251,6 +1255,11 @@
                         // Check for map room matching
                         if (waitingForMapLook) {
                             detectAndShowMap();
+                        }
+
+                        // Detect initial room after login and update nav buttons
+                        if (waitingForLoginRoom) {
+                            detectLoginRoom(plainText);
                         }
                     }
                 };
@@ -2498,6 +2507,51 @@
             const img = document.getElementById('mapImage');
             if (img) {
                 img.classList.toggle('zoomed');
+            }
+        }
+
+        // Detects the initial room after login and updates nav buttons + currentRoomId
+        let loginRoomNewPlayerMode = false; // flips true once new-player setup text is seen
+        async function detectLoginRoom(plainText) {
+            // New player path: watch for account-setup completion, then wait for "..."
+            const newPlayerSignal = 'Now that you have statistics and an element, you can begin play.';
+            if (!loginRoomNewPlayerMode && currentTerminalText.includes(newPlayerSignal)) {
+                loginRoomNewPlayerMode = true;
+                console.log('Login: new player setup complete, waiting for room description...');
+                recentTerminalText = ''; // flush so the upcoming room desc lands cleanly
+                return;
+            }
+
+            // Wait until "..." (room short desc prefix) appears in the recent buffer
+            if (!recentTerminalText.includes('...')) return;
+
+            // Wait for BBS prompt ")" confirming the full room output has arrived
+            const promptReady = /\n\s*\)\s*$/.test(recentTerminalText) || recentTerminalText.trimEnd().endsWith('\n)');
+            if (!promptReady) return;
+
+            // Stop watching
+            waitingForLoginRoom = false;
+            loginRoomNewPlayerMode = false;
+            console.log('Login: room description complete, attempting room match...');
+
+            // Load map data if not already cached
+            if (!mapData) {
+                try {
+                    const response = await fetch('Rooms.json');
+                    mapData = await response.json();
+                } catch (e) {
+                    console.error('Login: failed to load Rooms.json:', e);
+                    return;
+                }
+            }
+
+            const roomId = matchRoomFromLookOutput(recentTerminalText);
+            if (roomId) {
+                currentRoomId = roomId;
+                console.log('Login: matched starting room', roomId, '-', mapData.rooms[roomId].short);
+                updateExitsFromCurrentRoom();
+            } else {
+                console.log('Login: could not match starting room — nav buttons unchanged');
             }
         }
 
