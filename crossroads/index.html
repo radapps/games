@@ -695,9 +695,9 @@
         /* Re-roll Helper Popup */
         .reroll-grid {
             display: grid;
-            grid-template-columns: auto 1fr auto auto auto;
+            grid-template-columns: auto 1fr auto auto auto auto;
             align-items: center;
-            gap: 6px 10px;
+            gap: 6px 8px;
             padding: 4px 0;
         }
 
@@ -734,6 +734,30 @@
         .reroll-btn:hover {
             background: var(--bg-primary);
             border-color: var(--accent-primary);
+        }
+
+        .reroll-op-btn {
+            min-width: 36px;
+            height: 28px;
+            padding: 0 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 4px;
+            color: var(--accent-primary);
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            font-family: 'IBM Plex Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .reroll-op-btn:hover {
+            background: var(--accent-primary);
+            color: #fff;
         }
 
         .reroll-divider {
@@ -976,7 +1000,10 @@
         let rerollVisible = false; // Whether the Re-roll button is currently visible
         let rerollWatchingStats = false; // Watching terminal for "...Your current statistics:"
         let autoRerollActive = false; // Auto-reroll loop is running
-        let autoRerollTargets = {}; // Target minimums set by user { hp, sp, str, ego, dex, int, spd }
+        let autoRerollMatchFound = false; // A match was found and loop stopped
+        let autoRerollTargets = {}; // Target values set by user { hp, sp, str, ego, dex, int, spd }
+        let autoRerollOperators = {}; // Comparison operators { hp: '>=', sp: '>=', ... }
+        let autoRerollDelay = 300; // ms between ENTER sends during auto-reroll
         let autoRerollTimeout = null; // Timeout handle for auto-reroll loop
 
         // Popup control functions
@@ -2853,6 +2880,11 @@
         }
 
         function handleRerollButton() {
+            if (autoRerollMatchFound) {
+                // Match was already found — clicking again closes the popup (if open) or does nothing
+                closePopup();
+                return;
+            }
             showRerollPopup();
         }
 
@@ -2867,28 +2899,37 @@
             { key: 'spd', label: 'Spd', min: 0, max: 20 },
         ];
 
-        // Initialise targets to null (not set)
+        // Initialise targets and operators (not set / >= by default)
         if (Object.keys(autoRerollTargets).length === 0) {
-            rerollFields.forEach(f => autoRerollTargets[f.key] = null);
+            rerollFields.forEach(f => {
+                autoRerollTargets[f.key] = null;
+                autoRerollOperators[f.key] = '>=';
+            });
+        }
+
+        function rerollValueDisplay(key) {
+            const val = autoRerollTargets[key];
+            const op  = autoRerollOperators[key] || '>=';
+            return val === null ? '<not set>' : `${op} ${val}`;
         }
 
         function showRerollPopup() {
-            const overlay = document.getElementById('popupOverlay');
-            const titleEl = document.getElementById('popupTitle');
-            const listEl  = document.getElementById('popupButtonList');
+            const overlay   = document.getElementById('popupOverlay');
+            const titleEl   = document.getElementById('popupTitle');
+            const listEl    = document.getElementById('popupButtonList');
             const actionsEl = document.getElementById('popupHeaderActions');
 
             titleEl.textContent = 'Re-roll Helper';
             actionsEl.innerHTML = `<button class="popup-close" onclick="closeRerollPopup()">✕</button>`;
 
-            // Build grid
+            // Stat rows: label | value | op | − | + | ✕
             let gridHTML = '<div class="reroll-grid">';
             rerollFields.forEach(f => {
-                const val = autoRerollTargets[f.key];
-                const display = val === null ? '<not set>' : `≥ ${val}`;
+                const display = rerollValueDisplay(f.key);
                 gridHTML += `
                     <span class="reroll-label">${f.label}:</span>
                     <span class="reroll-value" id="rr-val-${f.key}">${display}</span>
+                    <button class="reroll-op-btn" id="rr-op-${f.key}" onclick="rerollCycleOp('${f.key}')" title="Toggle operator">${autoRerollOperators[f.key] || '>='}</button>
                     <button class="reroll-btn" onclick="rerollAdjust('${f.key}', -1)">−</button>
                     <button class="reroll-btn" onclick="rerollAdjust('${f.key}', 1)">+</button>
                     <button class="reroll-btn" onclick="rerollClear('${f.key}')" title="Clear">✕</button>
@@ -2896,6 +2937,19 @@
             });
             gridHTML += '</div>';
 
+            // Delay control row
+            gridHTML += `
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding: 6px 10px; background:var(--bg-tertiary); border-radius:6px; gap:8px;">
+                    <span class="settings-label" style="flex-shrink:0;">Delay (ms)</span>
+                    <div class="font-size-controls">
+                        <button class="reroll-btn" onclick="rerollAdjustDelay(-10)">−</button>
+                        <span id="rr-delay-val" style="min-width:44px; text-align:center; font-size:0.85em; color:var(--text-secondary);">${autoRerollDelay}ms</span>
+                        <button class="reroll-btn" onclick="rerollAdjustDelay(10)">+</button>
+                    </div>
+                </div>
+            `;
+
+            // Auto-Reroll button
             const isRunning = autoRerollActive;
             gridHTML += `
                 <button class="reroll-auto-btn ${isRunning ? 'running' : 'idle'}"
@@ -2923,17 +2977,35 @@
             }
             autoRerollTargets[key] = next;
             const el = document.getElementById(`rr-val-${key}`);
-            if (el) el.textContent = next === null ? '<not set>' : `≥ ${next}`;
+            if (el) el.textContent = rerollValueDisplay(key);
         }
 
         function rerollClear(key) {
             autoRerollTargets[key] = null;
             const el = document.getElementById(`rr-val-${key}`);
-            if (el) el.textContent = '<not set>';
+            if (el) el.textContent = rerollValueDisplay(key);
+        }
+
+        function rerollCycleOp(key) {
+            const ops = ['>=', '=', '<='];
+            const current = autoRerollOperators[key] || '>=';
+            const next = ops[(ops.indexOf(current) + 1) % ops.length];
+            autoRerollOperators[key] = next;
+            const opEl  = document.getElementById(`rr-op-${key}`);
+            const valEl = document.getElementById(`rr-val-${key}`);
+            if (opEl)  opEl.textContent  = next;
+            if (valEl) valEl.textContent = rerollValueDisplay(key);
+        }
+
+        function rerollAdjustDelay(delta) {
+            autoRerollDelay = Math.max(50, autoRerollDelay + delta);
+            const el = document.getElementById('rr-delay-val');
+            if (el) el.textContent = autoRerollDelay + 'ms';
         }
 
         function closeRerollPopup() {
             stopAutoReroll();
+            // Don't reset autoRerollMatchFound here — button should remain in "close" mode
             closePopup();
         }
 
@@ -2947,9 +3019,10 @@
 
         function startAutoReroll() {
             autoRerollActive = true;
+            autoRerollMatchFound = false;
             const btn = document.getElementById('rerollAutoBtn');
-            if (btn) { btn.textContent = 'STOP'; btn.className = 'reroll-auto-btn running'; }
-            console.log('Auto-reroll started, targets:', autoRerollTargets);
+            if (btn) { btn.textContent = 'STOP'; btn.className = 'reroll-auto-btn running'; btn.style.background = ''; }
+            console.log('Auto-reroll started, targets:', autoRerollTargets, 'operators:', autoRerollOperators);
             doRerollIteration();
         }
 
@@ -2957,38 +3030,43 @@
             autoRerollActive = false;
             if (autoRerollTimeout) { clearTimeout(autoRerollTimeout); autoRerollTimeout = null; }
             const btn = document.getElementById('rerollAutoBtn');
-            if (btn) { btn.textContent = 'Auto-Reroll'; btn.className = 'reroll-auto-btn idle'; }
+            if (btn) { btn.textContent = 'Auto-Reroll'; btn.className = 'reroll-auto-btn idle'; btn.style.background = ''; }
             console.log('Auto-reroll stopped');
         }
 
         function doRerollIteration() {
             if (!autoRerollActive) return;
-            // Send ENTER to request a new roll
             sendCommand('');
-            // Give the server time to respond, then check
+            // Wait for server response; checkAutoRerollMatch() fires from onmessage
+            // and will schedule the next iteration if needed
             autoRerollTimeout = setTimeout(() => {
-                // checkAutoRerollMatch() will be called by onmessage; if not matched yet,
-                // we schedule another iteration from there
-            }, 2000);
+                // Safety fallback: if onmessage hasn't triggered a next iteration yet
+                if (autoRerollActive) doRerollIteration();
+            }, autoRerollDelay + 1500);
         }
 
         function checkAutoRerollMatch() {
             if (!autoRerollActive) return;
 
             const stats = parseCurrentStats();
-            if (!stats) return; // Stats not in buffer yet
+            if (!stats) return;
 
-            // Check every configured target
-            const targets = autoRerollTargets;
             const allMet = rerollFields.every(f => {
-                if (targets[f.key] === null) return true; // not set = don't care
-                return stats[f.key] !== null && stats[f.key] >= targets[f.key];
+                const target = autoRerollTargets[f.key];
+                if (target === null) return true; // not set = don't care
+                const actual = stats[f.key];
+                if (actual === null) return false;
+                const op = autoRerollOperators[f.key] || '>=';
+                if (op === '>=') return actual >= target;
+                if (op === '=')  return actual === target;
+                if (op === '<=') return actual <= target;
+                return true;
             });
 
             if (allMet) {
                 stopAutoReroll();
+                autoRerollMatchFound = true;
                 console.log('Auto-reroll: all targets met!', stats);
-                // Flash the popup button to signal success
                 const btn = document.getElementById('rerollAutoBtn');
                 if (btn) {
                     btn.textContent = '✓ Match found!';
@@ -2996,11 +3074,11 @@
                     btn.style.background = 'var(--accent-success)';
                 }
             } else {
-                // Not matched yet — schedule next roll after a short delay
-                if (autoRerollTimeout) clearTimeout(autoRerollTimeout);
+                // Not matched — cancel safety timeout and schedule next roll
+                if (autoRerollTimeout) { clearTimeout(autoRerollTimeout); autoRerollTimeout = null; }
                 autoRerollTimeout = setTimeout(() => {
                     if (autoRerollActive) doRerollIteration();
-                }, 500);
+                }, autoRerollDelay);
             }
         }
 
