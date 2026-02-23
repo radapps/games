@@ -692,6 +692,86 @@
             background: linear-gradient(135deg, rgba(255, 165, 0, 0.25), rgba(255, 215, 0, 0.25));
         }
 
+        /* Re-roll Helper Popup */
+        .reroll-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 6px 10px;
+            padding: 4px 0;
+        }
+
+        .reroll-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .reroll-value {
+            font-size: 0.95em;
+            font-weight: 500;
+            color: var(--accent-primary);
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .reroll-btn {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .reroll-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .reroll-divider {
+            grid-column: 1 / -1;
+            border: none;
+            border-top: 1px solid var(--border-muted);
+            margin: 4px 0;
+        }
+
+        .reroll-auto-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .reroll-auto-btn.idle {
+            background: var(--accent-primary);
+            color: #fff;
+        }
+
+        .reroll-auto-btn.running {
+            background: var(--accent-danger);
+            color: #fff;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .terminal-container {
@@ -809,14 +889,14 @@
                             <button class="control-btn no-zoom" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                         </div>
 
-                        <!-- Row 4: SOCIAL, HELP, SETTINGS, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: SOCIAL, HELP, SETTINGS, <empty>, <empty>, REROLL, <empty> -->
                         <div class="button-row">
                             <button class="control-btn no-zoom" onclick="handleSocialButton()" title="Social">😀</button>
                             <button class="control-btn no-zoom" onclick="handleHelpButton()" title="Help">❓</button>
                             <button class="control-btn no-zoom" onclick="handleSettingsButton()" title="Settings">⚙️</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
-                            <div class="button-spacer"></div>
+                            <button class="control-btn no-zoom" id="btnReroll" onclick="handleRerollButton()" title="Re-roll" style="display:none;">🎲</button>
                             <div class="button-spacer"></div>
                         </div>
                     </div>
@@ -893,6 +973,11 @@
         let waitingForGetLook = false; // Waiting for LOOK to find room items to GET
         let waitingForDropInventory = false; // Waiting for inventory to show DROP list
         let waitingForLoginRoom = false; // Waiting for initial room description after login
+        let rerollVisible = false; // Whether the Re-roll button is currently visible
+        let rerollWatchingStats = false; // Watching terminal for "...Your current statistics:"
+        let autoRerollActive = false; // Auto-reroll loop is running
+        let autoRerollTargets = {}; // Target minimums set by user { hp, sp, str, ego, dex, int, spd }
+        let autoRerollTimeout = null; // Timeout handle for auto-reroll loop
 
         // Popup control functions
         function showPopup(title, buttons, onClickCallback) {
@@ -1260,6 +1345,16 @@
                         // Detect initial room after login and update nav buttons
                         if (waitingForLoginRoom) {
                             detectLoginRoom(plainText);
+                        }
+
+                        // Watch for stats screen to show re-roll button
+                        if (rerollWatchingStats) {
+                            checkForStatsScreen();
+                        }
+
+                        // Feed terminal text to auto-reroll loop if active
+                        if (autoRerollActive) {
+                            checkAutoRerollMatch();
                         }
                     }
                 };
@@ -2687,14 +2782,229 @@
             const command = input.value.trim();
             
             if (command) {
+                // If user types 'a' or 'A', hide the re-roll button and stop any auto-reroll
+                if (command.toLowerCase() === 'a') {
+                    setRerollVisible(false);
+                    stopAutoReroll();
+                }
                 sendCommand(command);
                 input.value = '';
             } else {
                 // Send just ENTER if input is empty
                 sendCommand('');
+                // If re-roll button is not yet visible, start watching for stats screen
+                if (!rerollVisible) {
+                    rerollWatchingStats = true;
+                }
             }
             input.focus();
         }
+
+        // ── Re-roll Helper ──────────────────────────────────────────────────────
+
+        function setRerollVisible(visible) {
+            rerollVisible = visible;
+            const btn = document.getElementById('btnReroll');
+            if (btn) btn.style.display = visible ? '' : 'none';
+        }
+
+        function checkForStatsScreen() {
+            if (recentTerminalText.includes('...Your current statistics:')) {
+                rerollWatchingStats = false;
+                setRerollVisible(true);
+                console.log('Re-roll button shown: stats screen detected');
+            }
+        }
+
+        // Parse the two stat rows beneath "...Your current statistics:"
+        // Returns { hp, sp, str, ego, dex, int, spd } or null if not found
+        function parseCurrentStats() {
+            const marker = '...Your current statistics:';
+            const idx = recentTerminalText.lastIndexOf(marker);
+            if (idx === -1) return null;
+
+            const after = recentTerminalText.substring(idx + marker.length);
+            const lines = after.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length < 2) return null;
+
+            // Row 1: HP: 13/13  Str: 20  Dex: 9  Spd: 10
+            // Row 2: SP: 12/12  Ego: 20  Int: 11  Ele: Earth
+            const row1 = lines[0];
+            const row2 = lines[1];
+
+            const get = (text, key) => {
+                const m = text.match(new RegExp(key + ':\\s*(\\d+)', 'i'));
+                return m ? parseInt(m[1]) : null;
+            };
+
+            // HP and SP are "X/X" — take the max (total)
+            const hpM = row1.match(/HP:\s*(\d+)\/(\d+)/i);
+            const spM = row2.match(/SP:\s*(\d+)\/(\d+)/i);
+
+            return {
+                hp:  hpM ? parseInt(hpM[2]) : null,
+                sp:  spM ? parseInt(spM[2]) : null,
+                str: get(row1, 'Str'),
+                dex: get(row1, 'Dex'),
+                spd: get(row1, 'Spd'),
+                ego: get(row2, 'Ego'),
+                int: get(row2, 'Int'),
+            };
+        }
+
+        function handleRerollButton() {
+            showRerollPopup();
+        }
+
+        // Re-roll target state
+        const rerollFields = [
+            { key: 'hp',  label: 'HP',  min: 0, max: 25 },
+            { key: 'sp',  label: 'SP',  min: 0, max: 25 },
+            { key: 'str', label: 'Str', min: 0, max: 20 },
+            { key: 'ego', label: 'Ego', min: 0, max: 20 },
+            { key: 'dex', label: 'Dex', min: 0, max: 20 },
+            { key: 'int', label: 'Int', min: 0, max: 20 },
+            { key: 'spd', label: 'Spd', min: 0, max: 20 },
+        ];
+
+        // Initialise targets to null (not set)
+        if (Object.keys(autoRerollTargets).length === 0) {
+            rerollFields.forEach(f => autoRerollTargets[f.key] = null);
+        }
+
+        function showRerollPopup() {
+            const overlay = document.getElementById('popupOverlay');
+            const titleEl = document.getElementById('popupTitle');
+            const listEl  = document.getElementById('popupButtonList');
+            const actionsEl = document.getElementById('popupHeaderActions');
+
+            titleEl.textContent = 'Re-roll Helper';
+            actionsEl.innerHTML = `<button class="popup-close" onclick="closeRerollPopup()">✕</button>`;
+
+            // Build grid
+            let gridHTML = '<div class="reroll-grid">';
+            rerollFields.forEach(f => {
+                const val = autoRerollTargets[f.key];
+                const display = val === null ? '<not set>' : `≥ ${val}`;
+                gridHTML += `
+                    <span class="reroll-label">${f.label}:</span>
+                    <span class="reroll-value" id="rr-val-${f.key}">${display}</span>
+                    <button class="reroll-btn" onclick="rerollAdjust('${f.key}', -1)">−</button>
+                    <button class="reroll-btn" onclick="rerollAdjust('${f.key}', 1)">+</button>
+                    <button class="reroll-btn" onclick="rerollClear('${f.key}')" title="Clear">✕</button>
+                `;
+            });
+            gridHTML += '</div>';
+
+            const isRunning = autoRerollActive;
+            gridHTML += `
+                <button class="reroll-auto-btn ${isRunning ? 'running' : 'idle'}"
+                        id="rerollAutoBtn"
+                        onclick="toggleAutoReroll()">
+                    ${isRunning ? 'STOP' : 'Auto-Reroll'}
+                </button>
+            `;
+
+            listEl.innerHTML = gridHTML;
+            overlay.classList.add('active');
+        }
+
+        function rerollAdjust(key, delta) {
+            const field = rerollFields.find(f => f.key === key);
+            if (!field) return;
+            const current = autoRerollTargets[key];
+            let next;
+            if (current === null) {
+                next = delta > 0 ? field.min : null;
+            } else {
+                next = current + delta;
+                if (next < field.min) next = null;
+                if (next > field.max) next = field.max;
+            }
+            autoRerollTargets[key] = next;
+            const el = document.getElementById(`rr-val-${key}`);
+            if (el) el.textContent = next === null ? '<not set>' : `≥ ${next}`;
+        }
+
+        function rerollClear(key) {
+            autoRerollTargets[key] = null;
+            const el = document.getElementById(`rr-val-${key}`);
+            if (el) el.textContent = '<not set>';
+        }
+
+        function closeRerollPopup() {
+            stopAutoReroll();
+            closePopup();
+        }
+
+        function toggleAutoReroll() {
+            if (autoRerollActive) {
+                stopAutoReroll();
+            } else {
+                startAutoReroll();
+            }
+        }
+
+        function startAutoReroll() {
+            autoRerollActive = true;
+            const btn = document.getElementById('rerollAutoBtn');
+            if (btn) { btn.textContent = 'STOP'; btn.className = 'reroll-auto-btn running'; }
+            console.log('Auto-reroll started, targets:', autoRerollTargets);
+            doRerollIteration();
+        }
+
+        function stopAutoReroll() {
+            autoRerollActive = false;
+            if (autoRerollTimeout) { clearTimeout(autoRerollTimeout); autoRerollTimeout = null; }
+            const btn = document.getElementById('rerollAutoBtn');
+            if (btn) { btn.textContent = 'Auto-Reroll'; btn.className = 'reroll-auto-btn idle'; }
+            console.log('Auto-reroll stopped');
+        }
+
+        function doRerollIteration() {
+            if (!autoRerollActive) return;
+            // Send ENTER to request a new roll
+            sendCommand('');
+            // Give the server time to respond, then check
+            autoRerollTimeout = setTimeout(() => {
+                // checkAutoRerollMatch() will be called by onmessage; if not matched yet,
+                // we schedule another iteration from there
+            }, 2000);
+        }
+
+        function checkAutoRerollMatch() {
+            if (!autoRerollActive) return;
+
+            const stats = parseCurrentStats();
+            if (!stats) return; // Stats not in buffer yet
+
+            // Check every configured target
+            const targets = autoRerollTargets;
+            const allMet = rerollFields.every(f => {
+                if (targets[f.key] === null) return true; // not set = don't care
+                return stats[f.key] !== null && stats[f.key] >= targets[f.key];
+            });
+
+            if (allMet) {
+                stopAutoReroll();
+                console.log('Auto-reroll: all targets met!', stats);
+                // Flash the popup button to signal success
+                const btn = document.getElementById('rerollAutoBtn');
+                if (btn) {
+                    btn.textContent = '✓ Match found!';
+                    btn.className = 'reroll-auto-btn idle';
+                    btn.style.background = 'var(--accent-success)';
+                }
+            } else {
+                // Not matched yet — schedule next roll after a short delay
+                if (autoRerollTimeout) clearTimeout(autoRerollTimeout);
+                autoRerollTimeout = setTimeout(() => {
+                    if (autoRerollActive) doRerollIteration();
+                }, 500);
+            }
+        }
+
+        // ── End Re-roll Helper ──────────────────────────────────────────────────
 
         function handleEnter(event) {
             if (event.key === 'Enter') {
