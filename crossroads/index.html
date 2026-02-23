@@ -2880,11 +2880,8 @@
         }
 
         function handleRerollButton() {
-            if (autoRerollMatchFound) {
-                // Match was already found — clicking again closes the popup (if open) or does nothing
-                closePopup();
-                return;
-            }
+            // Always open the popup; reset match-found so settings can be changed and loop restarted
+            autoRerollMatchFound = false;
             showRerollPopup();
         }
 
@@ -2949,13 +2946,29 @@
                 </div>
             `;
 
-            // Auto-Reroll button
+            // Auto-Reroll button — changes behaviour based on state
             const isRunning = autoRerollActive;
+            const isMatched = autoRerollMatchFound;
+            let btnClass, btnText, btnClick;
+            if (isMatched) {
+                btnClass = 'reroll-auto-btn idle';
+                btnText  = '✓ Match found!';
+                btnClick = 'closeRerollPopup()';
+            } else if (isRunning) {
+                btnClass = 'reroll-auto-btn running';
+                btnText  = 'STOP';
+                btnClick = 'toggleAutoReroll()';
+            } else {
+                btnClass = 'reroll-auto-btn idle';
+                btnText  = 'Auto-Reroll';
+                btnClick = 'toggleAutoReroll()';
+            }
             gridHTML += `
-                <button class="reroll-auto-btn ${isRunning ? 'running' : 'idle'}"
+                <button class="${btnClass}"
                         id="rerollAutoBtn"
-                        onclick="toggleAutoReroll()">
-                    ${isRunning ? 'STOP' : 'Auto-Reroll'}
+                        style="${isMatched ? 'background:var(--accent-success);' : ''}"
+                        onclick="${btnClick}">
+                    ${btnText}
                 </button>
             `;
 
@@ -3072,6 +3085,7 @@
                     btn.textContent = '✓ Match found!';
                     btn.className = 'reroll-auto-btn idle';
                     btn.style.background = 'var(--accent-success)';
+                    btn.onclick = closeRerollPopup;
                 }
             } else {
                 // Not matched — cancel safety timeout and schedule next roll
