@@ -2836,10 +2836,11 @@
         }
 
         function checkForStatsScreen() {
-            if (recentTerminalText.includes('...Your current statistics:')) {
+            const prompt = "Enter 'A' to accept or press <Enter>to re-roll:";
+            if (recentTerminalText.includes(prompt)) {
                 rerollWatchingStats = false;
                 setRerollVisible(true);
-                console.log('Re-roll button shown: stats screen detected');
+                console.log('Re-roll button shown: accept/re-roll prompt detected');
             }
         }
 
