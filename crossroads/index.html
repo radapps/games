@@ -809,10 +809,10 @@
                             <button class="control-btn no-zoom" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
                         </div>
 
-                        <!-- Row 4: HELP, SOCIAL, SETTINGS, <empty>, <empty>, <empty>, <empty> -->
+                        <!-- Row 4: SOCIAL, HELP, SETTINGS, <empty>, <empty>, <empty>, <empty> -->
                         <div class="button-row">
-                            <button class="control-btn no-zoom" onclick="handleHelpButton()" title="Help">❓</button>
                             <button class="control-btn no-zoom" onclick="handleSocialButton()" title="Social">😀</button>
+                            <button class="control-btn no-zoom" onclick="handleHelpButton()" title="Help">❓</button>
                             <button class="control-btn no-zoom" onclick="handleSettingsButton()" title="Settings">⚙️</button>
                             <div class="button-spacer"></div>
                             <div class="button-spacer"></div>
@@ -1525,15 +1525,9 @@
         }
 
         function handleExitsButton() {
-            if (currentRoomId && mapData) {
-                // Fast path: we know the room, read exits directly from JSON
-                updateExitsFromCurrentRoom();
-            } else {
-                // Unknown room: send LOOK and try to match it to a room in Rooms.json
-                waitingForExitLook = true;
-                recentTerminalText = '';
-                sendCommand('look');
-            }
+            // Always send EX and parse the terminal output (old reliable logic)
+            waitingForExits = true;
+            sendCommand('ex');
         }
 
         // Apply exits from the currently known room in mapData
