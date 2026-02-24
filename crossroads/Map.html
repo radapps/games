@@ -13,9 +13,34 @@
         .ui-panel { position: absolute; background: rgba(30, 30, 30, 0.95); border: 1px solid #444; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; }
         
         #top-bar { top: 10px; left: 10px; right: 10px; padding: 5px; display: flex; flex-direction: column; gap: 5px; width: fit-content; min-width: 50px; }
-        #menu-toggle { font-size: 20px; width: 40px; height: 40px; border: none; align-self: flex-start; }
+        #top-bar-buttons { display: flex; gap: 6px; }
+        #menu-toggle { font-size: 20px; width: 40px; height: 40px; border: none; }
+        #search-toggle { font-size: 18px; width: 40px; height: 40px; border: none; }
         #menu-content { display: none; padding: 10px; border-top: 1px solid #444; flex-direction: column; gap: 12px; }
         #menu-content.active { display: flex; width: calc(100vw - 40px); }
+
+        /* Search overlay */
+        #search-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; align-items: flex-start; justify-content: center; padding-top: 60px; box-sizing: border-box; }
+        #search-overlay.active { display: flex; }
+        #search-panel { background: #1e1e1e; border: 1px solid #555; border-radius: 10px; padding: 18px; width: 90%; max-width: 480px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 12px; }
+        #search-panel h4 { margin: 0; color: #4dabf7; font-size: 15px; border-left: 3px solid #4dabf7; padding-left: 10px; }
+        .search-row { display: flex; flex-direction: column; gap: 4px; }
+        .search-row label { font-size: 12px; color: #888; }
+        .search-input { background: #2a2a2a; color: #e0e0e0; border: 1px solid #555; padding: 9px 10px; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .search-input:focus { outline: none; border-color: #4dabf7; }
+        #search-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        #search-close-btn { background: #333; }
+        #search-results { display: none; flex-direction: column; gap: 6px; }
+        #search-results.active { display: flex; }
+        #search-results-msg { font-size: 12px; color: #fa5252; }
+        #search-grid { border: 1px solid #444; border-radius: 4px; overflow: hidden; max-height: 240px; overflow-y: auto; }
+        .grid-header { display: grid; grid-template-columns: 80px 1fr; background: #2a2a2a; border-bottom: 1px solid #555; }
+        .grid-header span { padding: 7px 10px; font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .grid-row { display: grid; grid-template-columns: 80px 1fr; cursor: pointer; border-bottom: 1px solid #333; transition: background 0.1s; }
+        .grid-row:last-child { border-bottom: none; }
+        .grid-row:hover { background: #2c3e50; }
+        .grid-row span { padding: 8px 10px; font-size: 13px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .grid-row span:first-child { color: #79c0ff; font-family: monospace; font-size: 12px; }
         
         select { background: #333; color: white; border: 1px solid #555; padding: 10px; border-radius: 4px; width: 100%; cursor: pointer; font-size: 14px; }
         .filter-wrap { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #aaa; background: #222; padding: 8px; border-radius: 4px; border: 1px solid #444; }
@@ -44,12 +69,41 @@
 <body>
 
 <div id="top-bar" class="ui-panel">
-    <button id="menu-toggle" class="btn">☰</button>
+    <div id="top-bar-buttons">
+        <button id="menu-toggle" class="btn">☰</button>
+        <button id="search-toggle" class="btn">🔍</button>
+    </div>
     <div id="menu-content">
         <select id="area-select"></select>
         <div class="filter-wrap">
             <input type="checkbox" id="show-single-rooms">
             <label for="show-single-rooms">Show Isolated Rooms</label>
+        </div>
+    </div>
+</div>
+
+<!-- Search Overlay -->
+<div id="search-overlay">
+    <div id="search-panel">
+        <h4>🔍 Search Rooms</h4>
+        <div class="search-row">
+            <label for="search-id">Room #</label>
+            <input class="search-input" type="number" id="search-id" placeholder="e.g. 5000">
+        </div>
+        <div class="search-row">
+            <label for="search-desc">Description</label>
+            <input class="search-input" type="text" id="search-desc" placeholder="keyword, short desc, or long desc...">
+        </div>
+        <div id="search-actions">
+            <button class="btn" id="search-close-btn">Cancel</button>
+            <button class="btn" id="search-find-btn" style="background:#1971c2; border-color:#4dabf7;">Find</button>
+        </div>
+        <div id="search-results">
+            <div id="search-results-msg"></div>
+            <div id="search-grid">
+                <div class="grid-header"><span>ID</span><span>Description</span></div>
+                <div id="search-grid-body"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -104,6 +158,68 @@
     resize();
 
     document.getElementById('menu-toggle').onclick = () => menuContent.classList.toggle('active');
+
+    // Search overlay logic
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchResults = document.getElementById('search-results');
+    const searchResultsMsg = document.getElementById('search-results-msg');
+    const searchGridBody = document.getElementById('search-grid-body');
+
+    document.getElementById('search-toggle').onclick = () => {
+        searchOverlay.classList.add('active');
+        searchResults.classList.remove('active');
+        searchGridBody.innerHTML = '';
+        document.getElementById('search-id').value = '';
+        document.getElementById('search-desc').value = '';
+        setTimeout(() => document.getElementById('search-id').focus(), 50);
+    };
+    document.getElementById('search-close-btn').onclick = () => searchOverlay.classList.remove('active');
+    searchOverlay.addEventListener('click', (e) => { if (e.target === searchOverlay) searchOverlay.classList.remove('active'); });
+
+    document.getElementById('search-desc').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    document.getElementById('search-id').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    document.getElementById('search-find-btn').onclick = doSearch;
+
+    function doSearch() {
+        if (!allData) return;
+        const idVal = document.getElementById('search-id').value.trim();
+        const descVal = document.getElementById('search-desc').value.trim().toLowerCase();
+        const matches = [];
+        Object.entries(allData.rooms).forEach(([id, room]) => {
+            if (idVal && id !== idVal) return;
+            if (descVal) {
+                const haystack = [(room.keyword || ''), (room.short || ''), (room.long || '')].join(' ').toLowerCase();
+                if (!haystack.includes(descVal)) return;
+            }
+            matches.push({ id, room });
+        });
+
+        if (matches.length === 0) {
+            searchResults.classList.add('active');
+            searchResultsMsg.innerText = 'No rooms found.';
+            searchGridBody.innerHTML = '';
+            return;
+        }
+
+        if (matches.length === 1) {
+            searchOverlay.classList.remove('active');
+            focusRoom(matches[0].id);
+            return;
+        }
+
+        // Multiple results — show grid
+        searchResults.classList.add('active');
+        searchResultsMsg.innerText = `${matches.length} rooms found. Click a row to navigate.`;
+        searchGridBody.innerHTML = '';
+        matches.forEach(({ id, room }) => {
+            const row = document.createElement('div');
+            row.className = 'grid-row';
+            const shortClean = (room.short || '').replace(/^\.+/, '');
+            row.innerHTML = `<span>${id}</span><span title="${shortClean}">${shortClean}</span>`;
+            row.onclick = () => { searchOverlay.classList.remove('active'); focusRoom(id); };
+            searchGridBody.appendChild(row);
+        });
+    }
     roomHeader.onclick = () => {
         const isOpen = collapsible.classList.toggle('active');
         toggleIcon.innerText = isOpen ? '▲' : '▼';
