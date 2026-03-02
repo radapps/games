@@ -566,11 +566,6 @@
         }
 
         .button-spacer {
-            width: 48px;
-            height: 48px;
-        }
-
-        .button-divider {
             width: 100%;
             max-width: 48px;
             height: 48px;
@@ -890,7 +885,7 @@
                             <button class="control-btn no-zoom" onclick="handleHitButton()" title="Hit">⚔️</button>
                             <button class="control-btn no-zoom" onclick="handleCastButton()" title="Cast">📖</button>
                             <button class="control-btn no-zoom" onclick="handleDrinkButton()" title="Drink">💧</button>
-                            <div class="button-divider"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn no-zoom" onclick="sendCommand('look')" title="Look">👁️</button>
                             <button class="control-btn no-zoom" id="btnN" onclick="sendDirectional('n')" title="North">⬆️</button>
                             <button class="control-btn no-zoom" id="btnU" onclick="sendDirectional('u')" title="Up">⤴️</button>
@@ -901,7 +896,7 @@
                             <button class="control-btn no-zoom" onclick="sendCommand('i')" title="Inventory">👜</button>
                             <button class="control-btn no-zoom" onclick="handleGetDropButton()" title="Get/Drop">✊</button>
                             <button class="control-btn no-zoom" onclick="sendCommand('hits')" title="HP/SP">❤️‍🩹</button>
-                            <div class="button-divider"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn no-zoom" id="btnW" onclick="sendDirectional('w')" title="West">⬅️</button>
                             <button class="control-btn no-zoom" onclick="handleExitsButton()" title="Exits">🚪</button>
                             <button class="control-btn no-zoom" id="btnE" onclick="sendDirectional('e')" title="East">➡️</button>
@@ -912,7 +907,7 @@
                             <button class="control-btn no-zoom" onclick="handleShopButton()" title="Shop">💲</button>
                             <button class="control-btn no-zoom" onclick="handleEquipButton()" title="Equip">🛡️</button>
                             <button class="control-btn no-zoom" onclick="sendCommand('stats')" title="Stats">📊</button>
-                            <div class="button-divider"></div>
+                            <div class="button-spacer"></div>
                             <button class="control-btn no-zoom" onclick="handleMapButton()" title="Map">🌎</button>
                             <button class="control-btn no-zoom" id="btnS" onclick="sendDirectional('s')" title="South">⬇️</button>
                             <button class="control-btn no-zoom" id="btnD" onclick="sendDirectional('d')" title="Down">⤵️</button>
@@ -923,9 +918,9 @@
                             <button class="control-btn no-zoom" onclick="handleSocialButton()" title="Social">😀</button>
                             <button class="control-btn no-zoom" onclick="handleHelpButton()" title="Help">❓</button>
                             <button class="control-btn no-zoom" onclick="handleSettingsButton()" title="Settings">⚙️</button>
-                            <div class="button-divider"></div>
                             <div class="button-spacer"></div>
-                            <div class="button-spacer"><button class="control-btn no-zoom" id="btnReroll" onclick="handleRerollButton()" title="Re-roll" style="display:none;">🎲</button></div>
+                            <div class="button-spacer"></div>
+                            <button class="control-btn no-zoom" id="btnReroll" onclick="handleRerollButton()" title="Re-roll" style="display:none;">🎲</button>
                             <div class="button-spacer"></div>
                         </div>
                     </div>
@@ -992,6 +987,7 @@
         let waitingForArmItems = false; // Waiting for arm inventory
         let waitingForWearItems = false; // Waiting for wear inventory
         let terminalFontSize = 1.2; // Current terminal font size in em
+        let terminalLines = 500; // Max lines to keep in terminal (0 = unlimited)
         let descriptionMode = 'long'; // 'short' or 'long'
         let waitingForShopDetection = false; // Waiting to detect shopkeeper before showing shop menu
         let waitingForGoldCheck = false; // Waiting to check player gold before buying
@@ -1327,7 +1323,7 @@
                         }
                         
                         // Check for item drops
-                        (plainText);
+                        checkForItemDrops(plainText);
                         
                         // Extract shop items if waiting
                         if (waitingForShopItems) {
@@ -1458,6 +1454,24 @@
             const terminal = document.getElementById('terminal');
             const processed = processANSI(text);
             terminal.innerHTML += processed;
+
+            // Enforce line limit
+            if (terminalLines > 0) {
+                const html = terminal.innerHTML;
+                const newlines = (html.match(/\n/g) || []).length;
+                if (newlines > terminalLines) {
+                    // Find the position of the newline that is (newlines - terminalLines) from the start
+                    let count = 0;
+                    const excess = newlines - terminalLines;
+                    let pos = 0;
+                    while (pos < html.length && count < excess) {
+                        if (html[pos] === '\n') count++;
+                        pos++;
+                    }
+                    terminal.innerHTML = html.substring(pos);
+                }
+            }
+
             terminal.scrollTop = terminal.scrollHeight;
         }
 
@@ -2162,10 +2176,8 @@
                 const lastMatch = matches[matches.length - 1];
                 let item = lastMatch[1].trim();
                 
-                // Remove "a" or "an" prefix
+                // Remove "a"/"an" prefix and "suit of" prefix
                 item = item.replace(/^(a |an )/i, '');
-
-                // Remove "suit of" prefix
                 item = item.replace(/^suit of /i, '');
                 
                 console.log('Item dropped:', item);
@@ -2537,6 +2549,14 @@
                         </div>
                     </div>
                     <div class="settings-row">
+                        <span class="settings-label">Terminal Lines</span>
+                        <div class="font-size-controls">
+                            <button class="font-size-btn" onclick="decreaseTerminalLines()">−</button>
+                            <div class="font-size-display" id="terminalLinesDisplay">${terminalLines === 0 ? '∞' : terminalLines}</div>
+                            <button class="font-size-btn" onclick="increaseTerminalLines()">+</button>
+                        </div>
+                    </div>
+                    <div class="settings-row">
                         <span class="settings-label">Session</span>
                         <button onclick="handleLogoff()" style="padding: 4px 14px; background: var(--accent-danger); border: 1px solid var(--accent-danger); border-radius: 4px; color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 0.8em; cursor: pointer;">
                             Logoff
@@ -2596,6 +2616,31 @@
             }, 500);
         }
 
+        function increaseTerminalLines() {
+            if (terminalLines === 0) return; // already unlimited
+            if (terminalLines >= 5000) {
+                terminalLines = 0; // flip to unlimited
+            } else {
+                terminalLines = Math.min(5000, terminalLines + 50);
+            }
+            applyTerminalLines();
+        }
+
+        function decreaseTerminalLines() {
+            if (terminalLines === 0) {
+                terminalLines = 5000; // flip from unlimited back to max
+            } else {
+                terminalLines = Math.max(50, terminalLines - 50);
+            }
+            applyTerminalLines();
+        }
+
+        function applyTerminalLines() {
+            const el = document.getElementById('terminalLinesDisplay');
+            if (el) el.textContent = terminalLines === 0 ? '∞' : terminalLines;
+            localStorage.setItem('bbs_terminal_lines', terminalLines);
+        }
+
         function loadSettings() {
             // Load saved settings
             const savedFontSize = localStorage.getItem('bbs_terminal_font_size');
@@ -2608,6 +2653,11 @@
             const savedDescMode = localStorage.getItem('bbs_description_mode');
             if (savedDescMode) {
                 descriptionMode = savedDescMode;
+            }
+
+            const savedTerminalLines = localStorage.getItem('bbs_terminal_lines');
+            if (savedTerminalLines !== null) {
+                terminalLines = parseInt(savedTerminalLines);
             }
         }
 
