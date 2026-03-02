@@ -1327,7 +1327,7 @@
                         }
                         
                         // Check for item drops
-                        checkForItemDrops(plainText);
+                        (plainText);
                         
                         // Extract shop items if waiting
                         if (waitingForShopItems) {
@@ -2164,6 +2164,9 @@
                 
                 // Remove "a" or "an" prefix
                 item = item.replace(/^(a |an )/i, '');
+
+                // Remove "suit of" prefix
+                item = item.replace(/^suit of /i, '');
                 
                 console.log('Item dropped:', item);
                 
