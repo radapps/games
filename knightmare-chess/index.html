@@ -55,36 +55,57 @@
             z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
         }
         
         header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             animation: fadeInDown 0.8s ease-out;
         }
         
         h1 {
             font-family: 'Cinzel', serif;
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-size: clamp(1.3rem, 4vw, 2rem);
             font-weight: 700;
             color: var(--accent-gold);
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
                          0 0 40px rgba(212, 175, 55, 0.3);
             letter-spacing: 0.1em;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .subtitle {
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
             font-style: italic;
+        }
+        
+        .new-game-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
+            color: var(--text-primary);
+            border: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .new-game-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--card-glow);
         }
         
         .game-container {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
-            gap: 20px;
+            gap: 10px;
             max-width: 1200px;
             margin: 0 auto;
             animation: fadeIn 1s ease-out 0.3s backwards;
@@ -94,13 +115,13 @@
         .left-panel {
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 10px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         
         .panel-section {
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
         
         .panel-section:last-child {
@@ -109,9 +130,9 @@
         
         .panel-title {
             font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             color: var(--accent-gold);
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             text-align: center;
             letter-spacing: 0.05em;
         }
@@ -153,61 +174,40 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
         
         .opponent-cards {
             display: flex;
-            gap: 8px;
+            gap: 5px;
             justify-content: center;
             flex-wrap: wrap;
         }
         
         .card-back {
-            width: 60px;
-            height: 84px;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
+            width: 50px;
+            height: 70px;
             border: 2px solid var(--accent-gold);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
             position: relative;
             overflow: hidden;
         }
         
-        .card-back::before {
-            content: '⚔';
-            font-size: 2rem;
-            color: var(--accent-gold);
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
-        }
-        
-        .card-back::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(212, 175, 55, 0.1) 10px,
-                rgba(212, 175, 55, 0.1) 20px
-            );
+        .card-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         
         #chessboard {
             width: 100%;
-            max-width: 600px;
+            max-width: 400px;
             aspect-ratio: 1;
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
-            border: 4px solid var(--accent-gold);
+            border: 3px solid var(--accent-gold);
             border-radius: 8px;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.4),
                         0 8px 32px rgba(0, 0, 0, 0.6);
@@ -219,10 +219,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(2rem, 5vw, 3.5rem);
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
+            padding: 2px;
+        }
+        
+        .square img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+            pointer-events: none;
         }
         
         .square.light {
@@ -264,17 +271,17 @@
         
         .player-cards {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             justify-content: center;
             flex-wrap: wrap;
         }
         
         .card {
-            width: 80px;
-            height: 112px;
+            width: 60px;
+            height: 84px;
             background: var(--bg-tertiary);
             border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
@@ -285,7 +292,8 @@
         .card img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background: var(--bg-tertiary);
         }
         
         .card:hover {
@@ -299,27 +307,27 @@
         .right-panel {
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 10px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 15px;
         }
         
         .deck-container, .discard-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .deck-pile, .discard-pile {
-            width: 100px;
-            height: 140px;
+            width: 80px;
+            height: 112px;
             background: var(--bg-tertiary);
             border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -327,6 +335,7 @@
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
+            overflow: hidden;
         }
         
         .deck-pile:hover {
@@ -334,33 +343,29 @@
             box-shadow: 0 6px 20px var(--card-glow);
         }
         
-        .deck-pile {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
+        .deck-pile img, .discard-pile img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--bg-tertiary);
         }
         
         .deck-count {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
+            bottom: 5px;
+            right: 5px;
             background: var(--accent-gold);
             color: var(--bg-primary);
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            font-size: 1.2rem;
-            width: 30px;
-            height: 30px;
+            font-size: 1rem;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-        }
-        
-        .discard-pile img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 6px;
         }
         
         /* Card modal */
@@ -386,7 +391,7 @@
             background: var(--bg-secondary);
             border: 3px solid var(--accent-gold);
             border-radius: 16px;
-            padding: 30px;
+            padding: 20px;
             max-width: 90vw;
             max-height: 90vh;
             box-shadow: 0 0 60px rgba(212, 175, 55, 0.6),
@@ -394,31 +399,33 @@
             animation: scaleIn 0.3s ease-out;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
         }
         
         .card-modal-image {
-            width: 300px;
-            height: 420px;
+            max-width: 300px;
+            max-height: 420px;
+            width: 100%;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            object-fit: cover;
+            object-fit: contain;
             border: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
         }
         
         .card-modal-buttons {
             display: flex;
-            gap: 20px;
+            gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
         }
         
         .btn {
             font-family: 'Cinzel', serif;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 15px 40px;
+            padding: 10px 25px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -465,18 +472,103 @@
         /* Game info */
         .game-info {
             text-align: center;
-            padding: 15px;
+            padding: 10px;
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 15px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
         
         .game-info-text {
             font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
+            font-size: 0.95rem;
             color: var(--accent-gold);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Color selection modal */
+        .color-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .color-modal.active {
+            display: flex;
+        }
+        
+        .color-modal-content {
+            background: var(--bg-secondary);
+            border: 3px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 90vw;
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6),
+                        0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: scaleIn 0.3s ease-out;
+            text-align: center;
+        }
+        
+        .color-modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+        }
+        
+        .color-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 15px 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .color-option.white {
+            background: linear-gradient(135deg, #e8e8f0, #d0d0e0);
+            color: var(--bg-primary);
+        }
+        
+        .color-option.black {
+            background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
+            color: var(--text-primary);
+        }
+        
+        .color-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px var(--card-glow);
+            border-color: var(--accent-gold);
         }
         
         /* Animations */
@@ -544,40 +636,66 @@
         
         @media (max-width: 640px) {
             .container {
-                padding: 10px;
+                padding: 5px;
             }
             
             h1 {
-                font-size: 2rem;
+                font-size: 1.2rem;
+            }
+            
+            .subtitle {
+                font-size: 0.75rem;
+            }
+            
+            .new-game-btn {
+                font-size: 0.75rem;
+                padding: 6px 15px;
             }
             
             .card {
-                width: 60px;
-                height: 84px;
-            }
-            
-            .card-back {
                 width: 50px;
                 height: 70px;
             }
             
+            .card-back {
+                width: 40px;
+                height: 56px;
+            }
+            
             .deck-pile, .discard-pile {
-                width: 80px;
-                height: 112px;
+                width: 65px;
+                height: 91px;
             }
             
             .card-modal-image {
-                width: 250px;
-                height: 350px;
+                max-width: 250px;
+                max-height: 350px;
             }
             
             .btn {
-                padding: 12px 30px;
-                font-size: 1rem;
+                padding: 10px 20px;
+                font-size: 0.8rem;
             }
             
             .left-panel {
                 grid-template-columns: 1fr;
+            }
+            
+            .panel-title {
+                font-size: 0.8rem;
+            }
+            
+            .game-info-text {
+                font-size: 0.85rem;
+            }
+            
+            .color-modal-title {
+                font-size: 1.2rem;
+            }
+            
+            .color-option {
+                font-size: 0.9rem;
+                padding: 12px 25px;
             }
         }
     </style>
@@ -587,6 +705,7 @@
         <header>
             <h1>⚔ KNIGHTMARE CHESS ⚔</h1>
             <p class="subtitle">Where Strategy Meets Sorcery</p>
+            <button class="new-game-btn" id="newGameBtn">New Game</button>
         </header>
         
         <div class="game-container">
@@ -662,6 +781,17 @@
         </div>
     </div>
     
+    <!-- Color Selection Modal -->
+    <div class="color-modal active" id="colorModal">
+        <div class="color-modal-content">
+            <h2 class="color-modal-title">Choose Your Color</h2>
+            <div class="color-options">
+                <button class="color-option white" id="playWhite">Play as White</button>
+                <button class="color-option black" id="playBlack">Play as Black</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script>
         // Game state
@@ -672,6 +802,8 @@
         let deckCards = 20;
         let discardPile = [];
         let currentCardSelected = null;
+        let playerColor = null; // 'w' or 'b'
+        let boardFlipped = false; // true if playing as black
         
         // Card names
         const cardNames = [
@@ -696,6 +828,14 @@
         
         // Initialize game
         function initGame() {
+            // Reset game state
+            game.reset();
+            playerCards = [];
+            discardPile = [];
+            selectedSquare = null;
+            currentCardSelected = null;
+            document.getElementById('capturedPieces').innerHTML = '';
+            
             // Shuffle deck
             deck = shuffleArray(cardNames);
             
@@ -713,7 +853,21 @@
             // Render board and cards
             renderBoard();
             renderPlayerCards();
+            renderOpponentCards();
             updateGameInfo();
+        }
+        
+        // Start new game with color selection
+        function startNewGame() {
+            document.getElementById('colorModal').classList.add('active');
+        }
+        
+        // Choose color and start game
+        function chooseColor(color) {
+            playerColor = color;
+            boardFlipped = (color === 'b');
+            document.getElementById('colorModal').classList.remove('active');
+            initGame();
         }
         
         // Render chessboard
@@ -723,8 +877,12 @@
             
             const position = game.board();
             
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
+            // Determine row order based on player color
+            const rows = boardFlipped ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
+            const cols = boardFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+            
+            rows.forEach((row) => {
+                cols.forEach((col) => {
                     const square = document.createElement('div');
                     const squareColor = (row + col) % 2 === 0 ? 'light' : 'dark';
                     square.className = `square ${squareColor}`;
@@ -734,28 +892,38 @@
                     
                     const piece = position[row][col];
                     if (piece) {
-                        square.textContent = getPieceUnicode(piece);
+                        const img = document.createElement('img');
+                        img.src = getPieceImage(piece);
+                        img.alt = piece.type;
+                        square.appendChild(img);
                     }
                     
                     square.addEventListener('click', () => handleSquareClick(squareNotation));
                     
                     board.appendChild(square);
-                }
-            }
+                });
+            });
         }
         
-        // Get Unicode symbol for piece
-        function getPieceUnicode(piece) {
-            const unicodePieces = {
-                'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
-                'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        // Get piece image path
+        function getPieceImage(piece) {
+            const pieceNames = {
+                'p': 'pawn',
+                'r': 'rook',
+                'n': 'knight',
+                'b': 'bishop',
+                'q': 'queen',
+                'k': 'king'
             };
-            return unicodePieces[piece.type] || '';
+            const pieceName = pieceNames[piece.type];
+            const color = piece.color === 'w' ? 'white' : 'black';
+            return `assets/chess/${pieceName}_${color}.png`;
         }
         
         // Handle square click
         function handleSquareClick(square) {
             if (game.game_over()) return;
+            if (game.turn() !== playerColor) return; // Not player's turn
             
             // If no square selected, select this square if it has a piece
             if (!selectedSquare) {
@@ -828,8 +996,33 @@
             const capturedContainer = document.getElementById('capturedPieces');
             const pieceElement = document.createElement('div');
             pieceElement.className = 'captured-piece';
-            pieceElement.textContent = getPieceUnicode({ type: pieceType, color: color });
+            
+            const img = document.createElement('img');
+            img.src = getPieceImage({ type: pieceType, color: color });
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            pieceElement.appendChild(img);
+            
             capturedContainer.appendChild(pieceElement);
+        }
+        
+        // Render opponent cards
+        function renderOpponentCards() {
+            const container = document.getElementById('opponentCards');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < opponentCards; i++) {
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-back';
+                
+                const img = document.createElement('img');
+                img.src = 'assets/_cardback.jpg';
+                img.alt = 'Card back';
+                cardBack.appendChild(img);
+                
+                container.appendChild(cardBack);
+            }
         }
         
         // Render player cards
@@ -842,7 +1035,7 @@
                 card.className = 'card';
                 
                 const img = document.createElement('img');
-                img.src = `/assets/${cardName}.jpg`;
+                img.src = `assets/${cardName}.jpg`;
                 img.alt = cardName;
                 img.onerror = function() {
                     // Fallback if image doesn't exist
@@ -869,7 +1062,7 @@
             const modal = document.getElementById('cardModal');
             const modalImage = document.getElementById('modalCardImage');
             
-            modalImage.src = `/assets/${cardName}.jpg`;
+            modalImage.src = `assets/${cardName}.jpg`;
             modalImage.alt = cardName;
             modalImage.onerror = function() {
                 // Fallback
@@ -935,6 +1128,23 @@
         // Update deck count display
         function updateDeckCount() {
             document.getElementById('deckCount').textContent = deckCards;
+            
+            // Update deck pile image
+            const deckPileElement = document.getElementById('deckPile');
+            if (deckCards > 0) {
+                // Show card back if deck has cards
+                let img = deckPileElement.querySelector('img');
+                if (!img) {
+                    img = document.createElement('img');
+                    img.src = 'assets/_cardback.jpg';
+                    img.alt = 'Deck';
+                    deckPileElement.insertBefore(img, deckPileElement.firstChild);
+                }
+            } else {
+                // Remove image if deck is empty
+                const img = deckPileElement.querySelector('img');
+                if (img) img.remove();
+            }
         }
         
         // Update discard pile display
@@ -945,7 +1155,7 @@
             if (discardPile.length > 0) {
                 const topCard = discardPile[discardPile.length - 1];
                 const img = document.createElement('img');
-                img.src = `/assets/${topCard}.jpg`;
+                img.src = `assets/${topCard}.jpg`;
                 img.alt = topCard;
                 img.onerror = function() {
                     discardPileElement.textContent = topCard;
@@ -976,6 +1186,13 @@
         document.getElementById('btnDiscard').addEventListener('click', discardCard);
         document.getElementById('btnCancel').addEventListener('click', closeCardModal);
         
+        // Color selection event listeners
+        document.getElementById('playWhite').addEventListener('click', () => chooseColor('w'));
+        document.getElementById('playBlack').addEventListener('click', () => chooseColor('b'));
+        
+        // New Game button
+        document.getElementById('newGameBtn').addEventListener('click', startNewGame);
+        
         // Close modal when clicking outside
         document.getElementById('cardModal').addEventListener('click', (e) => {
             if (e.target.id === 'cardModal') {
@@ -990,8 +1207,8 @@
             }
         });
         
-        // Initialize the game
-        initGame();
+        // Show color selection modal on load
+        document.getElementById('colorModal').classList.add('active');
     </script>
 </body>
 </html>
