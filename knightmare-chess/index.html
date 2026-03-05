@@ -72,13 +72,52 @@
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
                          0 0 40px rgba(212, 175, 55, 0.3);
             letter-spacing: 0.1em;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         
-        .subtitle {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            font-style: italic;
+        .game-info {
+            text-align: center;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            margin: 0 auto 15px;
+            max-width: 400px;
+        }
+        
+        .game-info-text {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+        }
+        
+        .end-turn-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 10px 30px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
+            color: var(--text-primary);
+            border: 2px solid var(--accent-gold);
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .end-turn-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--card-glow);
+        }
+        
+        .end-turn-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .new-game-btn {
@@ -177,29 +216,6 @@
             gap: 10px;
         }
         
-        .opponent-cards {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .card-back {
-            width: 50px;
-            height: 70px;
-            border: 2px solid var(--accent-gold);
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .card-back img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
         #chessboard {
             width: 100%;
             max-width: 400px;
@@ -277,8 +293,8 @@
         }
         
         .card {
-            width: 60px;
-            height: 84px;
+            width: 67px;
+            height: 120px;
             background: var(--bg-tertiary);
             border: 2px solid var(--border-color);
             border-radius: 6px;
@@ -323,8 +339,8 @@
         }
         
         .deck-pile, .discard-pile {
-            width: 80px;
-            height: 112px;
+            width: 67px;
+            height: 120px;
             background: var(--bg-tertiary);
             border: 2px solid var(--border-color);
             border-radius: 6px;
@@ -404,9 +420,8 @@
         }
         
         .card-modal-image {
-            max-width: 300px;
-            max-height: 420px;
-            width: 100%;
+            width: 235px;
+            height: 420px;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
             object-fit: contain;
@@ -643,33 +658,29 @@
                 font-size: 1.2rem;
             }
             
-            .subtitle {
-                font-size: 0.75rem;
-            }
-            
             .new-game-btn {
                 font-size: 0.75rem;
                 padding: 6px 15px;
             }
             
-            .card {
-                width: 50px;
-                height: 70px;
+            .end-turn-btn {
+                font-size: 0.8rem;
+                padding: 8px 20px;
             }
             
-            .card-back {
-                width: 40px;
-                height: 56px;
+            .card {
+                width: 60px;
+                height: 107px;
             }
             
             .deck-pile, .discard-pile {
-                width: 65px;
-                height: 91px;
+                width: 60px;
+                height: 107px;
             }
             
             .card-modal-image {
-                max-width: 250px;
-                max-height: 350px;
+                width: 200px;
+                height: 357px;
             }
             
             .btn {
@@ -704,8 +715,9 @@
     <div class="container">
         <header>
             <h1>⚔ KNIGHTMARE CHESS ⚔</h1>
-            <p class="subtitle">Where Strategy Meets Sorcery</p>
-            <button class="new-game-btn" id="newGameBtn">New Game</button>
+            <div class="game-info">
+                <p class="game-info-text" id="gameInfo">Choose your color to begin</p>
+            </div>
         </header>
         
         <div class="game-container">
@@ -728,15 +740,6 @@
             
             <!-- Center Panel: Chessboard -->
             <div class="center-panel">
-                <!-- Opponent's Cards -->
-                <div class="opponent-cards" id="opponentCards">
-                    <div class="card-back"></div>
-                    <div class="card-back"></div>
-                    <div class="card-back"></div>
-                    <div class="card-back"></div>
-                    <div class="card-back"></div>
-                </div>
-                
                 <!-- Chess Board -->
                 <div id="chessboard"></div>
                 
@@ -744,6 +747,9 @@
                 <div class="player-cards" id="playerCards">
                     <!-- Player cards will be populated here -->
                 </div>
+                
+                <!-- End Turn Button -->
+                <button class="end-turn-btn" id="endTurnBtn">End Turn</button>
             </div>
             
             <!-- Right Panel: Deck & Discard -->
@@ -764,8 +770,9 @@
             </div>
         </div>
         
-        <div class="game-info">
-            <p class="game-info-text" id="gameInfo">White to move</p>
+        <!-- New Game Button at Bottom -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="new-game-btn" id="newGameBtn">New Game</button>
         </div>
     </div>
     
@@ -782,7 +789,7 @@
     </div>
     
     <!-- Color Selection Modal -->
-    <div class="color-modal active" id="colorModal">
+    <div class="color-modal" id="colorModal">
         <div class="color-modal-content">
             <h2 class="color-modal-title">Choose Your Color</h2>
             <div class="color-options">
@@ -802,8 +809,10 @@
         let deckCards = 20;
         let discardPile = [];
         let currentCardSelected = null;
-        let playerColor = null; // 'w' or 'b'
+        let playerColor = 'w'; // Default to white
         let boardFlipped = false; // true if playing as black
+        let hasPlayedOrDiscardedCard = false; // Track if card was played/discarded this turn
+        let hasMoved = false; // Track if a move was made this turn
         
         // Card names
         const cardNames = [
@@ -834,6 +843,8 @@
             discardPile = [];
             selectedSquare = null;
             currentCardSelected = null;
+            hasPlayedOrDiscardedCard = false;
+            hasMoved = false;
             document.getElementById('capturedPieces').innerHTML = '';
             
             // Shuffle deck
@@ -853,8 +864,9 @@
             // Render board and cards
             renderBoard();
             renderPlayerCards();
-            renderOpponentCards();
+            updateDiscardPile();
             updateGameInfo();
+            updateEndTurnButton();
         }
         
         // Start new game with color selection
@@ -877,8 +889,8 @@
             
             const position = game.board();
             
-            // Determine row order based on player color
-            const rows = boardFlipped ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
+            // Determine row order based on player color - player's color always on bottom
+            const rows = boardFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
             const cols = boardFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
             
             rows.forEach((row) => {
@@ -943,6 +955,7 @@
                 
                 if (move) {
                     // Valid move made
+                    hasMoved = true;
                     if (move.captured) {
                         addCapturedPiece(move.captured, move.color === 'w' ? 'b' : 'w');
                     }
@@ -950,6 +963,7 @@
                     selectedSquare = null;
                     renderBoard();
                     updateGameInfo();
+                    updateEndTurnButton();
                     
                     // TODO: Computer move would go here
                 } else {
@@ -1007,24 +1021,6 @@
             capturedContainer.appendChild(pieceElement);
         }
         
-        // Render opponent cards
-        function renderOpponentCards() {
-            const container = document.getElementById('opponentCards');
-            container.innerHTML = '';
-            
-            for (let i = 0; i < opponentCards; i++) {
-                const cardBack = document.createElement('div');
-                cardBack.className = 'card-back';
-                
-                const img = document.createElement('img');
-                img.src = 'assets/cardback.jpg';
-                img.alt = 'Card back';
-                cardBack.appendChild(img);
-                
-                container.appendChild(cardBack);
-            }
-        }
-        
         // Render player cards
         function renderPlayerCards() {
             const container = document.getElementById('playerCards');
@@ -1069,34 +1065,33 @@
                 this.alt = `${cardName} (Image not found)`;
             };
             
+            // Show play/discard buttons for player cards
+            document.getElementById('btnPlay').style.display = 'inline-block';
+            document.getElementById('btnDiscard').style.display = 'inline-block';
+            document.getElementById('btnCancel').textContent = 'Cancel';
+            
             modal.classList.add('active');
         }
         
-        // Close card modal
+        // Close card modal (restore button states)
         function closeCardModal() {
             document.getElementById('cardModal').classList.remove('active');
+            document.getElementById('btnPlay').style.display = 'inline-block';
+            document.getElementById('btnDiscard').style.display = 'inline-block';
+            document.getElementById('btnCancel').textContent = 'Cancel';
             currentCardSelected = null;
         }
         
         // Play card
         function playCard() {
             if (!currentCardSelected) return;
+            if (hasPlayedOrDiscardedCard) {
+                alert('You can only play or discard one card per turn!');
+                return;
+            }
             
             // TODO: Implement card-specific logic
             console.log('Playing card:', currentCardSelected.name);
-            
-            // For now, just remove from hand
-            playerCards.splice(currentCardSelected.index, 1);
-            renderPlayerCards();
-            closeCardModal();
-            
-            // Draw replacement card at end of turn
-            // (In actual game, this would happen after move is complete)
-        }
-        
-        // Discard card
-        function discardCard() {
-            if (!currentCardSelected) return;
             
             // Add to discard pile
             discardPile.push(currentCardSelected.name);
@@ -1104,18 +1099,51 @@
             // Remove from hand
             playerCards.splice(currentCardSelected.index, 1);
             
-            // Update discard pile display
+            // Mark that a card was played
+            hasPlayedOrDiscardedCard = true;
+            
+            // Update displays
             updateDiscardPile();
-            
-            // Draw new card
-            drawCard();
-            
             renderPlayerCards();
+            updateEndTurnButton();
             closeCardModal();
         }
         
-        // Draw card
+        // Discard card
+        function discardCard() {
+            if (!currentCardSelected) return;
+            if (hasPlayedOrDiscardedCard) {
+                alert('You can only play or discard one card per turn!');
+                return;
+            }
+            
+            // Add to discard pile
+            discardPile.push(currentCardSelected.name);
+            
+            // Remove from hand
+            playerCards.splice(currentCardSelected.index, 1);
+            
+            // Mark that a card was discarded
+            hasPlayedOrDiscardedCard = true;
+            
+            // Update displays
+            updateDiscardPile();
+            renderPlayerCards();
+            updateEndTurnButton();
+            closeCardModal();
+        }
+        
+        // Draw card with shuffle logic
         function drawCard() {
+            // If deck is empty, shuffle discard pile back into deck (except last card)
+            if (deck.length === 0 && discardPile.length > 1) {
+                console.log('Deck empty! Shuffling discard pile...');
+                const lastCard = discardPile.pop(); // Keep last played card
+                deck = shuffleArray(discardPile);
+                discardPile = [lastCard]; // Put last card back
+                updateDiscardPile();
+            }
+            
             if (deck.length > 0 && playerCards.length < 5) {
                 playerCards.push(deck.pop());
                 deckCards = deck.length;
@@ -1123,6 +1151,38 @@
                 return true;
             }
             return false;
+        }
+        
+        // End turn
+        function endTurn() {
+            // Draw cards to fill hand to 5
+            while (playerCards.length < 5) {
+                if (!drawCard()) {
+                    break; // No more cards available
+                }
+            }
+            
+            // Reset turn flags
+            hasPlayedOrDiscardedCard = false;
+            hasMoved = false;
+            
+            // Update displays
+            renderPlayerCards();
+            updateEndTurnButton();
+            updateGameInfo();
+            
+            // TODO: Trigger opponent's turn
+        }
+        
+        // Update END TURN button state
+        function updateEndTurnButton() {
+            const btn = document.getElementById('endTurnBtn');
+            // Can only end turn if moved OR played/discarded a card
+            if (hasMoved || hasPlayedOrDiscardedCard) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
         }
         
         // Update deck count display
@@ -1136,7 +1196,7 @@
                 let img = deckPileElement.querySelector('img');
                 if (!img) {
                     img = document.createElement('img');
-                    img.src = 'assets/cardback.jpg';
+                    img.src = 'assets/_cardback.jpg';
                     img.alt = 'Deck';
                     deckPileElement.insertBefore(img, deckPileElement.firstChild);
                 }
@@ -1167,6 +1227,25 @@
             }
         }
         
+        // View discard pile top card
+        function viewDiscardCard() {
+            if (discardPile.length === 0) return;
+            
+            const topCard = discardPile[discardPile.length - 1];
+            const modal = document.getElementById('cardModal');
+            const modalImage = document.getElementById('modalCardImage');
+            
+            modalImage.src = `assets/${topCard}.jpg`;
+            modalImage.alt = topCard;
+            
+            // Hide play/discard buttons for viewing
+            document.getElementById('btnPlay').style.display = 'none';
+            document.getElementById('btnDiscard').style.display = 'none';
+            document.getElementById('btnCancel').textContent = 'Close';
+            
+            modal.classList.add('active');
+        }
+        
         // Update game info
         function updateGameInfo() {
             const info = document.getElementById('gameInfo');
@@ -1193,6 +1272,9 @@
         // New Game button
         document.getElementById('newGameBtn').addEventListener('click', startNewGame);
         
+        // End Turn button
+        document.getElementById('endTurnBtn').addEventListener('click', endTurn);
+        
         // Close modal when clicking outside
         document.getElementById('cardModal').addEventListener('click', (e) => {
             if (e.target.id === 'cardModal') {
@@ -1200,15 +1282,11 @@
             }
         });
         
-        // Deck click to draw (for testing)
-        document.getElementById('deckPile').addEventListener('click', () => {
-            if (drawCard()) {
-                renderPlayerCards();
-            }
-        });
+        // Discard pile click to view
+        document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
         
-        // Show color selection modal on load
-        document.getElementById('colorModal').classList.add('active');
+        // Start game immediately with white
+        initGame();
     </script>
 </body>
 </html>
