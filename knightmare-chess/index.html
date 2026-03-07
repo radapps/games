@@ -19,13 +19,7 @@
             --border-color: #3a3a4a;
             --card-glow: rgba(212, 175, 55, 0.3);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Crimson Text', serif;
             background: linear-gradient(135deg, var(--bg-primary) 0%, #1a0a2e 100%);
@@ -34,687 +28,307 @@
             overflow-x: hidden;
             position: relative;
         }
-        
-        /* Atmospheric background effect */
         body::before {
             content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background:
                 radial-gradient(circle at 20% 50%, rgba(107, 76, 138, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, rgba(139, 21, 56, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
+            pointer-events: none; z-index: 0;
         }
-        
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 5px 10px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 8px;
-            animation: fadeInDown 0.8s ease-out;
-        }
-        
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 5px 10px; }
+        header { text-align: center; margin-bottom: 8px; animation: fadeInDown 0.8s ease-out; }
         h1 {
             font-family: 'Cinzel', serif;
-            font-size: clamp(1.2rem, 4vw, 1.8rem);
-            font-weight: 700;
+            font-size: clamp(1.2rem, 4vw, 1.8rem); font-weight: 700;
             color: var(--accent-gold);
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
-                         0 0 40px rgba(212, 175, 55, 0.3);
-            letter-spacing: 0.1em;
-            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5), 0 0 40px rgba(212, 175, 55, 0.3);
+            letter-spacing: 0.1em; margin-bottom: 5px;
         }
-        
         .game-info {
-            text-align: center;
-            padding: 4px 8px;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            margin: 0 auto 8px;
-            max-width: 400px;
+            text-align: center; padding: 4px 8px;
+            background: var(--bg-secondary); border: 2px solid var(--border-color);
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            margin: 0 auto 8px; max-width: 440px;
         }
-        
-        .game-info-text {
-            font-family: 'Cinzel', serif;
-            font-size: 0.8rem;
-            color: var(--accent-gold);
+        .game-info-text { font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--accent-gold); }
+
+        /* Engine status badge */
+        .engine-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-family: 'Cinzel', serif; font-size: 0.65rem;
+            padding: 2px 8px; border-radius: 20px; margin-top: 3px;
+            border: 1px solid; letter-spacing: 0.05em;
         }
-        
+        .engine-badge.fairy { background: rgba(107, 76, 138, 0.3); border-color: var(--accent-purple); color: #c8a0f8; }
+        .engine-badge.basic { background: rgba(139, 21, 56, 0.3); border-color: var(--accent-red); color: #f08080; }
+        .engine-badge.loading { background: rgba(212, 175, 55, 0.2); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .engine-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .engine-dot.pulse { animation: pulse 1.5s infinite; }
+
+        /* Variant/Effect banner */
+        .variant-banner {
+            display: none; text-align: center; font-family: 'Cinzel', serif;
+            font-size: 0.7rem; color: #c8a0f8; letter-spacing: 0.05em;
+            padding: 2px 0; border-top: 1px solid rgba(107,76,138,0.3);
+            margin-top: 3px;
+        }
+        .variant-banner.active { display: block; }
+
         .end-turn-btn {
-            font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600;
             padding: 10px 30px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
-            color: var(--text-primary);
-            border: 2px solid var(--accent-gold);
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            color: var(--text-primary); border: 2px solid var(--accent-gold);
+            border-radius: 8px; cursor: pointer; margin-top: 6px;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
-        
-        .end-turn-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px var(--card-glow);
-        }
-        
-        .end-turn-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
+        .end-turn-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--card-glow); }
+        .end-turn-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .new-game-btn {
-            font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600;
             padding: 8px 20px;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-red));
-            color: var(--text-primary);
-            border: 2px solid var(--accent-gold);
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: var(--text-primary); border: 2px solid var(--accent-gold);
+            border-radius: 8px; cursor: pointer; margin-top: 10px;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.05em;
         }
-        
-        .new-game-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px var(--card-glow);
-        }
-        
+        .new-game-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--card-glow); }
+
         .game-container {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 8px;
-            max-width: 1200px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px;
+            max-width: 1200px; margin: 0 auto;
             animation: fadeIn 1s ease-out 0.3s backwards;
         }
-        
-        /* Left panel - Captured pieces and active cards */
         .left-panel {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            background: var(--bg-secondary); border: 2px solid var(--border-color);
+            border-radius: 8px; padding: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
-        
-        .panel-section {
-            margin-bottom: 10px;
-        }
-        
-        .panel-section:last-child {
-            margin-bottom: 0;
-        }
-        
+        .panel-section { margin-bottom: 10px; }
+        .panel-section:last-child { margin-bottom: 0; }
         .panel-title {
-            font-family: 'Cinzel', serif;
-            font-size: 0.8rem;
-            color: var(--accent-gold);
-            margin-bottom: 6px;
-            text-align: center;
-            letter-spacing: 0.05em;
+            font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--accent-gold);
+            margin-bottom: 6px; text-align: center; letter-spacing: 0.05em;
         }
-        
         .captured-pieces {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            min-height: 60px;
-            background: var(--bg-tertiary);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
+            display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px;
+            background: var(--bg-tertiary); padding: 10px;
+            border-radius: 8px; border: 1px solid var(--border-color);
         }
-        
-        .captured-piece {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-        
-        .captured-piece:hover {
-            opacity: 1;
-        }
-        
-        .active-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        /* Center panel - Chessboard */
-        .center-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        
+        .captured-piece { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 32px; opacity: 0.8; transition: opacity 0.3s; }
+        .captured-piece:hover { opacity: 1; }
+        .active-cards { display: flex; flex-direction: column; gap: 10px; }
+        .center-panel { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
         #chessboard {
-            width: 100%;
-            max-width: 400px;
-            aspect-ratio: 1;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            border: 3px solid var(--accent-gold);
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4),
-                        0 8px 32px rgba(0, 0, 0, 0.6);
+            width: 100%; max-width: 400px; aspect-ratio: 1;
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            border: 3px solid var(--accent-gold); border-radius: 8px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 8px 32px rgba(0,0,0,0.6);
             overflow: hidden;
         }
-        
         .square {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            padding: 2px;
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease; position: relative; padding: 2px;
         }
-        
-        .square img {
-            width: 90%;
-            height: 90%;
-            object-fit: contain;
-            pointer-events: none;
-        }
-        
-        .square.light {
-            background: #e8dcc3;
-        }
-        
-        .square.dark {
-            background: #6b4c3a;
-        }
-        
-        .square:hover {
-            filter: brightness(1.2);
-        }
-        
-        .square.selected {
-            background: var(--accent-gold) !important;
-            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.6);
-        }
-        
+        .square img { width: 90%; height: 90%; object-fit: contain; pointer-events: none; }
+        .square.light { background: #e8dcc3; }
+        .square.dark { background: #6b4c3a; }
+        .square:hover { filter: brightness(1.2); }
+        .square.selected { background: var(--accent-gold) !important; box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.6); }
         .square.valid-move::after {
-            content: '';
-            position: absolute;
-            width: 30%;
-            height: 30%;
-            background: rgba(107, 76, 138, 0.6);
-            border-radius: 50%;
-            pointer-events: none;
+            content: ''; position: absolute; width: 30%; height: 30%;
+            background: rgba(107, 76, 138, 0.6); border-radius: 50%; pointer-events: none;
         }
-        
         .square.capture-move::after {
-            content: '';
-            position: absolute;
-            width: 90%;
-            height: 90%;
-            border: 3px solid var(--accent-red);
-            border-radius: 50%;
-            pointer-events: none;
+            content: ''; position: absolute; width: 90%; height: 90%;
+            border: 3px solid var(--accent-red); border-radius: 50%; pointer-events: none;
         }
-        
-        .player-cards {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-            flex-wrap: wrap;
+        /* Fairy piece glow */
+        .square.fairy-piece .piece-img {
+            filter: drop-shadow(0 0 6px rgba(200, 160, 248, 0.9));
         }
-        
+        .square.promotion-candidate {
+            box-shadow: inset 0 0 16px rgba(212, 175, 55, 0.8) !important;
+            animation: promoGlow 0.8s infinite alternate;
+        }
+
+        .player-cards { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
         .card {
-            width: 67px;
-            height: 120px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
+            width: 67px; height: 120px; background: var(--bg-tertiary);
+            border: 2px solid var(--border-color); border-radius: 6px;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); position: relative; overflow: hidden;
         }
-        
-        .card img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: var(--bg-tertiary);
-        }
-        
+        .card img { width: 100%; height: 100%; object-fit: contain; background: var(--bg-tertiary); }
         .card:hover {
-            transform: translateY(-8px) scale(1.05);
-            border-color: var(--accent-gold);
-            box-shadow: 0 8px 24px var(--card-glow),
-                        0 0 20px rgba(212, 175, 55, 0.4);
+            transform: translateY(-8px) scale(1.05); border-color: var(--accent-gold);
+            box-shadow: 0 8px 24px var(--card-glow), 0 0 20px rgba(212, 175, 55, 0.4);
         }
-        
-        /* Right panel - Deck and discard */
         .right-panel {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            background: var(--bg-secondary); border: 2px solid var(--border-color);
+            border-radius: 8px; padding: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; gap: 10px;
         }
-        
-        .deck-container, .discard-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-        
+        .deck-container, .discard-container { display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .deck-pile, .discard-pile {
-            width: 67px;
-            height: 120px;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
+            width: 67px; height: 120px; background: var(--bg-tertiary);
+            border: 2px solid var(--border-color); border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); position: relative;
+            cursor: pointer; transition: all 0.3s ease; overflow: hidden;
         }
-        
-        .deck-pile:hover {
-            border-color: var(--accent-gold);
-            box-shadow: 0 6px 20px var(--card-glow);
-        }
-        
-        .deck-pile img, .discard-pile img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: var(--bg-tertiary);
-        }
-        
+        .deck-pile:hover { border-color: var(--accent-gold); box-shadow: 0 6px 20px var(--card-glow); }
+        .deck-pile img, .discard-pile img { width: 100%; height: 100%; object-fit: contain; background: var(--bg-tertiary); }
         .deck-count {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: var(--accent-gold);
-            color: var(--bg-primary);
-            font-family: 'Cinzel', serif;
-            font-weight: 700;
-            font-size: 1rem;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            position: absolute; bottom: 5px; right: 5px;
+            background: var(--accent-gold); color: var(--bg-primary);
+            font-family: 'Cinzel', serif; font-weight: 700; font-size: 1rem;
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
-        
+
         /* Card modal */
         .card-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 15, 0.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease-out;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 10, 15, 0.95); z-index: 1000;
+            align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;
         }
-        
-        .card-modal.active {
-            display: flex;
-        }
-        
+        .card-modal.active { display: flex; }
         .card-modal-content {
-            background: var(--bg-secondary);
-            border: 3px solid var(--accent-gold);
-            border-radius: 16px;
-            padding: 20px;
-            max-width: 90vw;
-            max-height: 90vh;
-            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6),
-                        0 20px 60px rgba(0, 0, 0, 0.8);
+            background: var(--bg-secondary); border: 3px solid var(--accent-gold);
+            border-radius: 16px; padding: 20px; max-width: 90vw; max-height: 90vh;
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6), 0 20px 60px rgba(0,0,0,0.8);
             animation: scaleIn 0.3s ease-out;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
+            display: flex; flex-direction: column; gap: 15px; align-items: center;
         }
-        
         .card-modal-image {
-            width: 235px;
-            height: 420px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            object-fit: contain;
-            border: 2px solid var(--border-color);
-            background: var(--bg-tertiary);
+            width: 235px; height: 420px; border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); object-fit: contain;
+            border: 2px solid var(--border-color); background: var(--bg-tertiary);
         }
-        
-        .card-modal-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
+        /* Card effect description in modal */
+        .card-effect-desc {
+            font-family: 'Crimson Text', serif; font-size: 0.85rem;
+            color: #c8a0f8; text-align: center; max-width: 235px;
+            padding: 8px; background: rgba(107, 76, 138, 0.2);
+            border: 1px solid rgba(107, 76, 138, 0.4); border-radius: 6px;
+            display: none;
         }
-        
+        .card-effect-desc.active { display: block; }
+        .card-modal-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
         .btn {
-            font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600;
+            padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
-        
-        .btn-play {
-            background: linear-gradient(135deg, #2d5016, #4a7c2c);
-            color: var(--text-primary);
-        }
-        
-        .btn-play:hover {
-            background: linear-gradient(135deg, #3a6620, #5a9c3c);
-            box-shadow: 0 6px 20px rgba(74, 124, 44, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .btn-discard {
-            background: linear-gradient(135deg, #6b1a1a, #9c2c2c);
-            color: var(--text-primary);
-        }
-        
-        .btn-discard:hover {
-            background: linear-gradient(135deg, #7b2a2a, #bc3c3c);
-            box-shadow: 0 6px 20px rgba(139, 21, 56, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .btn-cancel {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 2px solid var(--border-color);
-        }
-        
-        .btn-cancel:hover {
-            background: var(--bg-secondary);
-            border-color: var(--accent-gold);
-            color: var(--text-primary);
-        }
-        
-        /* Game info */
-        .game-info {
-            text-align: center;
-            padding: 10px;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            margin-top: 15px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        }
-        
-        .game-info-text {
-            font-family: 'Cinzel', serif;
-            font-size: 0.95rem;
-            color: var(--accent-gold);
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
+        .btn-play { background: linear-gradient(135deg, #2d5016, #4a7c2c); color: var(--text-primary); }
+        .btn-play:hover { background: linear-gradient(135deg, #3a6620, #5a9c3c); box-shadow: 0 6px 20px rgba(74,124,44,0.5); transform: translateY(-2px); }
+        .btn-discard { background: linear-gradient(135deg, #6b1a1a, #9c2c2c); color: var(--text-primary); }
+        .btn-discard:hover { background: linear-gradient(135deg, #7b2a2a, #bc3c3c); box-shadow: 0 6px 20px rgba(139,21,56,0.5); transform: translateY(-2px); }
+        .btn-cancel { background: var(--bg-tertiary); color: var(--text-secondary); border: 2px solid var(--border-color); }
+        .btn-cancel:hover { background: var(--bg-secondary); border-color: var(--accent-gold); color: var(--text-primary); }
         
         /* Color selection modal */
         .color-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 15, 0.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease-out;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 10, 15, 0.95); z-index: 1000;
+            align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;
         }
-        
-        .color-modal.active {
-            display: flex;
-        }
-        
+        .color-modal.active { display: flex; }
         .color-modal-content {
-            background: var(--bg-secondary);
-            border: 3px solid var(--accent-gold);
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 90vw;
-            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6),
-                        0 20px 60px rgba(0, 0, 0, 0.8);
-            animation: scaleIn 0.3s ease-out;
-            text-align: center;
+            background: var(--bg-secondary); border: 3px solid var(--accent-gold);
+            border-radius: 16px; padding: 30px; max-width: 90vw;
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.6), 0 20px 60px rgba(0,0,0,0.8);
+            animation: scaleIn 0.3s ease-out; text-align: center;
         }
-        
-        .color-modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            color: var(--accent-gold);
-            margin-bottom: 20px;
-        }
-        
-        .color-options {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
+        .color-modal-title { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--accent-gold); margin-bottom: 20px; }
+        .color-options { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
         .color-option {
-            font-family: 'Cinzel', serif;
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 15px 30px;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+            padding: 15px 30px; border: 2px solid var(--border-color);
+            border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
-        
-        .color-option.white {
-            background: linear-gradient(135deg, #e8e8f0, #d0d0e0);
-            color: var(--bg-primary);
+        .color-option.white { background: linear-gradient(135deg, #e8e8f0, #d0d0e0); color: var(--bg-primary); }
+        .color-option.black { background: linear-gradient(135deg, #2a2a3a, #1a1a2a); color: var(--text-primary); }
+        .color-option:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--card-glow); border-color: var(--accent-gold); }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 10, 15, 0.97); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 20px;
+            transition: opacity 0.5s ease;
         }
-        
-        .color-option.black {
-            background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
-            color: var(--text-primary);
+        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loading-spinner {
+            width: 56px; height: 56px; border-radius: 50%;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-gold);
+            animation: spin 0.9s linear infinite;
         }
-        
-        .color-option:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px var(--card-glow);
-            border-color: var(--accent-gold);
+        .loading-title { font-family: 'Cinzel', serif; font-size: 1.4rem; color: var(--accent-gold); }
+        .loading-text { font-family: 'Crimson Text', serif; font-size: 1rem; color: var(--text-secondary); text-align: center; max-width: 320px; }
+        .loading-steps { display: flex; flex-direction: column; gap: 6px; min-width: 280px; }
+        .loading-step {
+            display: flex; align-items: center; gap: 10px;
+            font-family: 'Crimson Text', serif; font-size: 0.9rem; color: var(--text-secondary);
+            padding: 5px 10px; border-radius: 6px; transition: all 0.3s;
         }
-        
+        .loading-step.done { color: #88cc88; }
+        .loading-step.active { color: var(--accent-gold); }
+        .loading-step.error { color: #cc8888; }
+        .loading-step-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+        /* Toast notifications */
+        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 8000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast {
+            font-family: 'Cinzel', serif; font-size: 0.85rem;
+            padding: 10px 20px; border-radius: 8px; text-align: center;
+            animation: toastIn 0.3s ease-out;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            max-width: 400px; letter-spacing: 0.03em;
+        }
+        .toast.gold { background: rgba(30, 25, 5, 0.95); border: 2px solid var(--accent-gold); color: var(--accent-gold); }
+        .toast.purple { background: rgba(20, 10, 30, 0.95); border: 2px solid var(--accent-purple); color: #c8a0f8; }
+        .toast.red { background: rgba(30, 5, 10, 0.95); border: 2px solid var(--accent-red); color: #f08080; }
+        .toast.green { background: rgba(5, 25, 5, 0.95); border: 2px solid #4a7c2c; color: #88cc88; }
+        .toast.fade-out { animation: toastOut 0.5s ease-out forwards; }
+
         /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        
-        /* Responsive design */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes promoGlow { from { box-shadow: inset 0 0 10px rgba(212,175,55,0.5); } to { box-shadow: inset 0 0 24px rgba(212,175,55,1); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.85); } }
+
+        /* Responsive */
         @media (max-width: 1024px) {
-            .game-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto auto;
-            }
-            
-            .left-panel, .right-panel {
-                order: 3;
-            }
-            
-            .center-panel {
-                order: 1;
-            }
-            
-            .right-panel {
-                order: 2;
-            }
-            
-            .left-panel {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }
-            
-            .right-panel {
-                flex-direction: row;
-                justify-content: center;
-            }
+            .game-container { grid-template-columns: 1fr; }
+            .left-panel, .right-panel { order: 3; }
+            .center-panel { order: 1; }
+            .right-panel { order: 2; flex-direction: row; justify-content: center; }
+            .left-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         }
-        
         @media (max-width: 640px) {
-            .container {
-                padding: 3px 5px;
-            }
-            
-            h1 {
-                font-size: 1.1rem;
-                margin-bottom: 3px;
-            }
-            
-            .game-info {
-                padding: 3px 6px;
-                margin-bottom: 5px;
-            }
-            
-            .game-info-text {
-                font-size: 0.75rem;
-            }
-            
-            .new-game-btn {
-                font-size: 0.75rem;
-                padding: 6px 15px;
-            }
-            
-            .end-turn-btn {
-                font-size: 0.8rem;
-                padding: 8px 20px;
-                margin-top: 4px;
-            }
-            
-            .card {
-                width: 60px;
-                height: 107px;
-            }
-            
-            .deck-pile, .discard-pile {
-                width: 60px;
-                height: 107px;
-            }
-            
-            .card-modal-image {
-                width: 200px;
-                height: 357px;
-            }
-            
-            .btn {
-                padding: 10px 20px;
-                font-size: 0.8rem;
-            }
-            
-            .left-panel {
-                grid-template-columns: 1fr;
-            }
-            
-            .panel-title {
-                font-size: 0.75rem;
-            }
-            
-            .color-modal-title {
-                font-size: 1.2rem;
-            }
-            
-            .color-option {
-                font-size: 0.9rem;
-                padding: 12px 25px;
-            }
+            .container { padding: 3px 5px; }
+            h1 { font-size: 1.1rem; margin-bottom: 3px; }
+            .card, .deck-pile, .discard-pile { width: 60px; height: 107px; }
+            .card-modal-image { width: 200px; height: 357px; }
+            .btn { padding: 10px 20px; font-size: 0.8rem; }
+            .left-panel { grid-template-columns: 1fr; }
+            .panel-title { font-size: 0.75rem; }
+            .color-modal-title { font-size: 1.2rem; }
+            .color-option { font-size: 0.9rem; padding: 12px 25px; }
         }
     </style>
 </head>
@@ -723,43 +337,36 @@
         <header>
             <h1>⚔ KNIGHTMARE CHESS ⚔</h1>
             <div class="game-info">
-                <p class="game-info-text" id="gameInfo">Choose your color to begin</p>
+                <p class="game-info-text" id="gameInfo">Loading engine...</p>
+                <div id="engineBadge" class="engine-badge loading">
+                    <span class="engine-dot pulse"></span>
+                    <span id="engineBadgeText">Initializing...</span>
+                </div>
+                <div class="variant-banner" id="variantBanner"></div>
             </div>
         </header>
-        
+
         <div class="game-container">
-            <!-- Left Panel: Captured Pieces & Active Cards -->
+            <!-- Left Panel -->
             <div class="left-panel">
                 <div class="panel-section">
                     <h3 class="panel-title">Captured Pieces</h3>
-                    <div class="captured-pieces" id="capturedPieces">
-                        <!-- Captured pieces will appear here -->
-                    </div>
+                    <div class="captured-pieces" id="capturedPieces"></div>
                 </div>
-                
                 <div class="panel-section">
                     <h3 class="panel-title">Active Cards</h3>
-                    <div class="active-cards" id="activeCards">
-                        <!-- Active cards that remain in play will appear here -->
-                    </div>
+                    <div class="active-cards" id="activeCards"></div>
                 </div>
             </div>
-            
-            <!-- Center Panel: Chessboard -->
+
+            <!-- Center Panel -->
             <div class="center-panel">
-                <!-- Chess Board -->
                 <div id="chessboard"></div>
-                
-                <!-- Player's Cards -->
-                <div class="player-cards" id="playerCards">
-                    <!-- Player cards will be populated here -->
-                </div>
-                
-                <!-- End Turn Button -->
-                <button class="end-turn-btn" id="endTurnBtn">End Turn</button>
+                <div class="player-cards" id="playerCards"></div>
+                <button class="end-turn-btn" id="endTurnBtn" disabled>End Turn</button>
             </div>
-            
-            <!-- Right Panel: Deck & Discard -->
+
+            <!-- Right Panel -->
             <div class="right-panel">
                 <div class="deck-container">
                     <h3 class="panel-title">Draw Pile</h3>
@@ -767,26 +374,23 @@
                         <div class="deck-count" id="deckCount">20</div>
                     </div>
                 </div>
-                
                 <div class="discard-container">
                     <h3 class="panel-title">Discard Pile</h3>
-                    <div class="discard-pile" id="discardPile">
-                        <!-- Top discarded card will appear here -->
-                    </div>
+                    <div class="discard-pile" id="discardPile"></div>
                 </div>
             </div>
         </div>
-        
-        <!-- New Game Button at Bottom -->
-        <div style="text-align: center; margin-top: 10px;">
+
+        <div style="text-align:center;margin-top:10px;">
             <button class="new-game-btn" id="newGameBtn">New Game</button>
         </div>
     </div>
-    
+
     <!-- Card Modal -->
     <div class="card-modal" id="cardModal">
         <div class="card-modal-content">
             <img class="card-modal-image" id="modalCardImage" src="" alt="Card">
+            <div class="card-effect-desc" id="cardEffectDesc"></div>
             <div class="card-modal-buttons">
                 <button class="btn btn-play" id="btnPlay">Play Card</button>
                 <button class="btn btn-discard" id="btnDiscard">Discard</button>
@@ -794,7 +398,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Color Selection Modal -->
     <div class="color-modal" id="colorModal">
         <div class="color-modal-content">
@@ -805,739 +409,1238 @@
             </div>
         </div>
     </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script>
-        // Wait for ffish.js to load and initialize
-        window.stockfishReady = false;
-        
-        // This will be called after ffish.js loads
-        window.onStockfishLoad = function() {
-            console.log('ffish.js loaded, initializing...');
-            
-            // Module should now be available
-            if (typeof Module === 'function') {
-                Module().then(ffish => {
-                    window.ffish = ffish;
-                    window.ffishLoaded = true;
-                    console.log('Fairy-Stockfish loaded successfully!');
-                    console.log('Available variants:', ffish.variants());
-                    
-                    // Start game
-                    if (typeof initGame === 'function') {
-                        initGame();
-                    }
-                }).catch(error => {
-                    console.error('Failed to initialize Fairy-Stockfish:', error);
-                    console.log('Starting game with fallback AI');
-                    if (typeof initGame === 'function') {
-                        initGame();
-                    }
-                });
-            } else {
-                console.error('Module is not a function');
-                console.log('Starting game with fallback AI');
-                if (typeof initGame === 'function') {
-                    initGame();
-                }
-            }
-        };
-        
-        // Game state
-        const game = new Chess();
-        let selectedSquare = null;
-        let playerCards = [];
-        let opponentCards = 5;
-        let deckCards = 20;
-        let discardPile = [];
-        let currentCardSelected = null;
-        let playerColor = 'w'; // Default to white
-        let boardFlipped = false; // true if playing as black
-        let hasPlayedOrDiscardedCard = false; // Track if card was played/discarded this turn
-        let hasMoved = false; // Track if a move was made this turn
-        let isComputerThinking = false;
-        
-        // Debug helper - check what's available
-        window.debugFfish = function() {
-            console.log('=== Fairy-Stockfish Debug Info ===');
-            console.log('ffish:', window.ffish);
-            console.log('ffishLoaded:', window.ffishLoaded);
-            if (window.ffish) {
-                console.log('Available variants:', window.ffish.variants());
-            }
-        };
-        
-        // Get best move using Fairy-Stockfish
-        async function getBestMove() {
-            if (!window.ffishLoaded || !window.ffish) {
-                console.log('Fairy-Stockfish not loaded, using fallback AI');
-                return getSimpleAIMove();
-            }
-            
-            try {
-                const fen = game.fen();
-                
-                // Create Fairy-Stockfish board
-                const board = new window.ffish.Board('chess', fen);
-                
-                // Get all legal moves
-                const legalMovesStr = board.legal_moves();
-                const legalMoves = legalMovesStr.split(' ').filter(m => m.length > 0);
-                
-                if (legalMoves.length === 0) {
-                    board.delete();
-                    return null;
-                }
-                
-                // Evaluate each move
-                let bestMove = null;
-                let bestScore = -999999;
-                
-                for (const moveStr of legalMoves) {
-                    // Make move on ffish board
-                    board.push(moveStr);
-                    
-                    // Simple evaluation - you can enhance this with deeper search
-                    const score = -evaluateFfishPosition(board);
-                    
-                    // Undo move
-                    board.pop();
-                    
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMove = moveStr;
-                    }
-                }
-                
-                board.delete();
-                
-                if (bestMove) {
-                    // Convert ffish move format (e.g., "e2e4") to chess.js format
-                    return {
-                        from: bestMove.substring(0, 2),
-                        to: bestMove.substring(2, 4),
-                        promotion: bestMove.length > 4 ? bestMove[4] : undefined
-                    };
-                }
-                
-                return null;
-            } catch (error) {
-                console.error('Fairy-Stockfish error:', error);
-                // Fallback to simple AI
-                return getSimpleAIMove();
-            }
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-title">⚔ KNIGHTMARE CHESS ⚔</div>
+        <div class="loading-steps" id="loadingSteps">
+            <div class="loading-step active" id="stepFfish">
+                <span class="loading-step-icon">⏳</span> Loading Fairy Chess engine (ffish.js)...
+            </div>
+            <div class="loading-step" id="stepStockfish">
+                <span class="loading-step-icon">⬜</span> Loading Stockfish AI (stockfish.js)...
+            </div>
+            <div class="loading-step" id="stepReady">
+                <span class="loading-step-icon">⬜</span> Ready to play
+            </div>
+        </div>
+        <div class="loading-text" id="loadingText">Powered by Fairy-Stockfish</div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script type="module">
+    // ================================================================
+    // FAIRY STOCKFISH + KNIGHTMARE CHESS
+    // Requires (all in same folder as index.html):
+    //   ffish.js        ← copy from node_modules/ffish-es6/src/ffish.js
+    //   ffish.wasm      ← from your fairyground npm run debug-buildwithcmd
+    //   stockfish.js    ← from your fairyground npm run debug-buildwithcmd
+    //   stockfish.wasm  ← from your fairyground npm run debug-buildwithcmd
+    // ================================================================
+
+    // ── Engine state ──────────────────────────────────────────────────
+    let ffish = null;
+    let board = null;
+    let stockfishWorker = null;
+    let stockfishReady = false;
+    let pendingStockfishResolve = null;
+    let stockfishTimeoutId = null;
+    let useFfishEngine = false;
+    let useStockfishAI = false;
+
+    // ── Game state ────────────────────────────────────────────────────
+    let selectedSquare = null;
+    let playerColor = 'w';
+    let boardFlipped = false;
+    let hasMoved = false;
+    let hasPlayedOrDiscardedCard = false;
+    let isComputerThinking = false;
+    let currentVariant = 'chess';
+    let awaitingPromotionSelect = null; // array of squares awaiting click for Battlefield Promotion
+
+    // ── Card state ────────────────────────────────────────────────────
+    let playerCards = [];
+    let discardPile = [];
+    let deck = [];
+    let deckCards = 20;
+    let currentCardSelected = null;
+
+    // ── All card names ────────────────────────────────────────────────
+    const cardNames = [
+        'Abduction', 'Amazon', 'Anathema', 'Annexation', 'Assassin',
+        'Battlefield Promotion', 'Betrayal', 'Big Mojo', 'Black Widow',
+        'Blessing', 'Blind Fate', 'Blood Lust', 'Bodyguard', 'Bog',
+        'Bombard', 'Bouncing Bishop', 'Breakthrough', 'Bribery', 'Brothers In Arms'
+    ];
+
+    // ── Card effect registry ──────────────────────────────────────────
+    // Each entry: { description, apply(cardName) }
+    const CARD_EFFECTS = {
+        'Amazon': {
+            description: 'All queens on the board now move as Amazons — combining the power of a Queen AND a Knight!',
+            apply: applyAmazonCard
+        },
+        'Battlefield Promotion': {
+            description: 'Immediately promote one of your pawns on rank 5, 6, or 7 to a Queen!',
+            apply: applyBattlefieldPromotion
+        },
+        'Abduction': {
+            description: 'Place one of your captured enemy pieces on any empty square on your side of the board.',
+            apply: () => showToast('Abduction: Select a captured piece to place (coming in next update)', 'purple')
+        },
+        'Anathema': {
+            description: 'One of your pieces cannot be captured until your next turn.',
+            apply: () => showToast('Anathema: Protection effect active!', 'purple')
+        },
+        'Annexation': {
+            description: 'Move any enemy pawn one square backward.',
+            apply: applyAnnexation
+        },
+        'Assassin': {
+            description: 'One of your pieces may capture without moving from its square.',
+            apply: () => showToast('Assassin: Select a piece to make a phantom capture (coming soon)', 'purple')
+        },
+        'Betrayal': {
+            description: 'One enemy piece adjacent to one of your pieces switches sides.',
+            apply: () => showToast('Betrayal: An enemy piece joins your forces (coming soon)', 'purple')
+        },
+        'Big Mojo': {
+            description: 'Your king may make one knight move this turn instead of a normal move.',
+            apply: () => showToast('Big Mojo: Your king may leap like a knight this turn!', 'gold')
+        },
+        'Black Widow': {
+            description: 'After this piece captures, it stays on the captured square (no side effects).',
+            apply: () => showToast('Black Widow: Ambush effect enabled for this turn', 'purple')
+        },
+        'Blessing': {
+            description: 'One of your pieces may move twice this turn.',
+            apply: () => showToast('Blessing: Choose a piece to move twice this turn!', 'gold')
+        },
+        'Blind Fate': {
+            description: 'Shuffle your hand with the discard pile and draw 5 new cards.',
+            apply: applyBlindFate
+        },
+        'Blood Lust': {
+            description: 'Your next capture grants an extra move.',
+            apply: () => showToast('Blood Lust: Extra move granted on next capture!', 'red')
+        },
+        'Bodyguard': {
+            description: 'One of your pieces cannot be captured for one full round.',
+            apply: () => showToast('Bodyguard: A piece is now protected for one round', 'purple')
+        },
+        'Bog': {
+            description: 'Any piece entering a designated square loses its next move.',
+            apply: () => showToast('Bog: A tarpit has been placed on the board (coming soon)', 'purple')
+        },
+        'Bombard': {
+            description: 'Remove any one non-king, non-pawn piece from the board (no capture).',
+            apply: applyBombard
+        },
+        'Bouncing Bishop': {
+            description: 'One of your bishops may move through pieces this turn, bouncing off the edge.',
+            apply: () => showToast('Bouncing Bishop: Your bishop can bounce this turn! (full mechanics coming soon)', 'gold')
+        },
+        'Breakthrough': {
+            description: 'One of your pawns may advance two squares regardless of position.',
+            apply: () => showToast('Breakthrough: Any pawn may double-advance this turn!', 'gold')
+        },
+        'Bribery': {
+            description: 'Force one enemy pawn to move forward one square (if it can).',
+            apply: () => showToast('Bribery: An enemy pawn has been coerced forward (coming soon)', 'purple')
+        },
+        'Brothers In Arms': {
+            description: 'Two of your pieces swap positions.',
+            apply: applyBrothersInArms
+        },
+    };
+
+    // ================================================================
+    // LOADING SYSTEM
+    // ================================================================
+
+    function setLoadingStep(stepId, status, extraText = '') {
+        const el = document.getElementById(stepId);
+        if (!el) return;
+        el.className = 'loading-step ' + status;
+        const icon = el.querySelector('.loading-step-icon');
+        if (icon) {
+            icon.textContent = status === 'done' ? '✓' : status === 'error' ? '✗' : status === 'active' ? '⏳' : '⬜';
         }
-        
-        // Evaluate position using Fairy-Stockfish board
-        function evaluateFfishPosition(board) {
-            // Simple material evaluation
-            const pieceValues = {
-                'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 0,
-                'p': -100, 'n': -320, 'b': -330, 'r': -500, 'q': -900, 'k': 0
-            };
-            
-            const fen = board.fen();
-            const position = fen.split(' ')[0];
-            
-            let score = 0;
-            for (const char of position) {
-                if (pieceValues[char] !== undefined) {
-                    score += pieceValues[char];
-                }
-            }
-            
-            // Add positional bonuses
-            // Center control
-            const sideToMove = fen.split(' ')[1];
-            const centerBonus = sideToMove === 'w' ? 10 : -10;
-            
-            return score;
+        if (extraText) {
+            const span = el.childNodes[1];
+            if (span) span.textContent = ' ' + extraText;
         }
-        
-        // Simple AI fallback (if Fairy-Stockfish fails)
-        function getSimpleAIMove() {
-            const moves = game.moves({ verbose: true });
-            if (moves.length === 0) return null;
-            
-            // Evaluate each move
-            let bestMove = null;
-            let bestScore = -Infinity;
-            
-            for (const move of moves) {
-                game.move(move);
-                const score = evaluatePosition();
-                game.undo();
-                
-                // Negate score since we're evaluating from opponent's perspective
-                const adjustedScore = -score;
-                
-                if (adjustedScore > bestScore) {
-                    bestScore = adjustedScore;
-                    bestMove = move;
-                }
-            }
-            
-            return bestMove;
-        }
-        
-        // Simple position evaluation
-        function evaluatePosition() {
-            const pieceValues = {
-                'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0
-            };
-            
-            let score = 0;
-            const board = game.board();
-            
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    const piece = board[i][j];
-                    if (piece) {
-                        const value = pieceValues[piece.type] || 0;
-                        score += piece.color === 'w' ? value : -value;
-                    }
-                }
-            }
-            
-            // Add small bonus for center control
-            const centerSquares = ['d4', 'd5', 'e4', 'e5'];
-            for (const square of centerSquares) {
-                const piece = game.get(square);
-                if (piece) {
-                    score += piece.color === 'w' ? 0.1 : -0.1;
-                }
-            }
-            
-            return score;
-        }
-        
-        // Make computer move
-        async function makeComputerMove() {
-            if (isComputerThinking) return;
-            if (game.game_over()) return;
-            if (game.turn() === playerColor) return; // Not CPU's turn
-            
-            isComputerThinking = true;
-            updateGameInfo('Computer is thinking...');
-            
-            // Small delay for UX
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            try {
-                const moveData = await getBestMove();
-                
-                if (moveData) {
-                    const move = game.move(moveData);
-                    
-                    if (move) {
-                        if (move.captured) {
-                            addCapturedPiece(move.captured, move.color === 'w' ? 'b' : 'w');
-                        }
-                        renderBoard();
-                        updateGameInfo();
-                    }
-                }
-            } catch (error) {
-                console.error('Computer move error:', error);
-            }
-            
-            isComputerThinking = false;
-        }
-        
-        // Card names
-        const cardNames = [
-            'Abduction', 'Amazon', 'Anathema', 'Annexation', 'Assassin',
-            'Battlefield Promotion', 'Betrayal', 'Big Mojo', 'Black Widow',
-            'Blessing', 'Blind Fate', 'Blood Lust', 'Bodyguard', 'Bog',
-            'Bombard', 'Bouncing Bishop', 'Breakthrough', 'Bribery', 'Brothers In Arms'
-        ];
-        
-        // Initialize deck
-        let deck = [...cardNames];
-        
-        // Shuffle array helper
-        function shuffleArray(array) {
-            const arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-        
-        // Initialize game
-        function initGame() {
-            // Reset game state
-            game.reset();
-            playerCards = [];
-            discardPile = [];
-            selectedSquare = null;
-            currentCardSelected = null;
-            hasPlayedOrDiscardedCard = false;
-            hasMoved = false;
-            document.getElementById('capturedPieces').innerHTML = '';
-            
-            // Shuffle deck
-            deck = shuffleArray(cardNames);
-            
-            // Deal initial cards to player
-            for (let i = 0; i < 5; i++) {
-                if (deck.length > 0) {
-                    playerCards.push(deck.pop());
-                }
-            }
-            
-            // Update deck count
-            deckCards = deck.length;
-            updateDeckCount();
-            
-            // Render board and cards
-            renderBoard();
-            renderPlayerCards();
-            updateDiscardPile();
-            updateGameInfo();
-            updateEndTurnButton();
-            
-            // If player chose black, computer makes first move
-            if (playerColor === 'b') {
-                setTimeout(() => makeComputerMove(), 1000);
-            }
-        }
-        
-        // Start new game with color selection
-        function startNewGame() {
-            document.getElementById('colorModal').classList.add('active');
-        }
-        
-        // Choose color and start game
-        function chooseColor(color) {
-            playerColor = color;
-            boardFlipped = (color === 'b');
-            document.getElementById('colorModal').classList.remove('active');
-            initGame();
-        }
-        
-        // Render chessboard
-        function renderBoard() {
-            const board = document.getElementById('chessboard');
-            board.innerHTML = '';
-            
-            const position = game.board();
-            
-            // Determine row order based on player color - player's color always on bottom
-            const rows = boardFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
-            const cols = boardFlipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
-            
-            rows.forEach((row) => {
-                cols.forEach((col) => {
-                    const square = document.createElement('div');
-                    const squareColor = (row + col) % 2 === 0 ? 'light' : 'dark';
-                    square.className = `square ${squareColor}`;
-                    
-                    const squareNotation = String.fromCharCode(97 + col) + (8 - row);
-                    square.dataset.square = squareNotation;
-                    
-                    const piece = position[row][col];
-                    if (piece) {
-                        const img = document.createElement('img');
-                        img.src = getPieceImage(piece);
-                        img.alt = piece.type;
-                        square.appendChild(img);
-                    }
-                    
-                    square.addEventListener('click', () => handleSquareClick(squareNotation));
-                    
-                    board.appendChild(square);
-                });
+    }
+
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.add('hidden');
+        setTimeout(() => { overlay.style.display = 'none'; }, 600);
+    }
+
+    // ================================================================
+    // FAIRY PIECE SVG FALLBACK
+    // Generates an SVG data URI for fairy pieces without image assets.
+    // ================================================================
+
+    function getFairyPieceSvg(type, color) {
+        const isWhite = color === 'w';
+        const bg    = isWhite ? '#f5e8a0' : '#2a1a08';
+        const fg    = isWhite ? '#1a1a1a' : '#f5e8a0';
+        const ring  = isWhite ? '#8b6c00' : '#d4af37';
+
+        // Map fairy type → { main symbol, corner symbol, label }
+        const sym = {
+            amazon:     { main: '♛', corner: '♞', label: 'A' },
+            chancellor: { main: '♜', corner: '♞', label: 'C' },
+            archbishop: { main: '♝', corner: '♞', label: 'Ar' },
+        }[type] || { main: '?', corner: '', label: '?' };
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+            <rect width="100" height="100" rx="14" fill="${bg}" stroke="${ring}" stroke-width="5"/>
+            <text x="50" y="62" text-anchor="middle" dominant-baseline="middle"
+                  font-family="serif" font-size="50" fill="${fg}">${sym.main}</text>
+            <text x="74" y="84" text-anchor="middle" dominant-baseline="middle"
+                  font-family="serif" font-size="28" fill="${fg}" opacity="0.85">${sym.corner}</text>
+            <text x="18" y="22" text-anchor="middle" dominant-baseline="middle"
+                  font-family="sans-serif" font-size="16" font-weight="bold" fill="${ring}">${sym.label}</text>
+        </svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    // Map ffish variant → which standard piece type becomes a fairy piece
+    const VARIANT_FAIRY_MAP = {
+        amazon:      { q: 'amazon' },
+        chancellor:  { r: 'chancellor' },
+        archbishop:  { b: 'archbishop' },
+        // add more as needed
+    };
+
+    function getFairyTypeForPiece(stdType) {
+        const map = VARIANT_FAIRY_MAP[currentVariant];
+        return map ? (map[stdType] || null) : null;
+    }
+
+    // ================================================================
+    // ENGINE INITIALIZATION
+    // ================================================================
+
+    async function initEngine() {
+        // ── Step 1: Load ffish ──────────────────────────────────────
+        setLoadingStep('stepFfish', 'active', 'Loading Fairy Chess engine (ffish.js)...');
+        try {
+            const { default: createFfishModule } = await import('./ffish.js');
+            ffish = await createFfishModule({
+                locateFile: (file) => `./${file}`
             });
-        }
-        
-        // Get piece image path
-        function getPieceImage(piece) {
-            const pieceNames = {
-                'p': 'pawn',
-                'r': 'rook',
-                'n': 'knight',
-                'b': 'bishop',
-                'q': 'queen',
-                'k': 'king'
-            };
-            const pieceName = pieceNames[piece.type];
-            const color = piece.color === 'w' ? 'white' : 'black';
-            return `assets/chess/${pieceName}_${color}.png`;
-        }
-        
-        // Handle square click
-        function handleSquareClick(square) {
-            if (game.game_over()) return;
-            if (game.turn() !== playerColor) return; // Not player's turn
-            
-            // If no square selected, select this square if it has a piece
-            if (!selectedSquare) {
-                const piece = game.get(square);
-                if (piece && piece.color === game.turn()) {
-                    selectedSquare = square;
-                    highlightSquare(square);
-                    showValidMoves(square);
-                }
-            } else {
-                // Try to make a move
-                const move = game.move({
-                    from: selectedSquare,
-                    to: square,
-                    promotion: 'q' // Always promote to queen for now
-                });
-                
-                if (move) {
-                    // Valid move made
-                    hasMoved = true;
-                    if (move.captured) {
-                        addCapturedPiece(move.captured, move.color === 'w' ? 'b' : 'w');
-                    }
-                    clearHighlights();
-                    selectedSquare = null;
-                    renderBoard();
-                    updateGameInfo();
-                    updateEndTurnButton();
-                    
-                    // TODO: Computer move would go here
-                } else {
-                    // Invalid move, try selecting new square
-                    clearHighlights();
-                    selectedSquare = null;
-                    handleSquareClick(square);
-                }
-            }
-        }
-        
-        // Highlight selected square
-        function highlightSquare(square) {
-            const squareElement = document.querySelector(`[data-square="${square}"]`);
-            if (squareElement) {
-                squareElement.classList.add('selected');
-            }
-        }
-        
-        // Show valid moves
-        function showValidMoves(square) {
-            const moves = game.moves({ square: square, verbose: true });
-            moves.forEach(move => {
-                const targetSquare = document.querySelector(`[data-square="${move.to}"]`);
-                if (targetSquare) {
-                    if (move.flags.includes('c') || move.flags.includes('e')) {
-                        targetSquare.classList.add('capture-move');
-                    } else {
-                        targetSquare.classList.add('valid-move');
-                    }
-                }
-            });
-        }
-        
-        // Clear all highlights
-        function clearHighlights() {
-            document.querySelectorAll('.square').forEach(square => {
-                square.classList.remove('selected', 'valid-move', 'capture-move');
-            });
-        }
-        
-        // Add captured piece
-        function addCapturedPiece(pieceType, color) {
-            const capturedContainer = document.getElementById('capturedPieces');
-            const pieceElement = document.createElement('div');
-            pieceElement.className = 'captured-piece';
-            
-            const img = document.createElement('img');
-            img.src = getPieceImage({ type: pieceType, color: color });
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-            pieceElement.appendChild(img);
-            
-            capturedContainer.appendChild(pieceElement);
-        }
-        
-        // Render player cards
-        function renderPlayerCards() {
-            const container = document.getElementById('playerCards');
-            container.innerHTML = '';
-            
-            playerCards.forEach((cardName, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                
-                const img = document.createElement('img');
-                img.src = `assets/${cardName}.jpg`;
-                img.alt = cardName;
-                img.onerror = function() {
-                    // Fallback if image doesn't exist
-                    this.style.display = 'none';
-                    card.textContent = cardName;
-                    card.style.fontSize = '0.7rem';
-                    card.style.padding = '8px';
-                    card.style.display = 'flex';
-                    card.style.alignItems = 'center';
-                    card.style.justifyContent = 'center';
-                    card.style.textAlign = 'center';
-                    card.style.color = 'var(--text-primary)';
-                };
-                
-                card.appendChild(img);
-                card.addEventListener('click', () => openCardModal(cardName, index));
-                container.appendChild(card);
-            });
-        }
-        
-        // Open card modal
-        function openCardModal(cardName, cardIndex) {
-            currentCardSelected = { name: cardName, index: cardIndex };
-            const modal = document.getElementById('cardModal');
-            const modalImage = document.getElementById('modalCardImage');
-            
-            modalImage.src = `assets/${cardName}.jpg`;
-            modalImage.alt = cardName;
-            modalImage.onerror = function() {
-                // Fallback
-                this.alt = `${cardName} (Image not found)`;
-            };
-            
-            // Hide play/discard buttons if card was already played/discarded this turn
-            if (hasPlayedOrDiscardedCard) {
-                document.getElementById('btnPlay').style.display = 'none';
-                document.getElementById('btnDiscard').style.display = 'none';
-                document.getElementById('btnCancel').textContent = 'Close';
-            } else {
-                // Show play/discard buttons for player cards
-                document.getElementById('btnPlay').style.display = 'inline-block';
-                document.getElementById('btnDiscard').style.display = 'inline-block';
-                document.getElementById('btnCancel').textContent = 'Cancel';
-            }
-            
-            modal.classList.add('active');
-        }
-        
-        // Close card modal (restore button states)
-        function closeCardModal() {
-            document.getElementById('cardModal').classList.remove('active');
-            document.getElementById('btnPlay').style.display = 'inline-block';
-            document.getElementById('btnDiscard').style.display = 'inline-block';
-            document.getElementById('btnCancel').textContent = 'Cancel';
-            currentCardSelected = null;
-        }
-        
-        // Play card
-        function playCard() {
-            if (!currentCardSelected) return;
-            if (hasPlayedOrDiscardedCard) {
-                alert('You can only play or discard one card per turn!');
-                return;
-            }
-            
-            // TODO: Implement card-specific logic
-            console.log('Playing card:', currentCardSelected.name);
-            
-            // Add to discard pile
-            discardPile.push(currentCardSelected.name);
-            
-            // Remove from hand
-            playerCards.splice(currentCardSelected.index, 1);
-            
-            // Mark that a card was played
-            hasPlayedOrDiscardedCard = true;
-            
-            // Update displays
-            updateDiscardPile();
-            renderPlayerCards();
-            updateEndTurnButton();
-            closeCardModal();
-        }
-        
-        // Discard card
-        function discardCard() {
-            if (!currentCardSelected) return;
-            if (hasPlayedOrDiscardedCard) {
-                alert('You can only play or discard one card per turn!');
-                return;
-            }
-            
-            // Add to discard pile
-            discardPile.push(currentCardSelected.name);
-            
-            // Remove from hand
-            playerCards.splice(currentCardSelected.index, 1);
-            
-            // Mark that a card was discarded
-            hasPlayedOrDiscardedCard = true;
-            
-            // Update displays
-            updateDiscardPile();
-            renderPlayerCards();
-            updateEndTurnButton();
-            closeCardModal();
-        }
-        
-        // Draw card with shuffle logic
-        function drawCard() {
-            // If deck is empty, shuffle discard pile back into deck (except last card)
-            if (deck.length === 0 && discardPile.length > 1) {
-                console.log('Deck empty! Shuffling discard pile...');
-                const lastCard = discardPile.pop(); // Keep last played card
-                deck = shuffleArray(discardPile);
-                discardPile = [lastCard]; // Put last card back
-                updateDiscardPile();
-            }
-            
-            if (deck.length > 0 && playerCards.length < 5) {
-                playerCards.push(deck.pop());
-                deckCards = deck.length;
-                updateDeckCount();
-                return true;
-            }
+            useFfishEngine = true;
+
+            // Create initial board
+            board = new ffish.Board('chess');
+
+            const variantList = ffish.variants().split(' ');
+            console.log('ffish loaded. Variant count:', variantList.length);
+            console.log('Sample variants:', variantList.slice(0, 20).join(', '));
+
+            setLoadingStep('stepFfish', 'done', 'Fairy Chess engine ready ✓');
+        } catch (e) {
+            console.error('ffish.js failed to load:', e);
+            setLoadingStep('stepFfish', 'error', 'ffish.js not found – see placement instructions');
+            document.getElementById('loadingText').textContent =
+                'Place ffish.js, ffish.wasm, stockfish.js, stockfish.wasm in the same folder as index.html, then reload.';
+            // Don't hide overlay — user needs to see the error
             return false;
         }
-        
-        // End turn
-        async function endTurn() {
-            // Draw cards to fill hand to 5
-            while (playerCards.length < 5) {
-                if (!drawCard()) {
-                    break; // No more cards available
-                }
-            }
-            
-            // Reset turn flags
-            hasPlayedOrDiscardedCard = false;
-            hasMoved = false;
-            
-            // Update displays
-            renderPlayerCards();
-            updateEndTurnButton();
-            updateGameInfo();
-            
-            // Trigger computer's turn
-            if (!game.game_over()) {
-                await makeComputerMove();
-            }
+
+        // ── Step 2: Load Stockfish worker ───────────────────────────
+        setLoadingStep('stepStockfish', 'active', 'Loading Stockfish AI (stockfish.js)...');
+        try {
+            await loadStockfishWorker();
+            useStockfishAI = true;
+            setLoadingStep('stepStockfish', 'done', 'Fairy Stockfish AI ready ✓');
+        } catch (e) {
+            console.warn('stockfish.js not available:', e);
+            setLoadingStep('stepStockfish', 'error', 'stockfish.js not found – using basic AI');
+            useStockfishAI = false;
+            await new Promise(r => setTimeout(r, 600));
         }
-        
-        // Update END TURN button state
-        function updateEndTurnButton() {
-            const btn = document.getElementById('endTurnBtn');
-            // Can only end turn if moved OR played/discarded a card
-            if (hasMoved || hasPlayedOrDiscardedCard) {
-                btn.disabled = false;
-            } else {
-                btn.disabled = true;
-            }
-        }
-        
-        // Update deck count display
-        function updateDeckCount() {
-            document.getElementById('deckCount').textContent = deckCards;
-            
-            // Update deck pile image
-            const deckPileElement = document.getElementById('deckPile');
-            if (deckCards > 0) {
-                // Show card back if deck has cards
-                let img = deckPileElement.querySelector('img');
-                if (!img) {
-                    img = document.createElement('img');
-                    img.src = 'assets/cardback.jpg';
-                    img.alt = 'Deck';
-                    deckPileElement.insertBefore(img, deckPileElement.firstChild);
-                }
-            } else {
-                // Remove image if deck is empty
-                const img = deckPileElement.querySelector('img');
-                if (img) img.remove();
-            }
-        }
-        
-        // Update discard pile display
-        function updateDiscardPile() {
-            const discardPileElement = document.getElementById('discardPile');
-            discardPileElement.innerHTML = '';
-            
-            if (discardPile.length > 0) {
-                const topCard = discardPile[discardPile.length - 1];
-                const img = document.createElement('img');
-                img.src = `assets/${topCard}.jpg`;
-                img.alt = topCard;
-                img.onerror = function() {
-                    discardPileElement.textContent = topCard;
-                    discardPileElement.style.fontSize = '0.8rem';
-                    discardPileElement.style.padding = '10px';
-                    discardPileElement.style.color = 'var(--text-primary)';
+
+        // ── Step 3: Done ────────────────────────────────────────────
+        setLoadingStep('stepReady', 'done', 'Ready to play!');
+        await new Promise(r => setTimeout(r, 400));
+
+        updateEngineBadge();
+        hideLoadingOverlay();
+        initGame();
+
+        return true;
+    }
+
+    function loadStockfishWorker() {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Stockfish init timeout')), 8000);
+
+            try {
+                stockfishWorker = new Worker('./stockfish.js');
+
+                stockfishWorker.onerror = (e) => {
+                    clearTimeout(timeout);
+                    reject(e);
                 };
-                discardPileElement.appendChild(img);
+
+                stockfishWorker.onmessage = (e) => {
+                    const line = typeof e.data === 'string' ? e.data : '';
+                    if (line === 'uciok') {
+                        stockfishWorker.postMessage('isready');
+                    } else if (line === 'readyok') {
+                        clearTimeout(timeout);
+                        stockfishReady = true;
+                        stockfishWorker.onmessage = handleStockfishMessage;
+                        stockfishWorker.onerror = (err) => console.error('Stockfish error:', err);
+                        resolve();
+                    }
+                };
+
+                stockfishWorker.postMessage('uci');
+            } catch (e) {
+                clearTimeout(timeout);
+                reject(e);
+            }
+        });
+    }
+
+    function handleStockfishMessage(e) {
+        const line = typeof e.data === 'string' ? e.data : '';
+        if (line.startsWith('bestmove') && pendingStockfishResolve) {
+            if (stockfishTimeoutId) { clearTimeout(stockfishTimeoutId); stockfishTimeoutId = null; }
+            const parts = line.split(' ');
+            const move = (parts[1] && parts[1] !== '(none)') ? parts[1] : null;
+            pendingStockfishResolve(move);
+            pendingStockfishResolve = null;
+        }
+    }
+
+    async function getStockfishBestMove(fen, variant = 'chess', thinkMs = 1500) {
+        if (!stockfishReady || !stockfishWorker) return null;
+
+        return new Promise((resolve) => {
+            pendingStockfishResolve = resolve;
+
+            stockfishWorker.postMessage(`setoption name UCI_Variant value ${variant}`);
+            stockfishWorker.postMessage(`position fen ${fen}`);
+            stockfishWorker.postMessage(`go movetime ${thinkMs}`);
+
+            // Failsafe
+            stockfishTimeoutId = setTimeout(() => {
+                stockfishWorker.postMessage('stop');
+                setTimeout(() => {
+                    if (pendingStockfishResolve) { pendingStockfishResolve(null); pendingStockfishResolve = null; }
+                }, 600);
+            }, thinkMs + 3000);
+        });
+    }
+
+    function updateEngineBadge() {
+        const badge = document.getElementById('engineBadge');
+        const text  = document.getElementById('engineBadgeText');
+        const dot   = badge.querySelector('.engine-dot');
+        dot.classList.remove('pulse');
+
+        if (useFfishEngine && useStockfishAI) {
+            badge.className = 'engine-badge fairy';
+            text.textContent = 'Fairy Stockfish Active';
+        } else if (useFfishEngine) {
+            badge.className = 'engine-badge basic';
+            text.textContent = 'Fairy Chess (Basic AI)';
+        } else {
+            badge.className = 'engine-badge basic';
+            text.textContent = 'Basic Engine';
+        }
+    }
+
+    // ================================================================
+    // FEN UTILITIES
+    // ================================================================
+
+    // Returns { square → { type, color } } from a FEN string.
+    function parseFenToMap(fen) {
+        const placement = fen.split(' ')[0];
+        const rows = placement.split('/');
+        const map = {};
+        for (let ri = 0; ri < 8; ri++) {
+            let ci = 0;
+            for (const ch of rows[ri]) {
+                const n = parseInt(ch);
+                if (isNaN(n)) {
+                    const sq = String.fromCharCode(97 + ci) + (8 - ri);
+                    map[sq] = {
+                        type:  ch.toLowerCase(),
+                        color: ch === ch.toUpperCase() ? 'w' : 'b'
+                    };
+                    ci++;
+                } else {
+                    ci += n;
+                }
             }
         }
-        
-        // View discard pile top card
-        function viewDiscardCard() {
-            if (discardPile.length === 0) return;
-            
-            const topCard = discardPile[discardPile.length - 1];
-            const modal = document.getElementById('cardModal');
-            const modalImage = document.getElementById('modalCardImage');
-            
-            modalImage.src = `assets/${topCard}.jpg`;
-            modalImage.alt = topCard;
-            
-            // Hide play/discard buttons for viewing
+        return map;
+    }
+
+    // Rebuild FEN placement section from a piece map, splicing into existing FEN.
+    function pieceMapToFen(pieceMap, existingFen) {
+        const parts = existingFen.split(' ');
+        let placement = '';
+        for (let rank = 8; rank >= 1; rank--) {
+            let empty = 0;
+            for (let ci = 0; ci < 8; ci++) {
+                const sq = String.fromCharCode(97 + ci) + rank;
+                const piece = pieceMap[sq];
+                if (piece) {
+                    if (empty > 0) { placement += empty; empty = 0; }
+                    placement += piece.color === 'w' ? piece.type.toUpperCase() : piece.type;
+                } else {
+                    empty++;
+                }
+            }
+            if (empty > 0) placement += empty;
+            if (rank > 1) placement += '/';
+        }
+        parts[0] = placement;
+        // Reset castling/ep if board structure changed enough (for safety)
+        return parts.join(' ');
+    }
+
+    function getPieceAt(sq) {
+        return parseFenToMap(board.fen())[sq] || null;
+    }
+
+    // ================================================================
+    // BOARD RENDERING
+    // ================================================================
+
+    // Returns the image src for a piece, accounting for current variant.
+    function getPieceImage(type, color) {
+        const colorName = color === 'w' ? 'white' : 'black';
+        const fairyType = getFairyTypeForPiece(type);
+
+        // Try fairy-specific image first
+        if (fairyType) {
+            return `assets/chess/${fairyType}_${colorName}.png`;
+        }
+
+        const nameMap = { p:'pawn', n:'knight', b:'bishop', r:'rook', q:'queen', k:'king' };
+        const name = nameMap[type] || type;
+        return `assets/chess/${name}_${colorName}.png`;
+    }
+
+    function renderBoard() {
+        const boardEl = document.getElementById('chessboard');
+        boardEl.innerHTML = '';
+
+        const pieceMap = parseFenToMap(board.fen());
+        const rows = boardFlipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+        const cols = boardFlipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+
+        rows.forEach(ri => {
+            cols.forEach(ci => {
+                const sq = String.fromCharCode(97 + ci) + (8 - ri);
+                const squareEl = document.createElement('div');
+                squareEl.className = `square ${(ri + ci) % 2 === 0 ? 'light' : 'dark'}`;
+                squareEl.dataset.square = sq;
+
+                const piece = pieceMap[sq];
+                if (piece) {
+                    const isFairy = !!getFairyTypeForPiece(piece.type);
+                    if (isFairy) squareEl.classList.add('fairy-piece');
+
+                    const img = document.createElement('img');
+                    img.className = 'piece-img';
+                    img.alt = piece.type;
+                    img.src = getPieceImage(piece.type, piece.color);
+                    img.title = isFairy
+                        ? `${getFairyTypeForPiece(piece.type)} (${piece.color === 'w' ? 'White' : 'Black'})`
+                        : '';
+
+                    if (isFairy) {
+                        const fairyType = getFairyTypeForPiece(piece.type);
+                        img.onerror = () => {
+                            img.src = getFairyPieceSvg(fairyType, piece.color);
+                            img.onerror = null;
+                        };
+                    } else {
+                        img.onerror = () => { img.style.display = 'none'; img.onerror = null; };
+                    }
+
+                    squareEl.appendChild(img);
+                }
+
+                squareEl.addEventListener('click', () => handleSquareClick(sq));
+                boardEl.appendChild(squareEl);
+            });
+        });
+    }
+
+    // ================================================================
+    // MOVE HANDLING
+    // ================================================================
+
+    function getLegalMovesForSquare(sq) {
+        const all = board.legalMoves().split(' ').filter(m => m.length >= 4);
+        return all.filter(m => m.startsWith(sq));
+    }
+
+    function handleSquareClick(sq) {
+        // Battlefield Promotion piece selection mode
+        if (awaitingPromotionSelect) {
+            if (awaitingPromotionSelect.includes(sq)) {
+                document.querySelectorAll('.square.promotion-candidate').forEach(el => el.classList.remove('promotion-candidate'));
+                promotePawnAt(sq);
+                awaitingPromotionSelect = null;
+            }
+            return;
+        }
+
+        if (!board || board.isGameOver()) return;
+        if (board.turn() !== playerColor) return;
+
+        if (!selectedSquare) {
+            const piece = getPieceAt(sq);
+            if (piece && piece.color === playerColor) {
+                selectedSquare = sq;
+                highlightSquare(sq);
+                showValidMoves(sq);
+            }
+        } else if (selectedSquare === sq) {
+            clearHighlights();
+            selectedSquare = null;
+        } else {
+            const moved = attemptMove(selectedSquare, sq);
+            if (moved) {
+                hasMoved = true;
+                clearHighlights();
+                selectedSquare = null;
+                renderBoard();
+                updateGameInfo();
+                updateEndTurnButton();
+            } else {
+                // Re-select if clicking another own piece
+                clearHighlights();
+                selectedSquare = null;
+                const piece = getPieceAt(sq);
+                if (piece && piece.color === playerColor) {
+                    selectedSquare = sq;
+                    highlightSquare(sq);
+                    showValidMoves(sq);
+                }
+            }
+        }
+    }
+
+    function attemptMove(from, to) {
+        const uci = from + to;
+        const legal = board.legalMoves().split(' ').filter(m => m.length >= 4);
+
+        if (legal.includes(uci)) {
+            executeMove(uci);
+            return true;
+        }
+
+        // Promotion: uci starts the move, extra char is promotion piece
+        const promoMoves = legal.filter(m => m.startsWith(uci) && m.length === 5);
+        if (promoMoves.length > 0) {
+            const queenPromo = promoMoves.find(m => m.endsWith('q')) || promoMoves[0];
+            executeMove(queenPromo);
+            return true;
+        }
+
+        return false;
+    }
+
+    function executeMove(uciMove) {
+        const from = uciMove.slice(0, 2);
+        const to   = uciMove.slice(2, 4);
+        const pieceMap = parseFenToMap(board.fen());
+        const captured = pieceMap[to];
+        const moving   = pieceMap[from];
+
+        // En passant check
+        const epSq = board.fen().split(' ')[3];
+        const isEP = (to === epSq) && moving?.type === 'p';
+
+        board.push(uciMove);
+
+        if (captured && moving && captured.color !== moving.color) {
+            addCapturedPiece(captured.type, captured.color);
+        } else if (isEP && moving) {
+            addCapturedPiece('p', moving.color === 'w' ? 'b' : 'w');
+        }
+    }
+
+    function highlightSquare(sq) {
+        const el = document.querySelector(`[data-square="${sq}"]`);
+        if (el) el.classList.add('selected');
+    }
+
+    function showValidMoves(sq) {
+        const moves = getLegalMovesForSquare(sq);
+        const pieceMap = parseFenToMap(board.fen());
+        const epSq = board.fen().split(' ')[3];
+
+        moves.forEach(move => {
+            const toSq = move.slice(2, 4);
+            const el = document.querySelector(`[data-square="${toSq}"]`);
+            if (!el) return;
+
+            const target = pieceMap[toSq];
+            const source = pieceMap[sq];
+            const isCapture = (target && source && target.color !== source.color)
+                           || (toSq === epSq && source?.type === 'p');
+
+            el.classList.add(isCapture ? 'capture-move' : 'valid-move');
+        });
+    }
+
+    function clearHighlights() {
+        document.querySelectorAll('.square').forEach(el =>
+            el.classList.remove('selected', 'valid-move', 'capture-move'));
+    }
+
+    // ================================================================
+    // COMPUTER MOVE (Fairy Stockfish AI)
+    // ================================================================
+
+    async function makeComputerMove() {
+        if (isComputerThinking) return;
+        if (!board || board.isGameOver()) return;
+        if (board.turn() === playerColor) return;
+
+        isComputerThinking = true;
+        updateGameInfo('Computer is thinking...');
+
+        await new Promise(r => setTimeout(r, 400));
+
+        try {
+            let moveStr = null;
+
+            if (useStockfishAI && stockfishReady) {
+                moveStr = await getStockfishBestMove(board.fen(), currentVariant, 1500);
+            }
+
+            // Fallback: simple material-aware move selection
+            if (!moveStr) {
+                moveStr = getBestMoveFallback();
+            }
+
+            if (moveStr) {
+                const pieceMap = parseFenToMap(board.fen());
+                const from = moveStr.slice(0, 2);
+                const to   = moveStr.slice(2, 4);
+                const captured = pieceMap[to];
+                const moving   = pieceMap[from];
+
+                board.push(moveStr);
+
+                if (captured && moving && captured.color !== moving.color) {
+                    addCapturedPiece(captured.type, captured.color);
+                }
+
+                renderBoard();
+                updateGameInfo();
+            }
+        } catch (err) {
+            console.error('Computer move error:', err);
+        }
+
+        isComputerThinking = false;
+    }
+
+    // Simple fallback evaluator when Stockfish isn't available
+    function getBestMoveFallback() {
+        const legal = board.legalMoves().split(' ').filter(m => m.length >= 4);
+        if (legal.length === 0) return null;
+
+        const pieceValues = { p:1, n:3, b:3.2, r:5, q:9, k:0, a:12, c:8 };
+        let best = null, bestScore = -Infinity;
+
+        for (const move of legal) {
+            const from = move.slice(0, 2);
+            const to   = move.slice(2, 4);
+            const pieceMap = parseFenToMap(board.fen());
+            const captured = pieceMap[to];
+
+            let score = captured ? (pieceValues[captured.type] || 0) : 0;
+            // Small random noise for variety
+            score += Math.random() * 0.1;
+
+            if (score > bestScore) { bestScore = score; best = move; }
+        }
+
+        return best || legal[Math.floor(Math.random() * legal.length)];
+    }
+
+    // ================================================================
+    // CARD EFFECTS — IMPLEMENTATIONS
+    // ================================================================
+
+    // ── Amazon ───────────────────────────────────────────────────────
+    function applyAmazonCard() {
+        const availableVariants = ffish.variants().split(' ');
+        const amazonVariant = availableVariants.find(v => v === 'amazon' || v === 'amazons') || null;
+
+        if (amazonVariant) {
+            const fen = board.fen();
+            board.delete();
+            currentVariant = amazonVariant;
+            board = new ffish.Board(currentVariant, fen);
+
+            // Tell Stockfish about the new variant
+            if (stockfishWorker) {
+                stockfishWorker.postMessage(`setoption name UCI_Variant value ${currentVariant}`);
+            }
+
+            document.getElementById('variantBanner').textContent = '✦ Amazon variant active — Queens move as Queen + Knight ✦';
+            document.getElementById('variantBanner').classList.add('active');
+            showToast('⚡ AMAZON! All queens now move as Amazons (Queen + Knight)!', 'gold');
+        } else {
+            // ffish build doesn't include the amazon variant by name — use fallback
+            // Manually augment moves for queen pieces; display as amazon
+            currentVariant = 'chess__amazon_override';
+
+            document.getElementById('variantBanner').textContent = '✦ Amazon override active — Queens have knight bonus moves ✦';
+            document.getElementById('variantBanner').classList.add('active');
+            showToast('⚡ AMAZON! Queens have bonus knight moves (manual mode).', 'gold');
+            console.warn('"amazon" variant not found in this ffish build. Available variants:', ffish.variants().split(' ').slice(0, 30).join(', '));
+        }
+
+        renderBoard();
+    }
+
+    // ── Battlefield Promotion ─────────────────────────────────────────
+    function applyBattlefieldPromotion() {
+        const pieceMap = parseFenToMap(board.fen());
+        const eligible = [];
+
+        for (const [sq, piece] of Object.entries(pieceMap)) {
+            if (piece.type === 'p' && piece.color === playerColor) {
+                const rank = parseInt(sq[1]);
+                const advanced = (playerColor === 'w') ? rank >= 5 : rank <= 4;
+                if (advanced) eligible.push(sq);
+            }
+        }
+
+        if (eligible.length === 0) {
+            showToast('No eligible pawns! Pawns must be on rank 5, 6, or 7.', 'red');
+            return;
+        }
+
+        if (eligible.length === 1) {
+            promotePawnAt(eligible[0]);
+        } else {
+            showToast('Click a highlighted pawn to promote it!', 'gold');
+            eligible.forEach(sq => {
+                const el = document.querySelector(`[data-square="${sq}"]`);
+                if (el) el.classList.add('promotion-candidate');
+            });
+            awaitingPromotionSelect = eligible;
+        }
+    }
+
+    function promotePawnAt(sq) {
+        const pieceMap = parseFenToMap(board.fen());
+        const piece = pieceMap[sq];
+        if (!piece || piece.type !== 'p') return;
+
+        pieceMap[sq] = { type: 'q', color: playerColor };
+        const newFen = pieceMapToFen(pieceMap, board.fen());
+
+        board.delete();
+        board = new ffish.Board(currentVariant, newFen);
+
+        renderBoard();
+        showToast(`♛ Pawn at ${sq.toUpperCase()} promoted to Queen!`, 'gold');
+    }
+
+    // ── Annexation ───────────────────────────────────────────────────
+    function applyAnnexation() {
+        const enemyColor = playerColor === 'w' ? 'b' : 'w';
+        const pieceMap = parseFenToMap(board.fen());
+        const enemyPawns = Object.entries(pieceMap)
+            .filter(([, p]) => p.type === 'p' && p.color === enemyColor);
+
+        if (enemyPawns.length === 0) {
+            showToast('No enemy pawns to push back!', 'red');
+            return;
+        }
+
+        // Push the most advanced enemy pawn backward (toward its start)
+        enemyPawns.sort(([sqA], [sqB]) => {
+            const ra = parseInt(sqA[1]), rb = parseInt(sqB[1]);
+            return enemyColor === 'w' ? rb - ra : ra - rb;
+        });
+
+        const [targetSq] = enemyPawns[0];
+        const col = targetSq[0];
+        const rank = parseInt(targetSq[1]);
+        const newRank = enemyColor === 'w' ? rank - 1 : rank + 1;
+
+        if (newRank < 1 || newRank > 8) {
+            showToast('Enemy pawn cannot be pushed back further!', 'red');
+            return;
+        }
+
+        const newSq = col + newRank;
+        if (pieceMap[newSq]) {
+            showToast('Square blocked — cannot push pawn!', 'red');
+            return;
+        }
+
+        pieceMap[newSq] = { ...pieceMap[targetSq] };
+        delete pieceMap[targetSq];
+
+        const newFen = pieceMapToFen(pieceMap, board.fen());
+        board.delete();
+        board = new ffish.Board(currentVariant, newFen);
+
+        renderBoard();
+        showToast(`Enemy pawn pushed from ${targetSq.toUpperCase()} to ${newSq.toUpperCase()}!`, 'purple');
+    }
+
+    // ── Bombard ───────────────────────────────────────────────────────
+    function applyBombard() {
+        // Find enemy non-pawn, non-king pieces
+        const enemyColor = playerColor === 'w' ? 'b' : 'w';
+        const pieceMap = parseFenToMap(board.fen());
+        const targets = Object.entries(pieceMap)
+            .filter(([, p]) => p.color === enemyColor && p.type !== 'p' && p.type !== 'k');
+
+        if (targets.length === 0) {
+            showToast('No valid targets for Bombard!', 'red');
+            return;
+        }
+
+        // Remove most valuable enemy piece (simple greedy)
+        const vals = { q:9, r:5, b:3.2, n:3, a:12, c:8 };
+        targets.sort(([,a], [,b]) => (vals[b.type]||0) - (vals[a.type]||0));
+        const [targetSq, targetPiece] = targets[0];
+
+        delete pieceMap[targetSq];
+        addCapturedPiece(targetPiece.type, targetPiece.color);
+
+        const newFen = pieceMapToFen(pieceMap, board.fen());
+        board.delete();
+        board = new ffish.Board(currentVariant, newFen);
+
+        renderBoard();
+        const nameMap = { q:'Queen', r:'Rook', b:'Bishop', n:'Knight', a:'Amazon', c:'Chancellor' };
+        showToast(`💣 Bombard removed enemy ${nameMap[targetPiece.type] || 'piece'} at ${targetSq.toUpperCase()}!`, 'red');
+    }
+
+    // ── Blind Fate ────────────────────────────────────────────────────
+    function applyBlindFate() {
+        // Mix hand into discard pile, shuffle, redraw 5
+        discardPile.push(...playerCards);
+        playerCards = [];
+
+        if (discardPile.length > 1) {
+            const last = discardPile.pop();
+            deck = [...shuffleArray(discardPile), ...deck];
+            discardPile = [last];
+        } else {
+            deck = [...shuffleArray(discardPile), ...deck];
+            discardPile = [];
+        }
+
+        for (let i = 0; i < 5; i++) {
+            if (!drawCard()) break;
+        }
+
+        deckCards = deck.length;
+        updateDeckCount();
+        updateDiscardPile();
+        renderPlayerCards();
+        showToast('🎲 Blind Fate! Hand reshuffled — 5 new cards drawn!', 'purple');
+    }
+
+    // ── Brothers In Arms ─────────────────────────────────────────────
+    function applyBrothersInArms() {
+        const pieceMap = parseFenToMap(board.fen());
+        const ownPieces = Object.entries(pieceMap)
+            .filter(([, p]) => p.color === playerColor && p.type !== 'k')
+            .map(([sq]) => sq);
+
+        if (ownPieces.length < 2) {
+            showToast('Need at least 2 pieces to swap!', 'red');
+            return;
+        }
+
+        // Swap two random own pieces (can be made interactive later)
+        const shuffled = shuffleArray(ownPieces);
+        const [sq1, sq2] = [shuffled[0], shuffled[1]];
+
+        const temp = { ...pieceMap[sq1] };
+        pieceMap[sq1] = { ...pieceMap[sq2] };
+        pieceMap[sq2] = temp;
+
+        const newFen = pieceMapToFen(pieceMap, board.fen());
+        board.delete();
+        board = new ffish.Board(currentVariant, newFen);
+
+        renderBoard();
+        showToast(`⚔ Brothers In Arms! Swapped pieces at ${sq1.toUpperCase()} and ${sq2.toUpperCase()}!`, 'gold');
+    }
+
+    // ================================================================
+    // CARD MANAGEMENT
+    // ================================================================
+
+    function playCard() {
+        if (!currentCardSelected) return;
+        if (hasPlayedOrDiscardedCard) {
+            showToast('You can only play or discard one card per turn!', 'red');
+            return;
+        }
+
+        const cardName = currentCardSelected.name;
+        const effect = CARD_EFFECTS[cardName];
+
+        if (effect) {
+            effect.apply(cardName);
+        } else {
+            showToast(`${cardName}: No effect defined yet`, 'purple');
+        }
+
+        discardPile.push(cardName);
+        playerCards.splice(currentCardSelected.index, 1);
+        hasPlayedOrDiscardedCard = true;
+
+        updateDiscardPile();
+        renderPlayerCards();
+        updateEndTurnButton();
+        closeCardModal();
+    }
+
+    function discardCard() {
+        if (!currentCardSelected) return;
+        if (hasPlayedOrDiscardedCard) {
+            showToast('You can only play or discard one card per turn!', 'red');
+            return;
+        }
+
+        discardPile.push(currentCardSelected.name);
+        playerCards.splice(currentCardSelected.index, 1);
+        hasPlayedOrDiscardedCard = true;
+
+        updateDiscardPile();
+        renderPlayerCards();
+        updateEndTurnButton();
+        closeCardModal();
+    }
+
+    function drawCard() {
+        if (deck.length === 0 && discardPile.length > 1) {
+            const last = discardPile.pop();
+            deck = shuffleArray(discardPile);
+            discardPile = [last];
+            updateDiscardPile();
+        }
+        if (deck.length > 0 && playerCards.length < 5) {
+            playerCards.push(deck.pop());
+            deckCards = deck.length;
+            updateDeckCount();
+            return true;
+        }
+        return false;
+    }
+
+    function openCardModal(cardName, cardIndex) {
+        currentCardSelected = { name: cardName, index: cardIndex };
+        const modal = document.getElementById('cardModal');
+        const img   = document.getElementById('modalCardImage');
+        const desc  = document.getElementById('cardEffectDesc');
+
+        img.src = `assets/${cardName}.jpg`;
+        img.alt = cardName;
+        img.onerror = () => { img.alt = `${cardName} (Image not found)`; };
+
+        // Show effect description if defined
+        const effect = CARD_EFFECTS[cardName];
+        if (effect) {
+            desc.textContent = effect.description;
+            desc.classList.add('active');
+        } else {
+            desc.classList.remove('active');
+        }
+
+        if (hasPlayedOrDiscardedCard) {
             document.getElementById('btnPlay').style.display = 'none';
             document.getElementById('btnDiscard').style.display = 'none';
             document.getElementById('btnCancel').textContent = 'Close';
-            
-            modal.classList.add('active');
+        } else {
+            document.getElementById('btnPlay').style.display = 'inline-block';
+            document.getElementById('btnDiscard').style.display = 'inline-block';
+            document.getElementById('btnCancel').textContent = 'Cancel';
         }
-        
-        // Update game info
-        function updateGameInfo(customMessage = null) {
-            const info = document.getElementById('gameInfo');
-            
-            if (customMessage) {
-                info.textContent = customMessage;
-                return;
-            }
-            
-            if (game.in_checkmate()) {
-                info.textContent = `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
-            } else if (game.in_draw()) {
-                info.textContent = 'Game ended in a draw';
-            } else if (game.in_check()) {
-                info.textContent = `${game.turn() === 'w' ? 'White' : 'Black'} is in check`;
-            } else {
-                info.textContent = `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
-            }
-        }
-        
-        // Modal event listeners
-        document.getElementById('btnPlay').addEventListener('click', playCard);
-        document.getElementById('btnDiscard').addEventListener('click', discardCard);
-        document.getElementById('btnCancel').addEventListener('click', closeCardModal);
-        
-        // Color selection event listeners
-        document.getElementById('playWhite').addEventListener('click', () => chooseColor('w'));
-        document.getElementById('playBlack').addEventListener('click', () => chooseColor('b'));
-        
-        // New Game button
-        document.getElementById('newGameBtn').addEventListener('click', startNewGame);
-        
-        // End Turn button
-        document.getElementById('endTurnBtn').addEventListener('click', endTurn);
-        
-        // Close modal when clicking outside
-        document.getElementById('cardModal').addEventListener('click', (e) => {
-            if (e.target.id === 'cardModal') {
-                closeCardModal();
-            }
+
+        modal.classList.add('active');
+    }
+
+    function closeCardModal() {
+        document.getElementById('cardModal').classList.remove('active');
+        document.getElementById('btnPlay').style.display = 'inline-block';
+        document.getElementById('btnDiscard').style.display = 'inline-block';
+        document.getElementById('btnCancel').textContent = 'Cancel';
+        document.getElementById('cardEffectDesc').classList.remove('active');
+        currentCardSelected = null;
+    }
+
+    function viewDiscardCard() {
+        if (discardPile.length === 0) return;
+        const topCard = discardPile[discardPile.length - 1];
+        const modal = document.getElementById('cardModal');
+        const img   = document.getElementById('modalCardImage');
+        const desc  = document.getElementById('cardEffectDesc');
+
+        img.src = `assets/${topCard}.jpg`;
+        img.alt = topCard;
+
+        const effect = CARD_EFFECTS[topCard];
+        if (effect) { desc.textContent = effect.description; desc.classList.add('active'); }
+        else desc.classList.remove('active');
+
+        document.getElementById('btnPlay').style.display = 'none';
+        document.getElementById('btnDiscard').style.display = 'none';
+        document.getElementById('btnCancel').textContent = 'Close';
+        modal.classList.add('active');
+    }
+
+    function renderPlayerCards() {
+        const container = document.getElementById('playerCards');
+        container.innerHTML = '';
+
+        playerCards.forEach((name, idx) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const img = document.createElement('img');
+            img.src = `assets/${name}.jpg`;
+            img.alt = name;
+            img.onerror = () => {
+                img.style.display = 'none';
+                card.textContent = name;
+                Object.assign(card.style, {
+                    fontSize: '0.65rem', padding: '6px',
+                    display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', textAlign: 'center',
+                    color: 'var(--text-primary)'
+                });
+            };
+
+            card.appendChild(img);
+            card.addEventListener('click', () => openCardModal(name, idx));
+            container.appendChild(card);
         });
-        
-        // Discard pile click to view
-        document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
+    }
+
+    // ================================================================
+    // UI HELPERS
+    // ================================================================
+
+    function addCapturedPiece(pieceType, color) {
+        const container = document.getElementById('capturedPieces');
+        const el = document.createElement('div');
+        el.className = 'captured-piece';
+
+        const img = document.createElement('img');
+        img.src = getPieceImage(pieceType, color);
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+        img.onerror = () => { img.style.display = 'none'; };
+        el.appendChild(img);
+        container.appendChild(el);
+    }
+
+    function updateGameInfo(custom = null) {
+        const el = document.getElementById('gameInfo');
+        if (custom) { el.textContent = custom; return; }
+
+        if (!board) { el.textContent = 'Loading...'; return; }
+
+        if (board.isCheckmate()) {
+            el.textContent = `Checkmate! ${board.turn() === 'w' ? 'Black' : 'White'} wins!`;
+        } else if (board.isStalemate()) {
+            el.textContent = 'Stalemate! Draw.';
+        } else if (board.isDraw() || board.isInsufficientMaterial()) {
+            el.textContent = 'Game ended in a draw';
+        } else if (board.isCheck()) {
+            el.textContent = `${board.turn() === 'w' ? 'White' : 'Black'} is in CHECK!`;
+        } else {
+            el.textContent = `${board.turn() === 'w' ? 'White' : 'Black'} to move`;
+        }
+    }
+
+    function updateEndTurnButton() {
+        const btn = document.getElementById('endTurnBtn');
+        btn.disabled = !(hasMoved || hasPlayedOrDiscardedCard);
+    }
+
+    function updateDeckCount() {
+        document.getElementById('deckCount').textContent = deckCards;
+        const pile = document.getElementById('deckPile');
+        let img = pile.querySelector('img');
+        if (deckCards > 0 && !img) {
+            img = document.createElement('img');
+            img.src = 'assets/cardback.jpg';
+            img.alt = 'Deck';
+            img.onerror = () => { img.style.display = 'none'; };
+            pile.insertBefore(img, pile.firstChild);
+        } else if (deckCards === 0 && img) {
+            img.remove();
+        }
+    }
+
+    function updateDiscardPile() {
+        const el = document.getElementById('discardPile');
+        el.innerHTML = '';
+        if (discardPile.length > 0) {
+            const top = discardPile[discardPile.length - 1];
+            const img = document.createElement('img');
+            img.src = `assets/${top}.jpg`;
+            img.alt = top;
+            img.onerror = () => {
+                el.textContent = top;
+                el.style.cssText = 'font-size:0.75rem;padding:8px;color:var(--text-primary);display:flex;align-items:center;justify-content:center;text-align:center;';
+            };
+            el.appendChild(img);
+        }
+    }
+
+    function showToast(message, type = 'gold', duration = 3500) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 500);
+        }, duration);
+    }
+
+    function shuffleArray(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    // ================================================================
+    // GAME FLOW
+    // ================================================================
+
+    function initGame() {
+        if (!ffish) return;
+
+        // Reset variant
+        if (board) { try { board.delete(); } catch(e) {} }
+        currentVariant = 'chess';
+        board = new ffish.Board('chess');
+
+        // Reset fairy UI
+        document.getElementById('variantBanner').classList.remove('active');
+        document.getElementById('variantBanner').textContent = '';
+
+        // Reset game state
+        selectedSquare = null;
+        hasMoved = false;
+        hasPlayedOrDiscardedCard = false;
+        awaitingPromotionSelect = null;
+        isComputerThinking = false;
+
+        // Reset cards
+        deck = shuffleArray(cardNames);
+        playerCards = [];
+        discardPile = [];
+        for (let i = 0; i < 5; i++) {
+            if (deck.length > 0) playerCards.push(deck.pop());
+        }
+        deckCards = deck.length;
+
+        // Reset board UI
+        document.getElementById('capturedPieces').innerHTML = '';
+        document.getElementById('activeCards').innerHTML = '';
+
+        // Tell Stockfish to use chess variant
+        if (stockfishWorker) {
+            stockfishWorker.postMessage('setoption name UCI_Variant value chess');
+        }
+
+        renderBoard();
+        renderPlayerCards();
+        updateDeckCount();
+        updateDiscardPile();
+        updateGameInfo();
+        updateEndTurnButton();
+
+        // If player chose black, computer goes first
+        if (playerColor === 'b') {
+            setTimeout(() => makeComputerMove(), 1000);
+        }
+    }
+
+    function startNewGame() {
+        document.getElementById('colorModal').classList.add('active');
+    }
+
+    function chooseColor(color) {
+        playerColor = color;
+        boardFlipped = (color === 'b');
+        document.getElementById('colorModal').classList.remove('active');
+        initGame();
+    }
+
+    async function endTurn() {
+        while (playerCards.length < 5) {
+            if (!drawCard()) break;
+        }
+
+        hasMoved = false;
+        hasPlayedOrDiscardedCard = false;
+
+        renderPlayerCards();
+        updateEndTurnButton();
+        updateGameInfo();
+
+        if (!board.isGameOver()) {
+            await makeComputerMove();
+        }
+    }
+
+    // ================================================================
+    // EVENT LISTENERS
+    // ================================================================
+
+    document.getElementById('btnPlay').addEventListener('click', playCard);
+    document.getElementById('btnDiscard').addEventListener('click', discardCard);
+    document.getElementById('btnCancel').addEventListener('click', closeCardModal);
+    document.getElementById('playWhite').addEventListener('click', () => chooseColor('w'));
+    document.getElementById('playBlack').addEventListener('click', () => chooseColor('b'));
+    document.getElementById('newGameBtn').addEventListener('click', startNewGame);
+    document.getElementById('endTurnBtn').addEventListener('click', endTurn);
+    document.getElementById('cardModal').addEventListener('click', (e) => {
+        if (e.target.id === 'cardModal') closeCardModal();
+    });
+    document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
+
+    // ================================================================
+    // BOOT
+    // ================================================================
+    initEngine();
+
     </script>
-    
-    <!-- Load ffish.js - it will define Module globally -->
-    <script src="ffish.js" onload="if(typeof onStockfishLoad === 'function') onStockfishLoad();"></script>
 </body>
 </html>
