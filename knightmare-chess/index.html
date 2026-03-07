@@ -808,12 +808,12 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script>
-        // Wait for stockfish.js to load and initialize
+        // Wait for ffish.js to load and initialize
         window.stockfishReady = false;
         
-        // This will be called after stockfish.js loads
+        // This will be called after ffish.js loads
         window.onStockfishLoad = function() {
-            console.log('stockfish.js loaded, initializing...');
+            console.log('ffish.js loaded, initializing...');
             
             // Module should now be available
             if (typeof Module === 'function') {
@@ -1537,7 +1537,7 @@
         document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
     </script>
     
-    <!-- Load stockfish.js - it will define Module globally -->
-    <script src="stockfish.js" onload="if(typeof onStockfishLoad === 'function') onStockfishLoad();"></script>
+    <!-- Load ffish.js - it will define Module globally -->
+    <script src="ffish.js" onload="if(typeof onStockfishLoad === 'function') onStockfishLoad();"></script>
 </body>
 </html>
