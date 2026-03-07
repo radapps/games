@@ -807,31 +807,41 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script type="module">
-        // Import ffish-es6 from esm.sh (auto-converts to ES modules)
-        import Module from 'https://esm.sh/ffish-es6@0.8';
+    <script>
+        // Wait for stockfish.js to load and initialize
+        window.stockfishReady = false;
         
-        console.log('Loading ffish-es6 from CDN...');
-        
-        // Initialize ffish
-        let ffish = null;
-        let ffishLoaded = false;
-        
-        Module().then(loadedModule => {
-            ffish = loadedModule;
-            ffishLoaded = true;
-            console.log('Fairy-Stockfish loaded successfully from CDN!');
-            console.log('Available variants:', ffish.variants());
+        // This will be called after stockfish.js loads
+        window.onStockfishLoad = function() {
+            console.log('stockfish.js loaded, initializing...');
             
-            // Start the game
-            window.ffish = ffish;
-            window.ffishLoaded = ffishLoaded;
-            initGame();
-        }).catch(error => {
-            console.error('Failed to load Fairy-Stockfish from CDN:', error);
-            console.log('Starting game with fallback AI');
-            initGame();
-        });
+            // Module should now be available
+            if (typeof Module === 'function') {
+                Module().then(ffish => {
+                    window.ffish = ffish;
+                    window.ffishLoaded = true;
+                    console.log('Fairy-Stockfish loaded successfully!');
+                    console.log('Available variants:', ffish.variants());
+                    
+                    // Start game
+                    if (typeof initGame === 'function') {
+                        initGame();
+                    }
+                }).catch(error => {
+                    console.error('Failed to initialize Fairy-Stockfish:', error);
+                    console.log('Starting game with fallback AI');
+                    if (typeof initGame === 'function') {
+                        initGame();
+                    }
+                });
+            } else {
+                console.error('Module is not a function');
+                console.log('Starting game with fallback AI');
+                if (typeof initGame === 'function') {
+                    initGame();
+                }
+            }
+        };
         
         // Game state
         const game = new Chess();
@@ -1526,5 +1536,8 @@
         // Discard pile click to view
         document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
     </script>
+    
+    <!-- Load stockfish.js - it will define Module globally -->
+    <script src="stockfish.js" onload="if(typeof onStockfishLoad === 'function') onStockfishLoad();"></script>
 </body>
 </html>
