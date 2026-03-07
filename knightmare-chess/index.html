@@ -716,8 +716,8 @@
     // ── Engine handles ────────────────────────────────────────────────
     let ffish           = null;
     let board           = null;
-    let stockfishWorker = null;
-    let stockfishReady  = false;
+    let sfSend          = null;   // function(cmd: string) → sends to whichever SF interface worked
+    let sfReady         = false;
     let pendingResolve  = null;
     let stockfishTimer  = null;
 
@@ -731,10 +731,10 @@
     let currentVariant           = 'chess';
 
     // ── Card state ────────────────────────────────────────────────────
-    let playerCards        = [];
-    let discardPile        = [];
-    let deck               = [];
-    let deckCards          = 20;
+    let playerCards         = [];
+    let discardPile         = [];
+    let deck                = [];
+    let deckCards           = 20;
     let currentCardSelected = null;
 
     const cardNames = [
@@ -773,34 +773,74 @@
     // ================================================================
 
     async function initEngine() {
-        // ── ffish ──────────────────────────────────────────────────
+        // ── 1. ffish ────────────────────────────────────────────────
         setLoadingLabel('Loading Fairy Chess library…');
         try {
             const { default: createFfish } = await import('./ffish.js');
             ffish = await createFfish({ locateFile: f => `./${f}` });
             board = new ffish.Board('chess');
-            console.log('ffish ready. Variants available:', ffish.variants().split(' ').length);
+            console.log('[ffish] ready. Variants available:', ffish.variants().split(' ').length);
         } catch (e) {
-            console.error('ffish failed:', e);
+            console.error('[ffish] failed:', e);
             showLoadingError(
                 'Could not load ffish.js or ffish.wasm.\n\n' +
                 'Place ffish.js, ffish.wasm, stockfish.js, and stockfish.wasm ' +
-                'in the same folder as index.html, then serve the folder over HTTP ' +
+                'in the same folder as index.html, then serve over HTTP ' +
                 '(e.g. npx serve . or python -m http.server).'
             );
             return;
         }
 
-        // ── Stockfish ───────────────────────────────────────────────
+        // ── 2. Stockfish ─────────────────────────────────────────────
+        // The fairyground build produces an Emscripten module, NOT a plain
+        // Web Worker script.  We try three strategies in order:
+        //
+        //   A) ES module import  → factory returns object with
+        //      addMessageListener() + postMessage()   (most common pattern)
+        //   B) ES module import  → factory is the Module itself;
+        //      listen via Module.onmessage / Module.print
+        //   C) Classic Web Worker (postMessage strings)
+        //
+        // All strategies log everything they receive so you can diagnose.
+
         setLoadingLabel('Loading Stockfish AI…');
-        try {
-            await loadStockfishWorker();
-            console.log('Stockfish ready.');
-        } catch (e) {
-            console.error('Stockfish failed:', e);
+        let sfLoaded = false;
+
+        // ── Strategy A: module import, addMessageListener API ────────
+        if (!sfLoaded) {
+            try {
+                sfLoaded = await tryStockfishAsModule_AML();
+                if (sfLoaded) console.log('[SF] Strategy A (module + addMessageListener) succeeded.');
+            } catch(e) {
+                console.warn('[SF] Strategy A failed:', e.message);
+            }
+        }
+
+        // ── Strategy B: module import, print/onmessage callback ──────
+        if (!sfLoaded) {
+            try {
+                sfLoaded = await tryStockfishAsModule_Print();
+                if (sfLoaded) console.log('[SF] Strategy B (module + print callback) succeeded.');
+            } catch(e) {
+                console.warn('[SF] Strategy B failed:', e.message);
+            }
+        }
+
+        // ── Strategy C: classic Web Worker ───────────────────────────
+        if (!sfLoaded) {
+            try {
+                sfLoaded = await tryStockfishAsWorker();
+                if (sfLoaded) console.log('[SF] Strategy C (Web Worker) succeeded.');
+            } catch(e) {
+                console.warn('[SF] Strategy C failed:', e.message);
+            }
+        }
+
+        if (!sfLoaded) {
             showLoadingError(
-                'Could not load stockfish.js or stockfish.wasm.\n\n' +
-                'Ensure all four engine files are in the same folder as index.html.'
+                'Could not initialise stockfish.js after trying all loading strategies.\n\n' +
+                'Open the browser console (F12) for detailed diagnostic output.\n\n' +
+                'Common causes: stockfish.wasm not in the same folder, CORS (serve via HTTP, not file://), or the build variant needs a different init pattern.'
             );
             return;
         }
@@ -809,34 +849,154 @@
         initGame();
     }
 
-    function loadStockfishWorker() {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(
-                () => reject(new Error('Stockfish init timeout')), 30000
-            );
+    // ── Strategy A ───────────────────────────────────────────────────
+    // Emscripten module that exposes addMessageListener / postMessage
+    function tryStockfishAsModule_AML() {
+        return new Promise(async (resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
+            try {
+                const mod = await import('./stockfish.js');
+                const factory = mod.default ?? mod.Stockfish ?? mod.stockfish ?? Object.values(mod)[0];
+                if (typeof factory !== 'function') throw new Error('no callable export found');
 
-            stockfishWorker = new Worker('./stockfish.js');
-            stockfishWorker.onerror = e => { clearTimeout(timeout); reject(e); };
+                const sf = await factory({ locateFile: f => `./${f}` });
+                console.log('[SF-A] module created. Keys:', Object.keys(sf).join(', '));
 
-            stockfishWorker.onmessage = ({ data }) => {
-                const line = typeof data === 'string' ? data : '';
-                if (line === 'uciok') {
-                    stockfishWorker.postMessage('isready');
-                } else if (line === 'readyok') {
-                    clearTimeout(timeout);
-                    stockfishReady = true;
-                    stockfishWorker.onmessage  = handleStockfishMessage;
-                    stockfishWorker.onerror    = err => console.error('Stockfish runtime error:', err);
-                    resolve();
+                if (typeof sf.addMessageListener !== 'function') {
+                    throw new Error('addMessageListener not found');
                 }
-            };
 
-            stockfishWorker.postMessage('uci');
+                let gotUciOk = false;
+                sf.addMessageListener(line => {
+                    console.log('[SF-A]', line);
+                    if (line === 'uciok' && !gotUciOk) {
+                        gotUciOk = true;
+                        sf.postMessage('isready');
+                    } else if (line === 'readyok') {
+                        clearTimeout(timeout);
+                        sfReady = true;
+                        sfSend  = cmd => sf.postMessage(cmd);
+                        // re-route future lines to the game handler
+                        sf.addMessageListener(handleSfLine);
+                        resolve(true);
+                    }
+                });
+
+                sf.postMessage('uci');
+            } catch(e) {
+                clearTimeout(timeout);
+                reject(e);
+            }
         });
     }
 
-    function handleStockfishMessage({ data }) {
-        const line = typeof data === 'string' ? data : '';
+    // ── Strategy B ───────────────────────────────────────────────────
+    // Emscripten module where output arrives via Module.print / Module.onmessage
+    function tryStockfishAsModule_Print() {
+        return new Promise(async (resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
+            try {
+                // Re-import with a fresh specifier to avoid cached rejected module
+                const url  = './stockfish.js?v=2';
+                const mod  = await import(url);
+                const factory = mod.default ?? mod.Stockfish ?? mod.stockfish ?? Object.values(mod)[0];
+                if (typeof factory !== 'function') throw new Error('no callable export');
+
+                let postFn = null;
+                let gotUciOk = false;
+
+                const handleLine = line => {
+                    if (!line) return;
+                    console.log('[SF-B]', line);
+                    if (line === 'uciok' && !gotUciOk) {
+                        gotUciOk = true;
+                        postFn('isready');
+                    } else if (line === 'readyok') {
+                        clearTimeout(timeout);
+                        sfReady = true;
+                        sfSend  = cmd => postFn(cmd);
+                        resolve(true);
+                    } else {
+                        handleSfLine(line);
+                    }
+                };
+
+                const sf = await factory({
+                    locateFile: f => `./${f}`,
+                    print:    handleLine,
+                    printErr: msg => console.warn('[SF-B err]', msg),
+                });
+                console.log('[SF-B] module created. Keys:', Object.keys(sf).join(', '));
+
+                // The module might expose postMessage, ccall, or a custom send fn
+                if (typeof sf.postMessage === 'function') {
+                    postFn = cmd => sf.postMessage(cmd);
+                } else if (typeof sf.ccall === 'function') {
+                    postFn = cmd => sf.ccall('cmd', null, ['string'], [cmd]);
+                } else {
+                    throw new Error('no send method (postMessage / ccall) found');
+                }
+
+                postFn('uci');
+            } catch(e) {
+                clearTimeout(timeout);
+                reject(e);
+            }
+        });
+    }
+
+    // ── Strategy C ───────────────────────────────────────────────────
+    // Classic Web Worker — works if stockfish.js is a self-contained worker script
+    function tryStockfishAsWorker() {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
+            try {
+                const worker = new Worker('./stockfish.js');
+                worker.onerror = e => { clearTimeout(timeout); reject(e); };
+
+                let gotAnyMessage = false;
+                let gotUciOk     = false;
+
+                worker.onmessage = ({ data }) => {
+                    const line = typeof data === 'string' ? data
+                               : (data && typeof data.data === 'string') ? data.data
+                               : JSON.stringify(data);
+                    if (!gotAnyMessage) {
+                        gotAnyMessage = true;
+                        console.log('[SF-C] first message received:', line);
+                    } else {
+                        console.log('[SF-C]', line);
+                    }
+
+                    if (line === 'uciok' && !gotUciOk) {
+                        gotUciOk = true;
+                        worker.postMessage('isready');
+                    } else if (line === 'readyok') {
+                        clearTimeout(timeout);
+                        sfReady = true;
+                        sfSend  = cmd => worker.postMessage(cmd);
+                        worker.onmessage = ({ data }) => {
+                            const l = typeof data === 'string' ? data
+                                    : (data && typeof data.data === 'string') ? data.data
+                                    : '';
+                            handleSfLine(l);
+                        };
+                        resolve(true);
+                    }
+                };
+
+                // Some builds need a short delay before accepting UCI
+                setTimeout(() => worker.postMessage('uci'), 200);
+            } catch(e) {
+                clearTimeout(timeout);
+                reject(e);
+            }
+        });
+    }
+
+    // ── Shared Stockfish message handler (post-init) ──────────────────
+    function handleSfLine(line) {
+        if (!line) return;
         if (line.startsWith('bestmove') && pendingResolve) {
             clearTimeout(stockfishTimer);
             stockfishTimer = null;
@@ -848,15 +1008,15 @@
 
     function getStockfishMove(fen, variant = 'chess', ms = 1500) {
         return new Promise((resolve, reject) => {
-            if (!stockfishReady) return reject(new Error('Stockfish not ready'));
+            if (!sfReady || !sfSend) return reject(new Error('Stockfish not ready'));
 
             pendingResolve = resolve;
-            stockfishWorker.postMessage(`setoption name UCI_Variant value ${variant}`);
-            stockfishWorker.postMessage(`position fen ${fen}`);
-            stockfishWorker.postMessage(`go movetime ${ms}`);
+            sfSend(`setoption name UCI_Variant value ${variant}`);
+            sfSend(`position fen ${fen}`);
+            sfSend(`go movetime ${ms}`);
 
             stockfishTimer = setTimeout(() => {
-                stockfishWorker.postMessage('stop');
+                sfSend('stop');
                 setTimeout(() => {
                     if (pendingResolve) { pendingResolve(null); pendingResolve = null; }
                 }, 800);
@@ -1043,6 +1203,7 @@
     async function makeComputerMove() {
         if (isComputerThinking || !board || board.isGameOver()) return;
         if (board.turn() === playerColor) return;
+        if (!sfReady) return;
 
         isComputerThinking = true;
         updateGameInfo('Computer is thinking…');
@@ -1281,8 +1442,8 @@
         currentVariant = 'chess';
         board = new ffish.Board('chess');
 
-        if (stockfishWorker) {
-            stockfishWorker.postMessage('setoption name UCI_Variant value chess');
+        if (sfSend) {
+            sfSend('setoption name UCI_Variant value chess');
         }
 
         selectedSquare           = null;
