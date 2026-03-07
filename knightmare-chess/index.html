@@ -807,7 +807,32 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script>
+    <script type="module">
+        // Import ffish-es6 from CDN
+        import Module from 'https://cdn.jsdelivr.net/npm/ffish-es6@0.8.15/dist/index.js';
+        
+        console.log('Loading ffish-es6 from CDN...');
+        
+        // Initialize ffish
+        let ffish = null;
+        let ffishLoaded = false;
+        
+        Module().then(loadedModule => {
+            ffish = loadedModule;
+            ffishLoaded = true;
+            console.log('Fairy-Stockfish loaded successfully from CDN!');
+            console.log('Available variants:', ffish.variants());
+            
+            // Start the game
+            window.ffish = ffish;
+            window.ffishLoaded = ffishLoaded;
+            initGame();
+        }).catch(error => {
+            console.error('Failed to load Fairy-Stockfish from CDN:', error);
+            console.log('Starting game with fallback AI');
+            initGame();
+        });
+        
         // Game state
         const game = new Chess();
         let selectedSquare = null;
@@ -829,61 +854,16 @@
         // Debug helper - check what's available
         window.debugFfish = function() {
             console.log('=== Fairy-Stockfish Debug Info ===');
-            console.log('typeof Module:', typeof Module);
-            console.log('Module:', Module);
-            console.log('ffish:', ffish);
-            console.log('ffishLoaded:', ffishLoaded);
-            if (typeof Module !== 'undefined') {
-                console.log('Module is defined! Try calling: Module()');
+            console.log('ffish:', window.ffish);
+            console.log('ffishLoaded:', window.ffishLoaded);
+            if (window.ffish) {
+                console.log('Available variants:', window.ffish.variants());
             }
         };
         
-        // Initialize Fairy-Stockfish
-        function initFairyStockfish() {
-            return new Promise((resolve, reject) => {
-                // Function to check if Module is ready and initialize
-                function tryInitialize() {
-                    if (typeof Module === 'undefined') {
-                        // Module not loaded yet, wait
-                        setTimeout(tryInitialize, 100);
-                        return;
-                    }
-                    
-                    console.log('Module found, initializing...');
-                    
-                    try {
-                        // Call Module as a function - it returns a promise
-                        Module().then(loadedModule => {
-                            ffish = loadedModule;
-                            ffishLoaded = true;
-                            console.log('Fairy-Stockfish loaded successfully!');
-                            console.log('Available variants:', ffish.variants());
-                            resolve(ffish);
-                        }).catch(error => {
-                            console.error('Error loading WASM:', error);
-                            reject(error);
-                        });
-                    } catch (error) {
-                        console.error('Error calling Module():', error);
-                        reject(error);
-                    }
-                }
-                
-                // Start trying to initialize
-                tryInitialize();
-                
-                // Timeout after 15 seconds
-                setTimeout(() => {
-                    if (!ffishLoaded) {
-                        reject(new Error('Timeout waiting for Fairy-Stockfish to load'));
-                    }
-                }, 15000);
-            });
-        }
-        
         // Get best move using Fairy-Stockfish
         async function getBestMove() {
-            if (!ffishLoaded || !ffish) {
+            if (!window.ffishLoaded || !window.ffish) {
                 console.log('Fairy-Stockfish not loaded, using fallback AI');
                 return getSimpleAIMove();
             }
@@ -892,7 +872,7 @@
                 const fen = game.fen();
                 
                 // Create Fairy-Stockfish board
-                const board = new ffish.Board('chess', fen);
+                const board = new window.ffish.Board('chess', fen);
                 
                 // Get all legal moves
                 const legalMovesStr = board.legal_moves();
@@ -1549,22 +1529,6 @@
         
         // Discard pile click to view
         document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
-        
-        // Initialize Fairy-Stockfish and start game
-        console.log('Starting Fairy-Stockfish initialization...');
-        updateGameInfo('Loading Fairy-Stockfish engine...');
-        
-        initFairyStockfish().then(() => {
-            console.log('Fairy-Stockfish ready!');
-            initGame();
-        }).catch((error) => {
-            console.error('Failed to load Fairy-Stockfish:', error);
-            console.log('Starting game with fallback AI');
-            initGame();
-        });
     </script>
-    
-    <!-- Load stockfish.js last so our initialization code is ready -->
-    <script src="stockfish.js"></script>
 </body>
 </html>
