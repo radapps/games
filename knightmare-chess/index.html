@@ -55,40 +55,40 @@
             z-index: 1;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 10px;
+            padding: 5px 10px;
         }
         
         header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             animation: fadeInDown 0.8s ease-out;
         }
         
         h1 {
             font-family: 'Cinzel', serif;
-            font-size: clamp(1.3rem, 4vw, 2rem);
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
             font-weight: 700;
             color: var(--accent-gold);
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.5),
                          0 0 40px rgba(212, 175, 55, 0.3);
             letter-spacing: 0.1em;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .game-info {
             text-align: center;
-            padding: 8px;
+            padding: 4px 8px;
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            margin: 0 auto 15px;
+            margin: 0 auto 8px;
             max-width: 400px;
         }
         
         .game-info-text {
             font-family: 'Cinzel', serif;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             color: var(--accent-gold);
         }
         
@@ -102,7 +102,7 @@
             border: 2px solid var(--accent-gold);
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 6px;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -144,7 +144,7 @@
         .game-container {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
-            gap: 10px;
+            gap: 8px;
             max-width: 1200px;
             margin: 0 auto;
             animation: fadeIn 1s ease-out 0.3s backwards;
@@ -155,12 +155,12 @@
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         
         .panel-section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         
         .panel-section:last-child {
@@ -169,9 +169,9 @@
         
         .panel-title {
             font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--accent-gold);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-align: center;
             letter-spacing: 0.05em;
         }
@@ -213,7 +213,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         #chessboard {
@@ -324,18 +324,18 @@
             background: var(--bg-secondary);
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
         
         .deck-container, .discard-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .deck-pile, .discard-pile {
@@ -651,11 +651,21 @@
         
         @media (max-width: 640px) {
             .container {
-                padding: 5px;
+                padding: 3px 5px;
             }
             
             h1 {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
+                margin-bottom: 3px;
+            }
+            
+            .game-info {
+                padding: 3px 6px;
+                margin-bottom: 5px;
+            }
+            
+            .game-info-text {
+                font-size: 0.75rem;
             }
             
             .new-game-btn {
@@ -666,6 +676,7 @@
             .end-turn-btn {
                 font-size: 0.8rem;
                 padding: 8px 20px;
+                margin-top: 4px;
             }
             
             .card {
@@ -693,11 +704,7 @@
             }
             
             .panel-title {
-                font-size: 0.8rem;
-            }
-            
-            .game-info-text {
-                font-size: 0.85rem;
+                font-size: 0.75rem;
             }
             
             .color-modal-title {
@@ -771,7 +778,7 @@
         </div>
         
         <!-- New Game Button at Bottom -->
-        <div style="text-align: center; margin-top: 20px;">
+        <div style="text-align: center; margin-top: 10px;">
             <button class="new-game-btn" id="newGameBtn">New Game</button>
         </div>
     </div>
@@ -813,6 +820,98 @@
         let boardFlipped = false; // true if playing as black
         let hasPlayedOrDiscardedCard = false; // Track if card was played/discarded this turn
         let hasMoved = false; // Track if a move was made this turn
+        let isComputerThinking = false;
+        
+        // Get best move using simple evaluation
+        async function getBestMove() {
+            // Simple evaluation-based move selection
+            const moves = game.moves({ verbose: true });
+            if (moves.length === 0) return null;
+            
+            // Evaluate each move
+            let bestMove = null;
+            let bestScore = -Infinity;
+            
+            for (const move of moves) {
+                game.move(move);
+                const score = evaluatePosition();
+                game.undo();
+                
+                // Negate score since we're evaluating from opponent's perspective after the move
+                const adjustedScore = -score;
+                
+                if (adjustedScore > bestScore) {
+                    bestScore = adjustedScore;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove;
+        }
+        
+        // Simple position evaluation
+        function evaluatePosition() {
+            const pieceValues = {
+                'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0
+            };
+            
+            let score = 0;
+            const board = game.board();
+            
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = board[i][j];
+                    if (piece) {
+                        const value = pieceValues[piece.type] || 0;
+                        score += piece.color === 'w' ? value : -value;
+                    }
+                }
+            }
+            
+            // Add small bonus for center control
+            const centerSquares = ['d4', 'd5', 'e4', 'e5'];
+            for (const square of centerSquares) {
+                const piece = game.get(square);
+                if (piece) {
+                    score += piece.color === 'w' ? 0.1 : -0.1;
+                }
+            }
+            
+            return score;
+        }
+        
+        // Make computer move
+        async function makeComputerMove() {
+            if (isComputerThinking) return;
+            if (game.game_over()) return;
+            if (game.turn() === playerColor) return; // Not CPU's turn
+            
+            isComputerThinking = true;
+            updateGameInfo('Computer is thinking...');
+            
+            // Small delay for UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            try {
+                const moveData = await getBestMove();
+                
+                if (moveData) {
+                    const move = game.move(moveData);
+                    
+                    if (move) {
+                        if (move.captured) {
+                            addCapturedPiece(move.captured, move.color === 'w' ? 'b' : 'w');
+                        }
+                        renderBoard();
+                        updateGameInfo();
+                    }
+                }
+            } catch (error) {
+                console.error('Computer move error:', error);
+            }
+            
+            isComputerThinking = false;
+        }
         
         // Card names
         const cardNames = [
@@ -867,6 +966,11 @@
             updateDiscardPile();
             updateGameInfo();
             updateEndTurnButton();
+            
+            // If player chose black, computer makes first move
+            if (playerColor === 'b') {
+                setTimeout(() => makeComputerMove(), 1000);
+            }
         }
         
         // Start new game with color selection
@@ -1065,10 +1169,17 @@
                 this.alt = `${cardName} (Image not found)`;
             };
             
-            // Show play/discard buttons for player cards
-            document.getElementById('btnPlay').style.display = 'inline-block';
-            document.getElementById('btnDiscard').style.display = 'inline-block';
-            document.getElementById('btnCancel').textContent = 'Cancel';
+            // Hide play/discard buttons if card was already played/discarded this turn
+            if (hasPlayedOrDiscardedCard) {
+                document.getElementById('btnPlay').style.display = 'none';
+                document.getElementById('btnDiscard').style.display = 'none';
+                document.getElementById('btnCancel').textContent = 'Close';
+            } else {
+                // Show play/discard buttons for player cards
+                document.getElementById('btnPlay').style.display = 'inline-block';
+                document.getElementById('btnDiscard').style.display = 'inline-block';
+                document.getElementById('btnCancel').textContent = 'Cancel';
+            }
             
             modal.classList.add('active');
         }
@@ -1154,7 +1265,7 @@
         }
         
         // End turn
-        function endTurn() {
+        async function endTurn() {
             // Draw cards to fill hand to 5
             while (playerCards.length < 5) {
                 if (!drawCard()) {
@@ -1171,7 +1282,10 @@
             updateEndTurnButton();
             updateGameInfo();
             
-            // TODO: Trigger opponent's turn
+            // Trigger computer's turn
+            if (!game.game_over()) {
+                await makeComputerMove();
+            }
         }
         
         // Update END TURN button state
@@ -1196,7 +1310,7 @@
                 let img = deckPileElement.querySelector('img');
                 if (!img) {
                     img = document.createElement('img');
-                    img.src = 'assets/cardback.jpg';
+                    img.src = 'assets/_cardback.jpg';
                     img.alt = 'Deck';
                     deckPileElement.insertBefore(img, deckPileElement.firstChild);
                 }
@@ -1247,8 +1361,14 @@
         }
         
         // Update game info
-        function updateGameInfo() {
+        function updateGameInfo(customMessage = null) {
             const info = document.getElementById('gameInfo');
+            
+            if (customMessage) {
+                info.textContent = customMessage;
+                return;
+            }
+            
             if (game.in_checkmate()) {
                 info.textContent = `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
             } else if (game.in_draw()) {
