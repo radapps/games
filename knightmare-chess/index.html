@@ -714,12 +714,12 @@
     // ================================================================
 
     // ── Engine handles ────────────────────────────────────────────────
-    let ffish           = null;
-    let board           = null;
-    let sfSend          = null;   // function(cmd: string) → sends to whichever SF interface worked
-    let sfReady         = false;
-    let pendingResolve  = null;
-    let stockfishTimer  = null;
+    let ffish          = null;
+    let board          = null;
+    let sfSend         = null;   // unified send function set by whichever strategy succeeds
+    let sfReady        = false;
+    let pendingResolve = null;
+    let stockfishTimer = null;
 
     // ── Game state ────────────────────────────────────────────────────
     let selectedSquare           = null;
@@ -779,7 +779,7 @@
             const { default: createFfish } = await import('./ffish.js');
             ffish = await createFfish({ locateFile: f => `./${f}` });
             board = new ffish.Board('chess');
-            console.log('[ffish] ready. Variants available:', ffish.variants().split(' ').length);
+            console.log('[ffish] ready. Variants:', ffish.variants().split(' ').length);
         } catch (e) {
             console.error('[ffish] failed:', e);
             showLoadingError(
@@ -792,55 +792,41 @@
         }
 
         // ── 2. Stockfish ─────────────────────────────────────────────
-        // The fairyground build produces an Emscripten module, NOT a plain
-        // Web Worker script.  We try three strategies in order:
+        // fairyground's Emscripten build can surface itself in several ways.
+        // We try four strategies in order and log everything so you can see
+        // exactly what the engine exposes.
         //
-        //   A) ES module import  → factory returns object with
-        //      addMessageListener() + postMessage()   (most common pattern)
-        //   B) ES module import  → factory is the Module itself;
-        //      listen via Module.onmessage / Module.print
-        //   C) Classic Web Worker (postMessage strings)
-        //
-        // All strategies log everything they receive so you can diagnose.
+        //  A) <script> tag → window.Stockfish global (Emscripten UMD pattern,
+        //     most likely for fairyground debug-buildwithcmd)
+        //  B) Module Worker  new Worker(url, { type:'module' })
+        //  C) Classic Worker new Worker(url)
+        //  D) Blob Worker   — inline worker that importScripts the file
 
         setLoadingLabel('Loading Stockfish AI…');
         let sfLoaded = false;
 
-        // ── Strategy A: module import, addMessageListener API ────────
         if (!sfLoaded) {
-            try {
-                sfLoaded = await tryStockfishAsModule_AML();
-                if (sfLoaded) console.log('[SF] Strategy A (module + addMessageListener) succeeded.');
-            } catch(e) {
-                console.warn('[SF] Strategy A failed:', e.message);
-            }
+            try   { sfLoaded = await sfStrategyA_ScriptGlobal();  if (sfLoaded) console.log('[SF] A succeeded'); }
+            catch (e) { console.warn('[SF] A failed:', e.message); }
         }
-
-        // ── Strategy B: module import, print/onmessage callback ──────
         if (!sfLoaded) {
-            try {
-                sfLoaded = await tryStockfishAsModule_Print();
-                if (sfLoaded) console.log('[SF] Strategy B (module + print callback) succeeded.');
-            } catch(e) {
-                console.warn('[SF] Strategy B failed:', e.message);
-            }
+            try   { sfLoaded = await sfStrategyB_ModuleWorker();  if (sfLoaded) console.log('[SF] B succeeded'); }
+            catch (e) { console.warn('[SF] B failed:', e.message); }
         }
-
-        // ── Strategy C: classic Web Worker ───────────────────────────
         if (!sfLoaded) {
-            try {
-                sfLoaded = await tryStockfishAsWorker();
-                if (sfLoaded) console.log('[SF] Strategy C (Web Worker) succeeded.');
-            } catch(e) {
-                console.warn('[SF] Strategy C failed:', e.message);
-            }
+            try   { sfLoaded = await sfStrategyC_ClassicWorker(); if (sfLoaded) console.log('[SF] C succeeded'); }
+            catch (e) { console.warn('[SF] C failed:', e.message); }
+        }
+        if (!sfLoaded) {
+            try   { sfLoaded = await sfStrategyD_BlobWorker();    if (sfLoaded) console.log('[SF] D succeeded'); }
+            catch (e) { console.warn('[SF] D failed:', e.message); }
         }
 
         if (!sfLoaded) {
             showLoadingError(
                 'Could not initialise stockfish.js after trying all loading strategies.\n\n' +
-                'Open the browser console (F12) for detailed diagnostic output.\n\n' +
-                'Common causes: stockfish.wasm not in the same folder, CORS (serve via HTTP, not file://), or the build variant needs a different init pattern.'
+                'Open DevTools (F12 → Console) — each strategy logs exactly what it ' +
+                'received from the engine. Paste those lines here to diagnose further.'
             );
             return;
         }
@@ -849,157 +835,205 @@
         initGame();
     }
 
-    // ── Strategy A ───────────────────────────────────────────────────
-    // Emscripten module that exposes addMessageListener / postMessage
-    function tryStockfishAsModule_AML() {
-        return new Promise(async (resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
-            try {
-                const mod = await import('./stockfish.js');
-                const factory = mod.default ?? mod.Stockfish ?? mod.stockfish ?? Object.values(mod)[0];
-                if (typeof factory !== 'function') throw new Error('no callable export found');
-
-                const sf = await factory({ locateFile: f => `./${f}` });
-                console.log('[SF-A] module created. Keys:', Object.keys(sf).join(', '));
-
-                if (typeof sf.addMessageListener !== 'function') {
-                    throw new Error('addMessageListener not found');
-                }
-
-                let gotUciOk = false;
-                sf.addMessageListener(line => {
-                    console.log('[SF-A]', line);
-                    if (line === 'uciok' && !gotUciOk) {
-                        gotUciOk = true;
-                        sf.postMessage('isready');
-                    } else if (line === 'readyok') {
-                        clearTimeout(timeout);
-                        sfReady = true;
-                        sfSend  = cmd => sf.postMessage(cmd);
-                        // re-route future lines to the game handler
-                        sf.addMessageListener(handleSfLine);
-                        resolve(true);
-                    }
-                });
-
-                sf.postMessage('uci');
-            } catch(e) {
-                clearTimeout(timeout);
-                reject(e);
-            }
-        });
-    }
-
-    // ── Strategy B ───────────────────────────────────────────────────
-    // Emscripten module where output arrives via Module.print / Module.onmessage
-    function tryStockfishAsModule_Print() {
-        return new Promise(async (resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
-            try {
-                // Re-import with a fresh specifier to avoid cached rejected module
-                const url  = './stockfish.js?v=2';
-                const mod  = await import(url);
-                const factory = mod.default ?? mod.Stockfish ?? mod.stockfish ?? Object.values(mod)[0];
-                if (typeof factory !== 'function') throw new Error('no callable export');
-
-                let postFn = null;
-                let gotUciOk = false;
-
-                const handleLine = line => {
-                    if (!line) return;
-                    console.log('[SF-B]', line);
-                    if (line === 'uciok' && !gotUciOk) {
-                        gotUciOk = true;
-                        postFn('isready');
-                    } else if (line === 'readyok') {
-                        clearTimeout(timeout);
-                        sfReady = true;
-                        sfSend  = cmd => postFn(cmd);
-                        resolve(true);
-                    } else {
-                        handleSfLine(line);
-                    }
-                };
-
-                const sf = await factory({
-                    locateFile: f => `./${f}`,
-                    print:    handleLine,
-                    printErr: msg => console.warn('[SF-B err]', msg),
-                });
-                console.log('[SF-B] module created. Keys:', Object.keys(sf).join(', '));
-
-                // The module might expose postMessage, ccall, or a custom send fn
-                if (typeof sf.postMessage === 'function') {
-                    postFn = cmd => sf.postMessage(cmd);
-                } else if (typeof sf.ccall === 'function') {
-                    postFn = cmd => sf.ccall('cmd', null, ['string'], [cmd]);
-                } else {
-                    throw new Error('no send method (postMessage / ccall) found');
-                }
-
-                postFn('uci');
-            } catch(e) {
-                clearTimeout(timeout);
-                reject(e);
-            }
-        });
-    }
-
-    // ── Strategy C ───────────────────────────────────────────────────
-    // Classic Web Worker — works if stockfish.js is a self-contained worker script
-    function tryStockfishAsWorker() {
+    // ── Strategy A: <script> tag → window.Stockfish global ───────────
+    // Emscripten UMD builds compiled for the web environment (not worker)
+    // create window.Stockfish when loaded as a plain script tag.
+    // This is the most likely pattern for fairyground's debug-buildwithcmd.
+    function sfStrategyA_ScriptGlobal() {
         return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('timeout')), 12000);
-            try {
-                const worker = new Worker('./stockfish.js');
-                worker.onerror = e => { clearTimeout(timeout); reject(e); };
+            const T = setTimeout(() => reject(new Error('timeout')), 15000);
 
-                let gotAnyMessage = false;
-                let gotUciOk     = false;
+            document.querySelectorAll('script[data-sf]').forEach(s => s.remove());
+            const script    = document.createElement('script');
+            script.dataset.sf = 'A';
+            script.src      = './stockfish.js';
+            script.onerror  = () => { clearTimeout(T); reject(new Error('script 404 or syntax error')); };
 
-                worker.onmessage = ({ data }) => {
-                    const line = typeof data === 'string' ? data
-                               : (data && typeof data.data === 'string') ? data.data
-                               : JSON.stringify(data);
-                    if (!gotAnyMessage) {
-                        gotAnyMessage = true;
-                        console.log('[SF-C] first message received:', line);
+            script.onload = async () => {
+                // Inventory every engine-looking global
+                const known = ['Stockfish','stockfish','StockfishModule','STOCKFISH','Module'];
+                const found = known.filter(n => typeof window[n] !== 'undefined');
+                const extra = Object.keys(window).filter(k =>
+                    /stock|fish|engine|fairy/i.test(k) && !known.includes(k)
+                );
+                console.log('[SF-A] script loaded. Known globals:', found.length ? found.join(', ') : '(none)');
+                if (extra.length) console.log('[SF-A] other engine-ish globals:', extra.join(', '));
+
+                const factory = window.Stockfish || window.stockfish || window.StockfishModule;
+                if (typeof factory !== 'function') {
+                    clearTimeout(T);
+                    reject(new Error(
+                        'no callable global. ' +
+                        (found.length
+                            ? `Found ${found.join(',')} but type=${found.map(n => typeof window[n]).join(',')}`
+                            : 'Nothing at all — the script may only work as a Worker')
+                    ));
+                    return;
+                }
+
+                try {
+                    const sf = await factory({ locateFile: f => `./${f}` });
+                    console.log('[SF-A] factory result keys:', Object.keys(sf).slice(0,30).join(', '));
+
+                    const bindUci = (send, listen) => {
+                        let ok = false;
+                        listen(line => {
+                            console.log('[SF-A]', line);
+                            if (line === 'uciok' && !ok) { ok = true; send('isready'); }
+                            else if (line === 'readyok') {
+                                clearTimeout(T);
+                                sfReady = true; sfSend = send;
+                                listen(handleSfLine);
+                                resolve(true);
+                            }
+                        });
+                        send('uci');
+                    };
+
+                    if (typeof sf.addMessageListener === 'function') {
+                        bindUci(cmd => sf.postMessage(cmd), cb => sf.addMessageListener(cb));
+                    } else if (typeof sf.postMessage === 'function') {
+                        let cb = null;
+                        sf.onmessage = line => { if (cb) cb(line); };
+                        bindUci(cmd => sf.postMessage(cmd), c => { cb = c; });
                     } else {
-                        console.log('[SF-C]', line);
+                        clearTimeout(T);
+                        reject(new Error(`no postMessage/addMessageListener. Keys: ${Object.keys(sf).slice(0,12).join(', ')}`));
                     }
+                } catch(e) { clearTimeout(T); reject(e); }
+            };
 
-                    if (line === 'uciok' && !gotUciOk) {
-                        gotUciOk = true;
-                        worker.postMessage('isready');
-                    } else if (line === 'readyok') {
-                        clearTimeout(timeout);
-                        sfReady = true;
-                        sfSend  = cmd => worker.postMessage(cmd);
-                        worker.onmessage = ({ data }) => {
-                            const l = typeof data === 'string' ? data
-                                    : (data && typeof data.data === 'string') ? data.data
-                                    : '';
-                            handleSfLine(l);
-                        };
-                        resolve(true);
-                    }
-                };
-
-                // Some builds need a short delay before accepting UCI
-                setTimeout(() => worker.postMessage('uci'), 200);
-            } catch(e) {
-                clearTimeout(timeout);
-                reject(e);
-            }
+            document.head.appendChild(script);
         });
     }
 
-    // ── Shared Stockfish message handler (post-init) ──────────────────
+    // ── Strategy B: Module Worker ─────────────────────────────────────
+    function sfStrategyB_ModuleWorker() {
+        return new Promise((resolve, reject) => {
+            const T = setTimeout(() => reject(new Error('timeout')), 15000);
+            try {
+                const w = new Worker('./stockfish.js', { type: 'module' });
+                w.onerror = e => { console.log('[SF-B] error:', e.message); clearTimeout(T); reject(e); };
+                let first = true, ok = false;
+                w.onmessage = ({ data }) => {
+                    const line = normMsg(data);
+                    if (first) { first = false; console.log('[SF-B] first msg raw:', JSON.stringify(data).slice(0,200)); }
+                    console.log('[SF-B]', line);
+                    if (line === 'uciok' && !ok) { ok = true; w.postMessage('isready'); }
+                    else if (line === 'readyok') {
+                        clearTimeout(T); sfReady = true;
+                        sfSend = cmd => w.postMessage(cmd);
+                        w.onmessage = ({ data }) => handleSfLine(normMsg(data));
+                        resolve(true);
+                    }
+                };
+                setTimeout(() => w.postMessage('uci'), 300);
+            } catch(e) { clearTimeout(T); reject(e); }
+        });
+    }
+
+    // ── Strategy C: Classic Worker ────────────────────────────────────
+    function sfStrategyC_ClassicWorker() {
+        return new Promise((resolve, reject) => {
+            const T = setTimeout(() => reject(new Error('timeout')), 15000);
+            try {
+                const w = new Worker('./stockfish.js');
+                w.onerror = e => {
+                    console.log('[SF-C] error:', e.message, '| file:', e.filename, '| line:', e.lineno);
+                    clearTimeout(T); reject(e);
+                };
+                let first = true, ok = false;
+                w.onmessage = ({ data }) => {
+                    const line = normMsg(data);
+                    if (first) { first = false; console.log('[SF-C] first msg raw:', JSON.stringify(data).slice(0,200)); }
+                    console.log('[SF-C]', line);
+                    if (line === 'uciok' && !ok) { ok = true; w.postMessage('isready'); }
+                    else if (line === 'readyok') {
+                        clearTimeout(T); sfReady = true;
+                        sfSend = cmd => w.postMessage(cmd);
+                        w.onmessage = ({ data }) => handleSfLine(normMsg(data));
+                        resolve(true);
+                    }
+                };
+                setTimeout(() => { console.log('[SF-C] sending uci…'); w.postMessage('uci'); }, 500);
+            } catch(e) { clearTimeout(T); reject(e); }
+        });
+    }
+
+    // ── Strategy D: Blob Worker wrapping importScripts ────────────────
+    // Creates an inline worker that importScripts() the file, then
+    // calls whatever global factory it registered and pipes output back.
+    function sfStrategyD_BlobWorker() {
+        return new Promise((resolve, reject) => {
+            const T = setTimeout(() => reject(new Error('timeout')), 20000);
+            const sfUrl = new URL('./stockfish.js', location.href).href;
+
+            const src = `
+var _sf = null, _q = [];
+function _send(cmd) {
+    if (_sf) {
+        if (typeof _sf.postMessage === 'function') _sf.postMessage(cmd);
+        else if (typeof _sf.cmd === 'function')    _sf.cmd(cmd);
+    } else { _q.push(cmd); }
+}
+self.onmessage = function(e) {
+    _send(typeof e.data === 'string' ? e.data : (e.data && e.data.data) ? e.data.data : '');
+};
+try {
+    importScripts('${sfUrl}');
+    var names = ['Stockfish','stockfish','StockfishModule','Module','STOCKFISH'];
+    var fac = null;
+    for (var i=0;i<names.length;i++) { if (typeof self[names[i]]==='function'){fac=self[names[i]];break;} }
+    if (!fac) { self.postMessage('__sferr__ no global factory after importScripts'); }
+    else {
+        Promise.resolve(fac({ locateFile: function(f){ return f; } })).then(function(sf) {
+            _sf = sf;
+            if (typeof sf.addMessageListener==='function') sf.addMessageListener(function(l){ self.postMessage(l); });
+            else { sf.print = function(l){ self.postMessage(l); }; }
+            _q.forEach(function(c){ _send(c); }); _q=[];
+        }).catch(function(e){ self.postMessage('__sferr__ factory: '+e); });
+    }
+} catch(e) { self.postMessage('__sferr__ importScripts: '+e); }
+`;
+            let burl;
+            try { burl = URL.createObjectURL(new Blob([src],{type:'application/javascript'})); }
+            catch(e) { clearTimeout(T); reject(e); return; }
+
+            const w = new Worker(burl);
+            w.onerror = e => { console.log('[SF-D] error:',e.message); URL.revokeObjectURL(burl); clearTimeout(T); reject(e); };
+            let first = true, ok = false;
+            w.onmessage = ({ data }) => {
+                const line = typeof data === 'string' ? data : JSON.stringify(data);
+                if (first) { first = false; console.log('[SF-D] first msg:', line.slice(0,200)); }
+                if (line.startsWith('__sferr__')) {
+                    console.log('[SF-D]', line); URL.revokeObjectURL(burl); clearTimeout(T); reject(new Error(line)); return;
+                }
+                console.log('[SF-D]', line);
+                if (line === 'uciok' && !ok) { ok = true; w.postMessage('isready'); }
+                else if (line === 'readyok') {
+                    URL.revokeObjectURL(burl); clearTimeout(T); sfReady = true;
+                    sfSend = cmd => w.postMessage(cmd);
+                    w.onmessage = ({ data }) => handleSfLine(typeof data==='string'?data:'');
+                    resolve(true);
+                }
+            };
+            setTimeout(() => { console.log('[SF-D] sending uci…'); w.postMessage('uci'); }, 800);
+        });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    function normMsg(data) {
+        if (typeof data === 'string') return data;
+        if (data && typeof data.data  === 'string') return data.data;
+        if (data && typeof data.line  === 'string') return data.line;
+        if (data && typeof data.text  === 'string') return data.text;
+        return JSON.stringify(data);
+    }
+
     function handleSfLine(line) {
         if (!line) return;
         if (line.startsWith('bestmove') && pendingResolve) {
-            clearTimeout(stockfishTimer);
-            stockfishTimer = null;
+            clearTimeout(stockfishTimer); stockfishTimer = null;
             const move = line.split(' ')[1];
             pendingResolve(move && move !== '(none)' ? move : null);
             pendingResolve = null;
