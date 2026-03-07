@@ -4,6 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knightmare Chess</title>
+    <!--
+        Cross-Origin Isolation — required for SharedArrayBuffer (multi-threaded WASM).
+        This inline service worker intercepts every fetch and adds the two required
+        headers so the browser unlocks SharedArrayBuffer without any server config.
+        The page reloads once after the SW activates; on subsequent loads it is instant.
+        If your server already sends these headers you can remove this block.
+    -->
+    <script>
+    (function () {
+        if (typeof SharedArrayBuffer !== 'undefined') return; // already isolated, nothing to do
+
+        if (!('serviceWorker' in navigator)) {
+            console.warn('[COI] Service workers not supported — SharedArrayBuffer unavailable.');
+            return;
+        }
+
+        const SW_SRC = `
+const CACHE = 'coi-v1';
+self.addEventListener('install',  () => self.skipWaiting());
+self.addEventListener('activate', e  => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => {
+    // Skip non-GET and opaque requests that break with COEP
+    if (e.request.method !== 'GET') return;
+    if (e.request.cache === 'only-if-cached' && e.request.mode !== 'same-origin') return;
+
+    e.respondWith(fetch(e.request).then(res => {
+        // Don't touch opaque (cross-origin no-cors) responses
+        if (!res || res.type === 'opaque' || res.type === 'error') return res;
+
+        const h = new Headers(res.headers);
+        h.set('Cross-Origin-Opener-Policy',   'same-origin');
+        h.set('Cross-Origin-Embedder-Policy',  'require-corp');
+        h.set('Cross-Origin-Resource-Policy',  'cross-origin');
+        return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+    }).catch(() => fetch(e.request)));
+});
+`;
+
+        // Register from a blob URL (same-origin scope, works in Chrome/Firefox/Edge)
+        const blob = new Blob([SW_SRC], { type: 'application/javascript' });
+        const url  = URL.createObjectURL(blob);
+
+        navigator.serviceWorker.register(url, { scope: './' })
+            .then(reg => {
+                // Wait for the new SW to activate then reload so the page runs isolated
+                const sw = reg.installing || reg.waiting;
+                if (sw) {
+                    sw.addEventListener('statechange', function onState(e) {
+                        if (e.target.state === 'activated') {
+                            sw.removeEventListener('statechange', onState);
+                            URL.revokeObjectURL(url);
+                            window.location.reload();
+                        }
+                    });
+                } else if (reg.active) {
+                    // SW already active from a previous load but page isn't controlled yet
+                    URL.revokeObjectURL(url);
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                URL.revokeObjectURL(url);
+                console.warn('[COI] SW registration failed:', err,
+                    '\nAlternative: add these headers to your server:\n' +
+                    '  Cross-Origin-Opener-Policy: same-origin\n' +
+                    '  Cross-Origin-Embedder-Policy: require-corp');
+            });
+    })();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap');
         
