@@ -826,46 +826,58 @@
         let ffish = null;
         let ffishLoaded = false;
         
+        // Debug helper - check what's available
+        window.debugFfish = function() {
+            console.log('=== Fairy-Stockfish Debug Info ===');
+            console.log('typeof Module:', typeof Module);
+            console.log('Module:', Module);
+            console.log('ffish:', ffish);
+            console.log('ffishLoaded:', ffishLoaded);
+            if (typeof Module !== 'undefined') {
+                console.log('Module is defined! Try calling: Module()');
+            }
+        };
+        
         // Initialize Fairy-Stockfish
         function initFairyStockfish() {
             return new Promise((resolve, reject) => {
-                // Function to check if Module is ready
-                function checkModuleReady() {
-                    if (typeof Module !== 'undefined' && Module) {
-                        // Module is available, set up initialization
-                        Module['onRuntimeInitialized'] = () => {
-                            try {
-                                ffish = Module;
-                                ffishLoaded = true;
-                                console.log('Fairy-Stockfish loaded successfully!');
-                                console.log('Available variants:', ffish.variants());
-                                resolve(ffish);
-                            } catch (error) {
-                                console.error('Error initializing Fairy-Stockfish:', error);
-                                reject(error);
-                            }
-                        };
-                        
-                        // Error handling
-                        Module['onAbort'] = (what) => {
-                            console.error('Fairy-Stockfish aborted:', what);
-                            reject(new Error('Fairy-Stockfish aborted'));
-                        };
-                    } else {
-                        // Module not ready yet, try again
-                        setTimeout(checkModuleReady, 50);
+                // Function to check if Module is ready and initialize
+                function tryInitialize() {
+                    if (typeof Module === 'undefined') {
+                        // Module not loaded yet, wait
+                        setTimeout(tryInitialize, 100);
+                        return;
+                    }
+                    
+                    console.log('Module found, initializing...');
+                    
+                    try {
+                        // Call Module as a function - it returns a promise
+                        Module().then(loadedModule => {
+                            ffish = loadedModule;
+                            ffishLoaded = true;
+                            console.log('Fairy-Stockfish loaded successfully!');
+                            console.log('Available variants:', ffish.variants());
+                            resolve(ffish);
+                        }).catch(error => {
+                            console.error('Error loading WASM:', error);
+                            reject(error);
+                        });
+                    } catch (error) {
+                        console.error('Error calling Module():', error);
+                        reject(error);
                     }
                 }
                 
-                // Start checking for Module
-                checkModuleReady();
+                // Start trying to initialize
+                tryInitialize();
                 
-                // Timeout after 10 seconds
+                // Timeout after 15 seconds
                 setTimeout(() => {
                     if (!ffishLoaded) {
-                        reject(new Error('Timeout waiting for stockfish.js to load'));
+                        reject(new Error('Timeout waiting for Fairy-Stockfish to load'));
                     }
-                }, 10000);
+                }, 15000);
             });
         }
         
@@ -1539,7 +1551,9 @@
         document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
         
         // Initialize Fairy-Stockfish and start game
+        console.log('Starting Fairy-Stockfish initialization...');
         updateGameInfo('Loading Fairy-Stockfish engine...');
+        
         initFairyStockfish().then(() => {
             console.log('Fairy-Stockfish ready!');
             initGame();
