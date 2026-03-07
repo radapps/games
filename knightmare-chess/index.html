@@ -807,6 +807,7 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="stockfish.js"></script>
     <script>
         // Game state
         const game = new Chess();
@@ -822,9 +823,131 @@
         let hasMoved = false; // Track if a move was made this turn
         let isComputerThinking = false;
         
-        // Get best move using simple evaluation
+        // Fairy-Stockfish variables
+        let ffish = null;
+        let ffishLoaded = false;
+        
+        // Initialize Fairy-Stockfish
+        function initFairyStockfish() {
+            return new Promise((resolve, reject) => {
+                // Load ffish module
+                if (typeof Module === 'undefined') {
+                    console.error('stockfish.js not loaded');
+                    reject(new Error('stockfish.js not loaded'));
+                    return;
+                }
+                
+                // Wait for WASM to load
+                Module['onRuntimeInitialized'] = () => {
+                    try {
+                        ffish = Module;
+                        ffishLoaded = true;
+                        console.log('Fairy-Stockfish loaded successfully!');
+                        console.log('Available variants:', ffish.variants());
+                        resolve(ffish);
+                    } catch (error) {
+                        console.error('Error initializing Fairy-Stockfish:', error);
+                        reject(error);
+                    }
+                };
+                
+                // Error handling
+                Module['onAbort'] = (what) => {
+                    console.error('Fairy-Stockfish aborted:', what);
+                    reject(new Error('Fairy-Stockfish aborted'));
+                };
+            });
+        }
+        
+        // Get best move using Fairy-Stockfish
         async function getBestMove() {
-            // Simple evaluation-based move selection
+            if (!ffishLoaded || !ffish) {
+                console.log('Fairy-Stockfish not loaded, using fallback AI');
+                return getSimpleAIMove();
+            }
+            
+            try {
+                const fen = game.fen();
+                
+                // Create Fairy-Stockfish board
+                const board = new ffish.Board('chess', fen);
+                
+                // Get all legal moves
+                const legalMovesStr = board.legal_moves();
+                const legalMoves = legalMovesStr.split(' ').filter(m => m.length > 0);
+                
+                if (legalMoves.length === 0) {
+                    board.delete();
+                    return null;
+                }
+                
+                // Evaluate each move
+                let bestMove = null;
+                let bestScore = -999999;
+                
+                for (const moveStr of legalMoves) {
+                    // Make move on ffish board
+                    board.push(moveStr);
+                    
+                    // Simple evaluation - you can enhance this with deeper search
+                    const score = -evaluateFfishPosition(board);
+                    
+                    // Undo move
+                    board.pop();
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = moveStr;
+                    }
+                }
+                
+                board.delete();
+                
+                if (bestMove) {
+                    // Convert ffish move format (e.g., "e2e4") to chess.js format
+                    return {
+                        from: bestMove.substring(0, 2),
+                        to: bestMove.substring(2, 4),
+                        promotion: bestMove.length > 4 ? bestMove[4] : undefined
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Fairy-Stockfish error:', error);
+                // Fallback to simple AI
+                return getSimpleAIMove();
+            }
+        }
+        
+        // Evaluate position using Fairy-Stockfish board
+        function evaluateFfishPosition(board) {
+            // Simple material evaluation
+            const pieceValues = {
+                'P': 100, 'N': 320, 'B': 330, 'R': 500, 'Q': 900, 'K': 0,
+                'p': -100, 'n': -320, 'b': -330, 'r': -500, 'q': -900, 'k': 0
+            };
+            
+            const fen = board.fen();
+            const position = fen.split(' ')[0];
+            
+            let score = 0;
+            for (const char of position) {
+                if (pieceValues[char] !== undefined) {
+                    score += pieceValues[char];
+                }
+            }
+            
+            // Add positional bonuses
+            // Center control
+            const sideToMove = fen.split(' ')[1];
+            const centerBonus = sideToMove === 'w' ? 10 : -10;
+            
+            return score;
+        }
+        
+        // Simple AI fallback (if Fairy-Stockfish fails)
+        function getSimpleAIMove() {
             const moves = game.moves({ verbose: true });
             if (moves.length === 0) return null;
             
@@ -837,7 +960,7 @@
                 const score = evaluatePosition();
                 game.undo();
                 
-                // Negate score since we're evaluating from opponent's perspective after the move
+                // Negate score since we're evaluating from opponent's perspective
                 const adjustedScore = -score;
                 
                 if (adjustedScore > bestScore) {
@@ -1310,7 +1433,7 @@
                 let img = deckPileElement.querySelector('img');
                 if (!img) {
                     img = document.createElement('img');
-                    img.src = 'assets/_cardback.jpg';
+                    img.src = 'assets/cardback.jpg';
                     img.alt = 'Deck';
                     deckPileElement.insertBefore(img, deckPileElement.firstChild);
                 }
@@ -1405,8 +1528,16 @@
         // Discard pile click to view
         document.getElementById('discardPile').addEventListener('click', viewDiscardCard);
         
-        // Start game immediately with white
-        initGame();
+        // Initialize Fairy-Stockfish and start game
+        updateGameInfo('Loading Fairy-Stockfish engine...');
+        initFairyStockfish().then(() => {
+            console.log('Fairy-Stockfish ready!');
+            initGame();
+        }).catch((error) => {
+            console.error('Failed to load Fairy-Stockfish:', error);
+            console.log('Starting game with fallback AI');
+            initGame();
+        });
     </script>
 </body>
 </html>
