@@ -1036,38 +1036,105 @@
         const cardConfigs = {
             'Anathema': {
                 requirement: (gameState) => {
-                    // Opponent has both a bishop and a rook
+                    // Opponent has both a bishop and a knight
                     const opponent = gameState.currentTurn === 'w' ? 'b' : 'w';
                     const board = gameState.board;
                     let hasBishop = false;
-                    let hasRook = false;
+                    let hasKnight = false;
                     
                     for (let row = 0; row < 8; row++) {
                         for (let col = 0; col < 8; col++) {
                             const piece = board[row][col];
                             if (piece && piece.color === opponent) {
                                 if (piece.type === 'b') hasBishop = true;
-                                if (piece.type === 'r') hasRook = true;
+                                if (piece.type === 'n') hasKnight = true;
                             }
                         }
                     }
                     
-                    return hasBishop && hasRook;
+                    return hasBishop && hasKnight;
                 },
-                whenToPlay: ['AFTERMOVE'],
+                whenToPlay: ['INSTEADOF'],
                 effectPersists: false,
                 continuingEffectCondition: null,
                 effect: (gameState) => {
-                    // TODO: Implement card effect
-                    alert('Anathema effect triggered! (Effect to be implemented)');
+                    // Start piece selection mode
+                    startAnathemaEffect();
                 }
             }
             // Add more card configs here as needed
         };
         
         // Game phase tracking for card playability
-        let currentGamePhase = 'BEFOREMOVE'; // BEFOREMOVE, AFTERMOVE, AFTEROPPONENTMOVE
+        let currentGamePhase = 'BEFOREMOVE'; // BEFOREMOVE, INSTEADOF, AFTERMOVE, AFTEROPPONENTMOVE
         let activeCards = []; // Cards with persistent effects
+        
+        // Anathema card state
+        let anathemaMode = false;
+        let anathemaSelectedKnight = null;
+        
+        function startAnathemaEffect() {
+            anathemaMode = true;
+            anathemaSelectedKnight = null;
+            updateGameInfo('Anathema: Select an opponent\'s knight to swap with a bishop');
+        }
+        
+        function handleAnathemaSelection(square) {
+            const piece = game.get(square);
+            const opponent = playerColor === 'w' ? 'b' : 'w';
+            
+            if (!piece || piece.color !== opponent) {
+                updateGameInfo('Anathema: Please select an opponent\'s piece');
+                return false;
+            }
+            
+            if (!anathemaSelectedKnight) {
+                // First selection - must be a knight
+                if (piece.type !== 'n') {
+                    updateGameInfo('Anathema: Please select an opponent\'s knight');
+                    return false;
+                }
+                anathemaSelectedKnight = square;
+                highlightSquare(square);
+                updateGameInfo('Anathema: Now select an opponent\'s bishop to swap with');
+                return false;
+            } else {
+                // Second selection - must be a bishop
+                if (piece.type !== 'b') {
+                    updateGameInfo('Anathema: Please select an opponent\'s bishop');
+                    return false;
+                }
+                
+                // Perform the swap
+                const knightSquare = anathemaSelectedKnight;
+                const bishopSquare = square;
+                
+                // Get the pieces
+                const knight = game.get(knightSquare);
+                const bishop = game.get(bishopSquare);
+                
+                // Remove both pieces
+                game.remove(knightSquare);
+                game.remove(bishopSquare);
+                
+                // Place them in swapped positions
+                game.put({ type: bishop.type, color: bishop.color }, knightSquare);
+                game.put({ type: knight.type, color: knight.color }, bishopSquare);
+                
+                // Clean up
+                anathemaMode = false;
+                anathemaSelectedKnight = null;
+                clearHighlights();
+                renderBoard();
+                
+                // Mark that we did an action instead of moving
+                hasMoved = true;
+                updateEndTurnButton();
+                updateGameInfo('Anathema: Knight and Bishop swapped!');
+                
+                return true;
+            }
+        }
         
         // Initialize deck
         let deck = [...cardNames];
@@ -1097,10 +1164,14 @@
         // Check if card can be played based on requirements and timing
         function isCardPlayable(cardName) {
             const config = cardConfigs[cardName];
-            if (!config) return true; // Cards without config can always be played
+            if (!config) return false; // Cards without config cannot be played
             
             // Check if it's the right time to play this card
-            if (!config.whenToPlay.includes(currentGamePhase)) {
+            // INSTEADOF cards can be played during BEFOREMOVE phase
+            const validPhases = [...config.whenToPlay];
+            if (validPhases.includes('INSTEADOF') && currentGamePhase === 'BEFOREMOVE') {
+                // INSTEADOF cards are playable during BEFOREMOVE
+            } else if (!validPhases.includes(currentGamePhase)) {
                 return false;
             }
             
@@ -1239,6 +1310,12 @@
         function handleSquareClick(square) {
             if (game.game_over()) return;
             if (game.turn() !== playerColor) return; // Not player's turn
+            
+            // Handle Anathema card piece selection mode
+            if (anathemaMode) {
+                handleAnathemaSelection(square);
+                return;
+            }
             
             // If no square selected, select this square if it has a piece
             if (!selectedSquare) {
@@ -1568,8 +1645,8 @@
         // Update END TURN button state
         function updateEndTurnButton() {
             const btn = document.getElementById('endTurnBtn');
-            // Can only end turn if moved OR played/discarded a card
-            if (hasMoved || hasPlayedOrDiscardedCard) {
+            // Can only end turn if moved (includes INSTEADOF card plays)
+            if (hasMoved) {
                 btn.disabled = false;
             } else {
                 btn.disabled = true;
