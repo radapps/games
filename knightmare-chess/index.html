@@ -118,6 +118,29 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .end-turn-btn.active-turn {
+            border-color: #ff8800;
+            box-shadow: 0 4px 16px rgba(255, 136, 0, 0.7),
+                        0 0 25px rgba(255, 136, 0, 0.5);
+            animation: pulseEndTurnGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseEndTurnGlow {
+            0%, 100% {
+                box-shadow: 0 4px 16px rgba(255, 136, 0, 0.7),
+                            0 0 25px rgba(255, 136, 0, 0.5);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(255, 136, 0, 0.9),
+                            0 0 35px rgba(255, 136, 0, 0.7);
+            }
+        }
+        
+        .end-turn-btn.active-turn:hover {
+            box-shadow: 0 0 30px rgba(255, 136, 0, 0.8);
         }
         
         .new-game-btn {
@@ -1054,12 +1077,39 @@
                     
                     return hasBishop && hasKnight;
                 },
-                whenToPlay: ['INSTEADOF'],
+                whenToPlay: ['AFTERMOVE'],
                 effectPersists: false,
                 continuingEffectCondition: null,
                 effect: (gameState) => {
                     // Start piece selection mode
                     startAnathemaEffect();
+                }
+            },
+            'Black Widow': {
+                requirement: (gameState) => {
+                    // Both a white queen and a black queen are on the board
+                    const board = gameState.board;
+                    let hasWhiteQueen = false;
+                    let hasBlackQueen = false;
+                    
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = board[row][col];
+                            if (piece && piece.type === 'q') {
+                                if (piece.color === 'w') hasWhiteQueen = true;
+                                if (piece.color === 'b') hasBlackQueen = true;
+                            }
+                        }
+                    }
+                    
+                    return hasWhiteQueen && hasBlackQueen;
+                },
+                whenToPlay: ['INSTEADOF'],
+                effectPersists: false,
+                continuingEffectCondition: null,
+                effect: (gameState) => {
+                    // Start queen swap mode
+                    startBlackWidowEffect();
                 }
             }
             // Add more card configs here as needed
@@ -1131,6 +1181,73 @@
                 hasMoved = true;
                 updateEndTurnButton();
                 updateGameInfo('Anathema: Knight and Bishop swapped!');
+                
+                return true;
+            }
+        }
+        
+        // Black Widow card state
+        let blackWidowMode = false;
+        let blackWidowSelectedQueen = null;
+        
+        function startBlackWidowEffect() {
+            blackWidowMode = true;
+            blackWidowSelectedQueen = null;
+            updateGameInfo('Black Widow: Select one of your queens');
+        }
+        
+        function handleBlackWidowSelection(square) {
+            const piece = game.get(square);
+            
+            if (!piece || piece.type !== 'q') {
+                updateGameInfo('Black Widow: Please select a queen');
+                return false;
+            }
+            
+            if (!blackWidowSelectedQueen) {
+                // First selection - must be player's queen
+                if (piece.color !== playerColor) {
+                    updateGameInfo('Black Widow: Please select one of YOUR queens');
+                    return false;
+                }
+                blackWidowSelectedQueen = square;
+                highlightSquare(square);
+                updateGameInfo('Black Widow: Now select an opponent\'s queen to swap with');
+                return false;
+            } else {
+                // Second selection - must be opponent's queen
+                const opponent = playerColor === 'w' ? 'b' : 'w';
+                if (piece.color !== opponent) {
+                    updateGameInfo('Black Widow: Please select an OPPONENT\'S queen');
+                    return false;
+                }
+                
+                // Perform the swap
+                const playerQueenSquare = blackWidowSelectedQueen;
+                const opponentQueenSquare = square;
+                
+                // Get the pieces
+                const playerQueen = game.get(playerQueenSquare);
+                const opponentQueen = game.get(opponentQueenSquare);
+                
+                // Remove both pieces
+                game.remove(playerQueenSquare);
+                game.remove(opponentQueenSquare);
+                
+                // Place them in swapped positions
+                game.put({ type: opponentQueen.type, color: opponentQueen.color }, playerQueenSquare);
+                game.put({ type: playerQueen.type, color: playerQueen.color }, opponentQueenSquare);
+                
+                // Clean up
+                blackWidowMode = false;
+                blackWidowSelectedQueen = null;
+                clearHighlights();
+                renderBoard();
+                
+                // Mark that we did an action instead of moving
+                hasMoved = true;
+                updateEndTurnButton();
+                updateGameInfo('Black Widow: Queens swapped!');
                 
                 return true;
             }
@@ -1210,6 +1327,10 @@
             hasMoved = false;
             currentGamePhase = 'BEFOREMOVE'; // Initialize game phase
             activeCards = []; // Reset active cards
+            anathemaMode = false; // Reset card modes
+            anathemaSelectedKnight = null;
+            blackWidowMode = false;
+            blackWidowSelectedQueen = null;
             document.getElementById('capturedPieces').innerHTML = '';
             
             // Shuffle deck
@@ -1314,6 +1435,12 @@
             // Handle Anathema card piece selection mode
             if (anathemaMode) {
                 handleAnathemaSelection(square);
+                return;
+            }
+            
+            // Handle Black Widow card piece selection mode
+            if (blackWidowMode) {
+                handleBlackWidowSelection(square);
                 return;
             }
             
@@ -1648,8 +1775,10 @@
             // Can only end turn if moved (includes INSTEADOF card plays)
             if (hasMoved) {
                 btn.disabled = false;
+                btn.classList.add('active-turn');
             } else {
                 btn.disabled = true;
+                btn.classList.remove('active-turn');
             }
         }
         
