@@ -1111,6 +1111,39 @@
                     // Start queen swap mode
                     startBlackWidowEffect();
                 }
+            },
+            'Battlefield Promotion': {
+                requirement: (gameState) => {
+                    // Player has a pawn on the 6th or 7th rank
+                    const board = gameState.board;
+                    const currentPlayer = gameState.currentTurn;
+                    
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = board[row][col];
+                            if (piece && piece.type === 'p' && piece.color === currentPlayer) {
+                                // Convert row index to rank
+                                const rank = 8 - row;
+                                // White pawns on rank 6 or 7, Black pawns on rank 2 or 3
+                                if (currentPlayer === 'w' && (rank === 6 || rank === 7)) {
+                                    return true;
+                                }
+                                if (currentPlayer === 'b' && (rank === 2 || rank === 3)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return false;
+                },
+                whenToPlay: ['AFTERMOVE'],
+                effectPersists: false,
+                continuingEffectCondition: null,
+                effect: (gameState) => {
+                    // Start pawn selection mode
+                    startBattlefieldPromotionEffect();
+                }
             }
             // Add more card configs here as needed
         };
@@ -1238,6 +1271,9 @@
                 game.put({ type: opponentQueen.type, color: opponentQueen.color }, playerQueenSquare);
                 game.put({ type: playerQueen.type, color: playerQueen.color }, opponentQueenSquare);
                 
+                // Switch turn manually since we used put/remove instead of move
+                switchTurn();
+                
                 // Clean up
                 blackWidowMode = false;
                 blackWidowSelectedQueen = null;
@@ -1251,6 +1287,39 @@
                 
                 return true;
             }
+        }
+        
+        // Battlefield Promotion card state
+        let battlefieldPromotionMode = false;
+        
+        function startBattlefieldPromotionEffect() {
+            battlefieldPromotionMode = true;
+            updateGameInfo('Battlefield Promotion: Select a pawn on the 6th or 7th rank');
+        }
+        
+        function handleBattlefieldPromotionSelection(square) {
+            const piece = game.get(square);
+            
+            if (!piece || piece.type !== 'p' || piece.color !== playerColor) {
+                updateGameInfo('Battlefield Promotion: Please select one of your pawns');
+                return false;
+            }
+            
+            // Check if pawn is on 6th or 7th rank
+            const rank = parseInt(square[1]);
+            const validRank = (playerColor === 'w' && (rank === 6 || rank === 7)) ||
+                             (playerColor === 'b' && (rank === 2 || rank === 3));
+            
+            if (!validRank) {
+                updateGameInfo('Battlefield Promotion: Pawn must be on the 6th or 7th rank');
+                return false;
+            }
+            
+            // Show promotion modal without queen option
+            showPromotionModal(square, square, true); // true = hide queen
+            battlefieldPromotionMode = false;
+            
+            return true;
         }
         
         // Initialize deck
@@ -1276,6 +1345,15 @@
                 inCheckmate: game.in_checkmate(),
                 inDraw: game.in_draw()
             };
+        }
+        
+        // Manually switch turns (needed for INSTEADOF cards that don't use game.move())
+        function switchTurn() {
+            const fen = game.fen();
+            const fenParts = fen.split(' ');
+            // Toggle active color (second part of FEN)
+            fenParts[1] = fenParts[1] === 'w' ? 'b' : 'w';
+            game.load(fenParts.join(' '));
         }
         
         // Check if card can be played based on requirements and timing
@@ -1331,6 +1409,7 @@
             anathemaSelectedKnight = null;
             blackWidowMode = false;
             blackWidowSelectedQueen = null;
+            battlefieldPromotionMode = false;
             document.getElementById('capturedPieces').innerHTML = '';
             
             // Shuffle deck
@@ -1444,6 +1523,12 @@
                 return;
             }
             
+            // Handle Battlefield Promotion card piece selection mode
+            if (battlefieldPromotionMode) {
+                handleBattlefieldPromotionSelection(square);
+                return;
+            }
+            
             // If no square selected, select this square if it has a piece
             if (!selectedSquare) {
                 const piece = game.get(square);
@@ -1505,9 +1590,11 @@
         
         // Pawn promotion modal
         let pendingPromotionMove = null;
+        let isBattlefieldPromotion = false;
         
-        function showPromotionModal(from, to) {
+        function showPromotionModal(from, to, hideQueen = false) {
             pendingPromotionMove = { from, to };
+            isBattlefieldPromotion = hideQueen;
             const modal = document.getElementById('promotionModal');
             
             // Set piece icons based on player color
@@ -1524,6 +1611,13 @@
             document.getElementById('promoteBishop').textContent = pieces['b'];
             document.getElementById('promoteKnight').textContent = pieces['n'];
             
+            // Show/hide queen option
+            if (hideQueen) {
+                document.getElementById('promoteQueen').style.display = 'none';
+            } else {
+                document.getElementById('promoteQueen').style.display = 'flex';
+            }
+            
             modal.classList.add('active');
         }
         
@@ -1531,11 +1625,25 @@
             if (!pendingPromotionMove) return;
             
             const { from, to } = pendingPromotionMove;
-            attemptMove(from, to, pieceType);
+            
+            if (isBattlefieldPromotion) {
+                // Battlefield Promotion: replace pawn directly without moving
+                const pawnColor = game.get(from).color;
+                game.remove(from);
+                game.put({ type: pieceType, color: pawnColor }, from);
+                
+                renderBoard();
+                updateGameInfo('Battlefield Promotion: Pawn promoted to ' + 
+                              (pieceType === 'r' ? 'Rook' : pieceType === 'b' ? 'Bishop' : 'Knight') + '!');
+            } else {
+                // Normal pawn promotion via move
+                attemptMove(from, to, pieceType);
+            }
             
             // Close modal
             document.getElementById('promotionModal').classList.remove('active');
             pendingPromotionMove = null;
+            isBattlefieldPromotion = false;
         }
         
         // Highlight selected square
