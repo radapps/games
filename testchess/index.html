@@ -1,28 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Fairy Stockfish Board</title>
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fairy Chess</title>
 
 <style>
 
 body{
-font-family:sans-serif;
+font-family:Arial;
 text-align:center;
 background:#222;
 color:white;
-margin:0;
 }
 
 #board{
-width:95vw;
-max-width:520px;
-margin:auto;
 display:grid;
 grid-template-columns:repeat(8,1fr);
-border:4px solid #444;
+width:95vw;
+max-width:500px;
+margin:auto;
 }
 
 .square{
@@ -30,56 +29,45 @@ aspect-ratio:1;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:32px;
+font-size:40px;
 user-select:none;
 }
 
-.light{background:#eee;color:black;}
-.dark{background:#777;color:black;}
-
-.selected{
-outline:4px solid red;
-}
+.light{background:#f0d9b5}
+.dark{background:#b58863}
 
 .controls{
-margin:10px;
+margin-top:10px;
 }
 
 input{
 width:90%;
-font-size:14px;
-}
-
-button{
-font-size:16px;
-margin:4px;
 padding:8px;
 }
 
+button{
+padding:8px;
+margin:4px;
+}
+
 </style>
+
 </head>
 
 <body>
 
-<h2>Fairy Stockfish Board</h2>
+<h2>Fairy Chess</h2>
 
 <div id="board"></div>
 
 <div class="controls">
 
-<input id="fenInput" placeholder="Paste FEN here">
+<input id="fenInput">
 
 <br>
 
-<button onclick="loadFEN()">Load FEN</button>
+<button onclick="loadFENFromInput()">Load FEN</button>
 <button onclick="engineMove()">Engine Move</button>
-<button onclick="flipBoard()">Flip</button>
-
-<br>
-
-<input id="customPiece" placeholder="Custom piece symbol">
-
-<button onclick="placeCustom()">Place Piece</button>
 
 </div>
 
@@ -87,247 +75,320 @@ padding:8px;
 
 <script>
 
-let board = document.getElementById("board")
+/* =============================
+BOARD STATE
+============================= */
 
-let squares = []
-let position = []
-let selected = null
-let flipped=false
+let board=[]
+let selected=null
+let sideToMove="w"
 
-let pieceMap={
+const boardElement=document.getElementById("board")
+
+/* =============================
+PIECE DEFINITIONS
+EDIT THIS TO ADD FAIRY PIECES
+============================= */
+
+const pieces={
+
 p:"♟",
 r:"♜",
 n:"♞",
 b:"♝",
 q:"♛",
 k:"♚",
+
 P:"♙",
 R:"♖",
 N:"♘",
 B:"♗",
 Q:"♕",
-K:"♔"
+K:"♔",
+
 }
+
+/* Example fairy piece
+pieces["a"]="🜁"
+pieces["A"]="🜁"
+*/
+
+/* =============================
+CREATE BOARD
+============================= */
 
 function createBoard(){
 
-board.innerHTML=""
-squares=[]
+boardElement.innerHTML=""
 
 for(let r=0;r<8;r++){
+
 for(let c=0;c<8;c++){
 
 let sq=document.createElement("div")
 
 sq.className="square "+((r+c)%2?"dark":"light")
 
-sq.dataset.index=r*8+c
+sq.dataset.r=r
+sq.dataset.c=c
 
-sq.onclick=()=>clickSquare(r*8+c)
+sq.onclick=clickSquare
 
-board.appendChild(sq)
-
-squares.push(sq)
-
-}}
+boardElement.appendChild(sq)
 
 }
 
-function draw(){
-
-for(let i=0;i<64;i++){
-
-let piece=position[i]||""
-
-let symbol=pieceMap[piece]||piece
-
-squares[i].innerText=symbol
-
-squares[i].classList.remove("selected")
+}
 
 }
 
-if(selected!=null)
-squares[selected].classList.add("selected")
+/* =============================
+DRAW BOARD
+============================= */
+
+function drawBoard(){
+
+let squares=document.querySelectorAll(".square")
+
+squares.forEach(sq=>{
+
+let r=sq.dataset.r
+let c=sq.dataset.c
+
+let piece=board[r][c]
+
+sq.textContent=pieces[piece]||""
+
+})
 
 }
 
-function clickSquare(i){
+/* =============================
+FEN LOADER
+============================= */
 
-if(selected==null){
+function loadFEN(fen){
 
-selected=i
+let parts=fen.split(" ")
 
-}else{
+let rows=parts[0].split("/")
 
-position[i]=position[selected]
-position[selected]=""
+board=[]
+
+for(let r=0;r<8;r++){
+
+let row=[]
+
+for(let char of rows[r]){
+
+if(!isNaN(char)){
+
+for(let i=0;i<parseInt(char);i++)
+row.push("")
+
+}
+else{
+
+row.push(char)
+
+}
+
+}
+
+board.push(row)
+
+}
+
+sideToMove=parts[1]
+
+drawBoard()
+
+}
+
+/* =============================
+INPUT FEN
+============================= */
+
+function loadFENFromInput(){
+
+let fen=document.getElementById("fenInput").value
+
+loadFEN(fen)
+
+}
+
+/* =============================
+CLICK MOVE SYSTEM
+============================= */
+
+function clickSquare(){
+
+let r=this.dataset.r
+let c=this.dataset.c
+
+if(selected){
+
+movePiece(selected.r,selected.c,r,c)
 
 selected=null
 
 }
+else{
 
-draw()
+if(board[r][c]!=""){
 
-}
-
-function loadFEN(){
-
-let fen=document.getElementById("fenInput").value
-
-let rows=fen.split(" ")[0].split("/")
-
-position=[]
-
-for(let r=0;r<8;r++){
-
-let row=rows[r]
-
-for(let ch of row){
-
-if(Number(ch)){
-
-for(let i=0;i<ch;i++)
-position.push("")
-
-}else{
-
-position.push(ch)
+selected={r:r,c:c}
 
 }
 
-}}
-
-draw()
+}
 
 }
 
-function boardToFEN(){
+/* =============================
+MOVE PIECE
+============================= */
+
+function movePiece(r1,c1,r2,c2){
+
+board[r2][c2]=board[r1][c1]
+board[r1][c1]=""
+
+drawBoard()
+
+}
+
+/* =============================
+FEN EXPORT
+============================= */
+
+function getFEN(){
 
 let fen=""
+
 for(let r=0;r<8;r++){
 
 let empty=0
 
 for(let c=0;c<8;c++){
 
-let piece=position[r*8+c]
+let piece=board[r][c]
 
 if(piece==""){
 
 empty++
 
-}else{
+}
+else{
 
-if(empty){
+if(empty>0){
 fen+=empty
 empty=0
 }
 
 fen+=piece
-}
 
 }
 
-if(empty) fen+=empty
+}
+
+if(empty>0) fen+=empty
 
 if(r<7) fen+="/"
 
 }
 
-return fen+" w - - 0 1"
+fen+=" "+sideToMove+" - - 0 1"
+
+return fen
 
 }
 
-function placeCustom(){
+/* =============================
+ENGINE
+============================= */
 
-let piece=document.getElementById("customPiece").value
+let engineReady=false
 
-if(selected!=null){
+Module["onRuntimeInitialized"]=function(){
 
-position[selected]=piece
+engineReady=true
 
-selected=null
-
-draw()
-
-}
-
-}
-
-function flipBoard(){
-
-position.reverse()
-
-draw()
-
-}
-
-createBoard()
-
-position=new Array(64).fill("")
-
-loadFENFromStart()
-
-function loadFENFromStart(){
-
-document.getElementById("fenInput").value=
-"rn bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w"
-
-loadFEN()
-
-}
-
-let engine = new Worker("fairy-stockfish.js")
-
-engine.onmessage=function(e){
-
-let line=e.data
-
-if(line.startsWith("bestmove")){
-
-let move=line.split(" ")[1]
-
-applyMove(move)
-
-}
+console.log("Engine ready")
 
 }
 
 function engineMove(){
 
-let fen=boardToFEN()
+if(!engineReady){
+alert("Engine not ready")
+return
+}
 
-engine.postMessage("uci")
-engine.postMessage("isready")
-engine.postMessage("position fen "+fen)
-engine.postMessage("go depth 10")
+let fen=getFEN()
+
+Module.ccall(
+'uci_command',
+null,
+['string'],
+['position fen '+fen]
+)
+
+Module.ccall(
+'uci_command',
+null,
+['string'],
+['go depth 12']
+)
 
 }
 
-function applyMove(move){
+/* =============================
+ENGINE OUTPUT
+============================= */
 
-let from=move.slice(0,2)
-let to=move.slice(2,4)
+Module.print=function(line){
 
-let fromIndex=coordToIndex(from)
-let toIndex=coordToIndex(to)
+console.log("ENGINE:",line)
 
-position[toIndex]=position[fromIndex]
-position[fromIndex]=""
+if(line.startsWith("bestmove")){
 
-draw()
+let move=line.split(" ")[1]
+
+applyEngineMove(move)
+
+}
 
 }
 
-function coordToIndex(c){
+/* =============================
+APPLY ENGINE MOVE
+============================= */
 
-let file=c.charCodeAt(0)-97
-let rank=8-Number(c[1])
+function applyEngineMove(move){
 
-return rank*8+file
+let c1=move.charCodeAt(0)-97
+let r1=8-move[1]
+
+let c2=move.charCodeAt(2)-97
+let r2=8-move[3]
+
+movePiece(r1,c1,r2,c2)
 
 }
+
+/* =============================
+INITIALIZE
+============================= */
+
+createBoard()
+
+let startFEN=
+"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+document.getElementById("fenInput").value=startFEN
+
+loadFEN(startFEN)
 
 </script>
 
