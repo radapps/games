@@ -1496,9 +1496,7 @@
             });
             
             if (move) {
-                // Switch turn back to player since opponent's "turn" was modified
-                switchTurn();
-                
+                // After game.move(), it's already player's turn
                 renderBoard();
                 updateGameInfo(`Bog: ${move.piece.toUpperCase()} moved back - only 1 square allowed!`);
             }
@@ -1823,6 +1821,10 @@
                 const pawnColor = game.get(from).color;
                 game.remove(from);
                 game.put({ type: pieceType, color: pawnColor }, from);
+                
+                // Update the FEN to persist the change
+                const currentFen = game.fen();
+                game.load(currentFen);
                 
                 renderBoard();
                 updateGameInfo('Battlefield Promotion: Pawn promoted to ' + 
