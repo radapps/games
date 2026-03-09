@@ -936,6 +936,9 @@
         </div>
     </div>
     
+    <!-- Fireworks Canvas -->
+    <canvas id="fireworksCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none;"></canvas>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script>
         // Game state
@@ -951,6 +954,10 @@
         let hasPlayedOrDiscardedCard = false; // Track if card was played/discarded this turn
         let hasMoved = false; // Track if a move was made this turn
         let isComputerThinking = false;
+        
+        // Track captured pawns for Betrayal card
+        let capturedPlayerPawns = []; // Pawns captured from the player
+        let capturedOpponentPawns = []; // Pawns captured from the opponent
         
         // Get best move using simple evaluation
         async function getBestMove() {
@@ -1115,8 +1122,10 @@
             'Battlefield Promotion': {
                 requirement: (gameState) => {
                     // Player has a pawn on the 6th or 7th rank
+                    // Note: After a move in AFTERMOVE phase, gameState.currentTurn is opponent's turn
+                    // So we need to check for the player's pieces (opposite of currentTurn in AFTERMOVE)
                     const board = gameState.board;
-                    const currentPlayer = gameState.currentTurn;
+                    const currentPlayer = playerColor; // Use playerColor instead of gameState.currentTurn
                     
                     for (let row = 0; row < 8; row++) {
                         for (let col = 0; col < 8; col++) {
@@ -1144,6 +1153,41 @@
                     // Start pawn selection mode
                     startBattlefieldPromotionEffect();
                 }
+            },
+            'Betrayal': {
+                requirement: (gameState) => {
+                    // Opponent has a pawn on player's half AND player has captured pawns
+                    if (capturedPlayerPawns.length === 0) return false;
+                    
+                    const board = gameState.board;
+                    const opponent = playerColor === 'w' ? 'b' : 'w';
+                    
+                    // Check for opponent pawns on player's half
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = board[row][col];
+                            if (piece && piece.type === 'p' && piece.color === opponent) {
+                                const rank = 8 - row;
+                                // Player's half: ranks 1-4 for white, ranks 5-8 for black
+                                if (playerColor === 'w' && rank <= 4) {
+                                    return true;
+                                }
+                                if (playerColor === 'b' && rank >= 5) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return false;
+                },
+                whenToPlay: ['BEFOREMOVE'],
+                effectPersists: false,
+                continuingEffectCondition: null,
+                effect: (gameState) => {
+                    // Start betrayal mode
+                    startBetrayalEffect();
+                }
             }
             // Add more card configs here as needed
         };
@@ -1164,6 +1208,7 @@
         
         function handleAnathemaSelection(square) {
             const piece = game.get(square);
+            // After making a move, game.turn() switches to opponent, so we check against playerColor
             const opponent = playerColor === 'w' ? 'b' : 'w';
             
             if (!piece || piece.color !== opponent) {
@@ -1210,9 +1255,6 @@
                 clearHighlights();
                 renderBoard();
                 
-                // Mark that we did an action instead of moving
-                hasMoved = true;
-                updateEndTurnButton();
                 updateGameInfo('Anathema: Knight and Bishop swapped!');
                 
                 return true;
@@ -1322,6 +1364,49 @@
             return true;
         }
         
+        // Betrayal card state
+        let betrayalMode = false;
+        
+        function startBetrayalEffect() {
+            betrayalMode = true;
+            updateGameInfo('Betrayal: Select an opponent\'s pawn on your half of the board');
+        }
+        
+        function handleBetrayalSelection(square) {
+            const piece = game.get(square);
+            const opponent = playerColor === 'w' ? 'b' : 'w';
+            
+            if (!piece || piece.type !== 'p' || piece.color !== opponent) {
+                updateGameInfo('Betrayal: Please select an opponent\'s pawn');
+                return false;
+            }
+            
+            // Check if pawn is on player's half
+            const rank = parseInt(square[1]);
+            const validHalf = (playerColor === 'w' && rank <= 4) ||
+                             (playerColor === 'b' && rank >= 5);
+            
+            if (!validHalf) {
+                updateGameInfo('Betrayal: Pawn must be on your half of the board');
+                return false;
+            }
+            
+            // Replace opponent's pawn with player's captured pawn
+            game.remove(square);
+            game.put({ type: 'p', color: playerColor }, square);
+            
+            // Remove one captured pawn from the list
+            capturedPlayerPawns.pop();
+            
+            // Clean up
+            betrayalMode = false;
+            renderBoard();
+            
+            updateGameInfo('Betrayal: Opponent\'s pawn replaced with your own!');
+            
+            return true;
+        }
+        
         // Initialize deck
         let deck = [...cardNames];
         
@@ -1410,6 +1495,9 @@
             blackWidowMode = false;
             blackWidowSelectedQueen = null;
             battlefieldPromotionMode = false;
+            betrayalMode = false;
+            capturedPlayerPawns = []; // Reset captured pawns
+            capturedOpponentPawns = [];
             document.getElementById('capturedPieces').innerHTML = '';
             
             // Shuffle deck
@@ -1526,6 +1614,12 @@
             // Handle Battlefield Promotion card piece selection mode
             if (battlefieldPromotionMode) {
                 handleBattlefieldPromotionSelection(square);
+                return;
+            }
+            
+            // Handle Betrayal card piece selection mode
+            if (betrayalMode) {
+                handleBetrayalSelection(square);
                 return;
             }
             
@@ -1690,6 +1784,15 @@
             pieceElement.appendChild(img);
             
             capturedContainer.appendChild(pieceElement);
+            
+            // Track captured pawns for Betrayal card
+            if (pieceType === 'p') {
+                if (color === playerColor) {
+                    capturedPlayerPawns.push(color);
+                } else {
+                    capturedOpponentPawns.push(color);
+                }
+            }
         }
         
         // Render player cards
@@ -1962,6 +2065,11 @@
             
             if (game.in_checkmate()) {
                 info.textContent = `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
+                // Trigger fireworks and disable End Turn button
+                startFireworks();
+                const btn = document.getElementById('endTurnBtn');
+                btn.disabled = true;
+                btn.classList.remove('active-turn');
             } else if (game.in_draw()) {
                 info.textContent = 'Game ended in a draw';
             } else if (game.in_check()) {
@@ -1969,6 +2077,122 @@
             } else {
                 info.textContent = `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
             }
+        }
+        
+        // Fireworks animation
+        function startFireworks() {
+            const canvas = document.getElementById('fireworksCanvas');
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const fireworks = [];
+            const particles = [];
+            
+            class Firework {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height;
+                    this.targetY = Math.random() * canvas.height * 0.5;
+                    this.speed = 5;
+                    this.exploded = false;
+                    this.hue = Math.random() * 360;
+                }
+                
+                update() {
+                    if (!this.exploded) {
+                        this.y -= this.speed;
+                        if (this.y <= this.targetY) {
+                            this.explode();
+                        }
+                    }
+                }
+                
+                draw() {
+                    if (!this.exploded) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                        ctx.fill();
+                    }
+                }
+                
+                explode() {
+                    this.exploded = true;
+                    for (let i = 0; i < 50; i++) {
+                        particles.push(new Particle(this.x, this.y, this.hue));
+                    }
+                }
+            }
+            
+            class Particle {
+                constructor(x, y, hue) {
+                    this.x = x;
+                    this.y = y;
+                    this.hue = hue;
+                    this.velocity = {
+                        x: (Math.random() - 0.5) * 8,
+                        y: (Math.random() - 0.5) * 8
+                    };
+                    this.alpha = 1;
+                    this.decay = Math.random() * 0.02 + 0.01;
+                }
+                
+                update() {
+                    this.velocity.y += 0.1;
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+                    this.alpha -= this.decay;
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            
+            function animate() {
+                ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Launch new fireworks
+                if (Math.random() < 0.1 && fireworks.length < 3) {
+                    fireworks.push(new Firework());
+                }
+                
+                // Update and draw fireworks
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    fireworks[i].update();
+                    fireworks[i].draw();
+                    if (fireworks[i].exploded) {
+                        fireworks.splice(i, 1);
+                    }
+                }
+                
+                // Update and draw particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    particles[i].draw();
+                    if (particles[i].alpha <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                
+                if (fireworks.length > 0 || particles.length > 0) {
+                    requestAnimationFrame(animate);
+                } else if (Date.now() - startTime > 5000) {
+                    canvas.style.display = 'none';
+                }
+            }
+            
+            const startTime = Date.now();
+            animate();
         }
         
         // Modal event listeners
