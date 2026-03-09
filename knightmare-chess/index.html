@@ -817,8 +817,8 @@
             }
             
             .card {
-                width: 60px;
-                height: 107px;
+                width: 69px;
+                height: 122px;
             }
             
             .deck-pile, .discard-pile {
@@ -1486,16 +1486,21 @@
             const newRank = fromRank + rankDir;
             const newSquare = newFile + newRank;
             
-            // Get the piece at the current location
-            const piece = game.get(lastOpponentMove.to);
+            // Undo the opponent's last move (this restores captured pieces)
+            game.undo();
             
-            if (piece) {
-                // Remove from current position and place at new position
-                game.remove(lastOpponentMove.to);
-                game.put(piece, newSquare);
+            // Make a new move - just 1 square in the same direction
+            const move = game.move({
+                from: lastOpponentMove.from,
+                to: newSquare
+            });
+            
+            if (move) {
+                // Switch turn back to player since opponent's "turn" was modified
+                switchTurn();
                 
                 renderBoard();
-                updateGameInfo(`Bog: ${piece.type.toUpperCase()} moved back - only 1 square allowed!`);
+                updateGameInfo(`Bog: ${move.piece.toUpperCase()} moved back - only 1 square allowed!`);
             }
         }
         
@@ -1690,31 +1695,31 @@
         // Handle square click
         function handleSquareClick(square) {
             if (game.game_over()) return;
-            if (game.turn() !== playerColor) return; // Not player's turn
             
-            // Handle Anathema card piece selection mode
+            // Handle card piece selection modes first (before turn check)
+            // These modes should work even if game.turn() has switched
             if (anathemaMode) {
                 handleAnathemaSelection(square);
                 return;
             }
             
-            // Handle Black Widow card piece selection mode
             if (blackWidowMode) {
                 handleBlackWidowSelection(square);
                 return;
             }
             
-            // Handle Battlefield Promotion card piece selection mode
             if (battlefieldPromotionMode) {
                 handleBattlefieldPromotionSelection(square);
                 return;
             }
             
-            // Handle Betrayal card piece selection mode
             if (betrayalMode) {
                 handleBetrayalSelection(square);
                 return;
             }
+            
+            // Normal move handling - check if it's player's turn
+            if (game.turn() !== playerColor) return;
             
             // If no square selected, select this square if it has a piece
             if (!selectedSquare) {
@@ -1734,6 +1739,13 @@
                 if (isPawnPromotion) {
                     // Show promotion modal
                     showPromotionModal(selectedSquare, square);
+                } else {
+                    // Try to make a normal move
+                    attemptMove(selectedSquare, square);
+                }
+            }
+        }
+                            showPromotionModal(selectedSquare, square);
                 } else {
                     // Try to make a normal move
                     attemptMove(selectedSquare, square);
