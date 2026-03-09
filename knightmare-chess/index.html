@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knightmare Chess</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="ico/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="ico/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="ico/favicon-16x16.png">
+    <link rel="manifest" href="ico/site.webmanifest">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap');
         
@@ -90,6 +94,22 @@
             font-family: 'Cinzel', serif;
             font-size: 0.8rem;
             color: var(--accent-gold);
+            transition: all 0.3s ease;
+        }
+        
+        .game-info-text.flash {
+            animation: flashBorder 0.6s ease-out;
+        }
+        
+        @keyframes flashBorder {
+            0%, 100% {
+                text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(212, 175, 55, 0.9),
+                             0 0 30px rgba(212, 175, 55, 0.6);
+                transform: scale(1.05);
+            }
         }
         
         .end-turn-btn {
@@ -959,6 +979,9 @@
         let capturedPlayerPawns = []; // Pawns captured from the player
         let capturedOpponentPawns = []; // Pawns captured from the opponent
         
+        // Track last opponent move for Bog card
+        let lastOpponentMove = null; // { from, to, piece, flags }
+        
         // Get best move using simple evaluation
         async function getBestMove() {
             // Simple evaluation-based move selection
@@ -1036,6 +1059,14 @@
                     const move = game.move(moveData);
                     
                     if (move) {
+                        // Track last opponent move for Bog card
+                        lastOpponentMove = {
+                            from: move.from,
+                            to: move.to,
+                            piece: move.piece,
+                            flags: move.flags
+                        };
+                        
                         if (move.captured) {
                             addCapturedPiece(move.captured, move.color === 'w' ? 'b' : 'w');
                         }
@@ -1187,6 +1218,35 @@
                 effect: (gameState) => {
                     // Start betrayal mode
                     startBetrayalEffect();
+                }
+            },
+            'Bog': {
+                requirement: (gameState) => {
+                    // Opponent last moved a rook, bishop, or queen at least 2 squares
+                    if (!lastOpponentMove) return false;
+                    
+                    const piece = lastOpponentMove.piece;
+                    if (piece !== 'r' && piece !== 'b' && piece !== 'q') return false;
+                    
+                    // Calculate distance moved
+                    const fromFile = lastOpponentMove.from.charCodeAt(0);
+                    const fromRank = parseInt(lastOpponentMove.from[1]);
+                    const toFile = lastOpponentMove.to.charCodeAt(0);
+                    const toRank = parseInt(lastOpponentMove.to[1]);
+                    
+                    const distance = Math.max(
+                        Math.abs(toFile - fromFile),
+                        Math.abs(toRank - fromRank)
+                    );
+                    
+                    return distance >= 2;
+                },
+                whenToPlay: ['BEFOREMOVE', 'AFTEROPPONENTMOVE'],
+                effectPersists: false,
+                continuingEffectCondition: null,
+                effect: (gameState) => {
+                    // Move the piece back so it only moved 1 square
+                    executeBogEffect();
                 }
             }
             // Add more card configs here as needed
@@ -1407,6 +1467,38 @@
             return true;
         }
         
+        // Bog card effect
+        function executeBogEffect() {
+            if (!lastOpponentMove) return;
+            
+            // Get movement direction
+            const fromFile = lastOpponentMove.from.charCodeAt(0);
+            const fromRank = parseInt(lastOpponentMove.from[1]);
+            const toFile = lastOpponentMove.to.charCodeAt(0);
+            const toRank = parseInt(lastOpponentMove.to[1]);
+            
+            // Calculate direction (normalized to -1, 0, or 1)
+            const fileDir = Math.sign(toFile - fromFile);
+            const rankDir = Math.sign(toRank - fromRank);
+            
+            // Calculate new position (1 square from origin in the direction moved)
+            const newFile = String.fromCharCode(fromFile + fileDir);
+            const newRank = fromRank + rankDir;
+            const newSquare = newFile + newRank;
+            
+            // Get the piece at the current location
+            const piece = game.get(lastOpponentMove.to);
+            
+            if (piece) {
+                // Remove from current position and place at new position
+                game.remove(lastOpponentMove.to);
+                game.put(piece, newSquare);
+                
+                renderBoard();
+                updateGameInfo(`Bog: ${piece.type.toUpperCase()} moved back - only 1 square allowed!`);
+            }
+        }
+        
         // Initialize deck
         let deck = [...cardNames];
         
@@ -1498,6 +1590,7 @@
             betrayalMode = false;
             capturedPlayerPawns = []; // Reset captured pawns
             capturedOpponentPawns = [];
+            lastOpponentMove = null; // Reset last opponent move
             document.getElementById('capturedPieces').innerHTML = '';
             
             // Shuffle deck
@@ -2058,24 +2151,40 @@
         function updateGameInfo(customMessage = null) {
             const info = document.getElementById('gameInfo');
             
+            // Determine new message
+            let newMessage = '';
             if (customMessage) {
-                info.textContent = customMessage;
-                return;
+                newMessage = customMessage;
+            } else if (game.in_checkmate()) {
+                newMessage = `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
+            } else if (game.in_draw()) {
+                newMessage = 'Game ended in a draw';
+            } else if (game.in_check()) {
+                newMessage = `${game.turn() === 'w' ? 'White' : 'Black'} is in check`;
+            } else {
+                newMessage = `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
             }
             
+            // Add flash animation if message changed
+            if (info.textContent !== newMessage) {
+                info.textContent = newMessage;
+                info.classList.remove('flash');
+                // Force reflow to restart animation
+                void info.offsetWidth;
+                info.classList.add('flash');
+                
+                // Remove flash class after animation completes
+                setTimeout(() => {
+                    info.classList.remove('flash');
+                }, 600);
+            }
+            
+            // Handle checkmate special effects
             if (game.in_checkmate()) {
-                info.textContent = `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
-                // Trigger fireworks and disable End Turn button
                 startFireworks();
                 const btn = document.getElementById('endTurnBtn');
                 btn.disabled = true;
                 btn.classList.remove('active-turn');
-            } else if (game.in_draw()) {
-                info.textContent = 'Game ended in a draw';
-            } else if (game.in_check()) {
-                info.textContent = `${game.turn() === 'w' ? 'White' : 'Black'} is in check`;
-            } else {
-                info.textContent = `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
             }
         }
         
@@ -2161,8 +2270,10 @@
                 ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Launch new fireworks
-                if (Math.random() < 0.1 && fireworks.length < 3) {
+                const elapsed = Date.now() - startTime;
+                
+                // Launch new fireworks only for the first 4 seconds
+                if (elapsed < 4000 && Math.random() < 0.1 && fireworks.length < 3) {
                     fireworks.push(new Firework());
                 }
                 
@@ -2184,9 +2295,10 @@
                     }
                 }
                 
-                if (fireworks.length > 0 || particles.length > 0) {
+                // Continue animating if under 6 seconds OR if there are still particles/fireworks
+                if (elapsed < 6000 || fireworks.length > 0 || particles.length > 0) {
                     requestAnimationFrame(animate);
-                } else if (Date.now() - startTime > 5000) {
+                } else {
                     canvas.style.display = 'none';
                 }
             }
