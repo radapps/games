@@ -1326,15 +1326,47 @@
             },
             'Blind Fate': {
                 requirement: (gameState) => {
-                    // Player has lost 2 or more pieces
-                    return capturedPlayerPawns.length + 
-                           Object.values(capturedPlayerPiecesByType).reduce((a, b) => a + b, 0) >= 2;
+                    // Player has lost 2 or more pieces (count all captured pieces)
+                    return capturedPlayerPiecesArray.length >= 2;
                 },
                 whenToPlay: ['INSTEADOF'],
                 effectPersists: false,
                 continuingEffectCondition: null,
                 effect: (gameState) => {
                     startBlindFateEffect();
+                }
+            },
+            'Amazon': {
+                requirement: (gameState) => {
+                    // At least one queen on the board
+                    const board = gameState.board;
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = board[row][col];
+                            if (piece && piece.type === 'q') {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                },
+                whenToPlay: ['AFTERMOVE'],
+                effectPersists: true,
+                continuingEffectCondition: () => {
+                    // Effect ends when no amazons left on board
+                    const board = game.board();
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            const piece = board[row][col];
+                            if (piece && piece.type === 'a') { // 'a' for amazon
+                                return true; // Still has amazons, keep effect active
+                            }
+                        }
+                    }
+                    return false; // No amazons left, deactivate
+                },
+                effect: (gameState) => {
+                    executeAmazonEffect();
                 }
             }
             // Add more card configs here as needed
@@ -1610,8 +1642,17 @@
             
             if (!kingSquare) return null;
             
-            // Get all opponent's pieces and check which one attacks the king
+            // Temporarily switch turn to opponent to check their moves
+            const currentTurn = game.turn();
+            if (currentTurn === playerColor) {
+                // Need to check opponent's moves, so switch turn
+                switchTurn();
+            }
+            
+            // Get all opponent's pieces and check which one can move to king square
             const opponent = playerColor === 'w' ? 'b' : 'w';
+            let checkingSquare = null;
+            
             for (let row = 0; row < 8; row++) {
                 for (let col = 0; col < 8; col++) {
                     const piece = board[row][col];
@@ -1620,18 +1661,26 @@
                         const rank = 8 - row;
                         const square = file + rank;
                         
-                        // Check if this piece can attack the king
+                        // Check if this piece can move to the king
                         const moves = game.moves({ square: square, verbose: true });
                         for (const move of moves) {
                             if (move.to === kingSquare) {
-                                return square;
+                                checkingSquare = square;
+                                break;
                             }
                         }
+                        if (checkingSquare) break;
                     }
                 }
+                if (checkingSquare) break;
             }
             
-            return null;
+            // Switch turn back if we switched it
+            if (currentTurn === playerColor) {
+                switchTurn();
+            }
+            
+            return checkingSquare;
         }
         
         // Bribery card effect
@@ -1766,13 +1815,16 @@
             switchTurn();
             hasMoved = true;
             
+            // Save piece type before cleaning up
+            const placedPieceType = blindFateChosenPiece.type;
+            
             // Clean up
             blindFateMode = false;
             blindFateChosenPiece = null;
             blindFateSelectedPieces = [];
             
             renderBoard();
-            updateGameInfo(`Blind Fate: ${getPieceName(blindFateChosenPiece.type)} placed!`);
+            updateGameInfo(`Blind Fate: ${getPieceName(placedPieceType)} placed!`);
             updateEndTurnButton();
             
             return true;
@@ -1802,6 +1854,41 @@
             
             return false;
         }
+        
+        // Amazon card effect
+        function executeAmazonEffect() {
+            // Replace all queens with amazons
+            const board = game.board();
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = board[row][col];
+                    if (piece && piece.type === 'q') {
+                        const file = String.fromCharCode(97 + col);
+                        const rank = 8 - row;
+                        const square = file + rank;
+                        
+                        // Remove queen and place amazon (using custom type 'a')
+                        game.remove(square);
+                        game.put({ type: 'a', color: piece.color }, square);
+                    }
+                }
+            }
+            
+            // Update FEN to persist amazons
+            const currentFen = game.fen();
+            game.load(currentFen);
+            
+            renderBoard();
+            updateGameInfo('Amazon: All queens transformed into Amazons!');
+        }
+        
+        // Check if Amazon effect is active
+        function isAmazonActive() {
+            return activeCards.includes('Amazon');
+        }
+        
+        // Override getPieceImage to handle amazons
+        const originalGetPieceImage = getPieceImage;
         
         // Initialize deck
         let deck = [...cardNames];
@@ -1862,6 +1949,17 @@
         
         // Update card playability for all cards in hand
         function updateCardPlayability() {
+            // Don't show cards as playable if already played/discarded, game is over, or not player's turn
+            if (hasPlayedOrDiscardedCard || game.game_over() || game.turn() !== playerColor) {
+                playerCards.forEach((cardName, index) => {
+                    const cardElement = document.querySelector(`[data-card-index="${index}"]`);
+                    if (cardElement) {
+                        cardElement.classList.remove('playable');
+                    }
+                });
+                return;
+            }
+            
             playerCards.forEach((cardName, index) => {
                 const cardElement = document.querySelector(`[data-card-index="${index}"]`);
                 if (cardElement) {
@@ -1990,7 +2088,8 @@
                 'n': 'knight',
                 'b': 'bishop',
                 'q': 'queen',
-                'k': 'king'
+                'k': 'king',
+                'a': 'amazon'
             };
             const pieceName = pieceNames[piece.type];
             const color = piece.color === 'w' ? 'white' : 'black';
@@ -2058,6 +2157,44 @@
         
         // Attempt to make a move (extracted for reuse)
         function attemptMove(from, to, promotion = null) {
+            const piece = game.get(from);
+            
+            // Handle amazon moves specially (knight OR bishop movement)
+            if (piece && piece.type === 'a') {
+                if (isValidAmazonMove(from, to)) {
+                    // Check if destination has opponent piece (capture)
+                    const captured = game.get(to);
+                    
+                    // Make the move manually
+                    game.remove(from);
+                    game.put(piece, to);
+                    
+                    // Track captured piece
+                    if (captured) {
+                        addCapturedPiece(captured.type, captured.color);
+                    }
+                    
+                    // Update game state
+                    hasMoved = true;
+                    currentGamePhase = 'AFTERMOVE';
+                    clearHighlights();
+                    selectedSquare = null;
+                    renderBoard();
+                    updateGameInfo();
+                    updateEndTurnButton();
+                    updateCardPlayability();
+                    
+                    return true;
+                } else {
+                    // Invalid amazon move
+                    clearHighlights();
+                    selectedSquare = null;
+                    handleSquareClick(to);
+                    return false;
+                }
+            }
+            
+            // Normal chess.js move handling
             const moveOptions = { from: from, to: to };
             if (promotion) {
                 moveOptions.promotion = promotion;
@@ -2088,6 +2225,51 @@
                 handleSquareClick(to);
                 return false;
             }
+        }
+        
+        // Check if amazon move is valid (knight OR bishop)
+        function isValidAmazonMove(from, to) {
+            const fromFile = from.charCodeAt(0) - 97;
+            const fromRank = parseInt(from[1]) - 1;
+            const toFile = to.charCodeAt(0) - 97;
+            const toRank = parseInt(to[1]) - 1;
+            
+            const fileDiff = Math.abs(toFile - fromFile);
+            const rankDiff = Math.abs(toRank - fromRank);
+            
+            // Knight move: L-shape (2,1) or (1,2)
+            const isKnightMove = (fileDiff === 2 && rankDiff === 1) || (fileDiff === 1 && rankDiff === 2);
+            
+            // Bishop move: diagonal
+            const isBishopMove = fileDiff === rankDiff && fileDiff > 0;
+            
+            if (!isKnightMove && !isBishopMove) return false;
+            
+            // Check destination square
+            const destination = game.get(to);
+            const piece = game.get(from);
+            
+            // Can't capture own piece
+            if (destination && destination.color === piece.color) return false;
+            
+            // If bishop move, check path is clear
+            if (isBishopMove) {
+                const fileDir = Math.sign(toFile - fromFile);
+                const rankDir = Math.sign(toRank - fromRank);
+                
+                let checkFile = fromFile + fileDir;
+                let checkRank = fromRank + rankDir;
+                
+                while (checkFile !== toFile || checkRank !== toRank) {
+                    const checkSquare = String.fromCharCode(97 + checkFile) + (checkRank + 1);
+                    if (game.get(checkSquare)) return false; // Path blocked
+                    
+                    checkFile += fileDir;
+                    checkRank += rankDir;
+                }
+            }
+            
+            return true;
         }
         
         // Pawn promotion modal
@@ -2162,6 +2344,31 @@
         
         // Show valid moves
         function showValidMoves(square) {
+            const piece = game.get(square);
+            
+            // Handle amazon valid moves
+            if (piece && piece.type === 'a') {
+                // Show all valid amazon moves
+                for (let file = 0; file < 8; file++) {
+                    for (let rank = 0; rank < 8; rank++) {
+                        const targetSquare = String.fromCharCode(97 + file) + (rank + 1);
+                        if (targetSquare !== square && isValidAmazonMove(square, targetSquare)) {
+                            const targetElement = document.querySelector(`[data-square="${targetSquare}"]`);
+                            if (targetElement) {
+                                const destination = game.get(targetSquare);
+                                if (destination && destination.color !== piece.color) {
+                                    targetElement.classList.add('capture-move');
+                                } else if (!destination) {
+                                    targetElement.classList.add('valid-move');
+                                }
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+            
+            // Normal chess.js moves
             const moves = game.moves({ square: square, verbose: true });
             moves.forEach(move => {
                 const targetSquare = document.querySelector(`[data-square="${move.to}"]`);
@@ -2249,6 +2456,37 @@
             updateCardPlayability();
         }
         
+        // Render active cards (persistent effects)
+        function renderActiveCards() {
+            const container = document.getElementById('activeCards');
+            container.innerHTML = '';
+            
+            activeCards.forEach((cardName) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.border = '2px solid var(--accent-gold)';
+                card.style.boxShadow = '0 0 15px rgba(212, 175, 55, 0.5)';
+                
+                const img = document.createElement('img');
+                img.src = `assets/${cardName}.jpg`;
+                img.alt = cardName;
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    card.textContent = cardName;
+                    card.style.fontSize = '0.7rem';
+                    card.style.padding = '8px';
+                    card.style.display = 'flex';
+                    card.style.alignItems = 'center';
+                    card.style.justifyContent = 'center';
+                    card.style.textAlign = 'center';
+                    card.style.color = 'var(--text-primary)';
+                };
+                
+                card.appendChild(img);
+                container.appendChild(card);
+            });
+        }
+        
         // Open card modal
         function openCardModal(cardName, cardIndex) {
             currentCardSelected = { name: cardName, index: cardIndex };
@@ -2323,6 +2561,7 @@
             // Update displays
             updateDiscardPile();
             renderPlayerCards();
+            renderActiveCards();
             updateEndTurnButton();
             closeCardModal();
         }
@@ -2373,6 +2612,9 @@
         
         // End turn
         async function endTurn() {
+            // Check active card conditions and remove expired ones
+            checkActiveCardConditions();
+            
             // Draw cards to fill hand to 5
             while (playerCards.length < 5) {
                 if (!drawCard()) {
@@ -2386,6 +2628,7 @@
             
             // Update displays
             renderPlayerCards();
+            renderActiveCards();
             updateEndTurnButton();
             updateGameInfo();
             
@@ -2393,9 +2636,41 @@
             if (!game.game_over()) {
                 await makeComputerMove();
                 
+                // Check active cards again after computer move
+                checkActiveCardConditions();
+                
                 // Reset game phase to BEFOREMOVE at start of player's turn
                 currentGamePhase = 'BEFOREMOVE';
                 updateCardPlayability();
+            }
+        }
+        
+        // Check if active cards should still be active
+        function checkActiveCardConditions() {
+            const cardsToRemove = [];
+            
+            activeCards.forEach(cardName => {
+                const config = cardConfigs[cardName];
+                if (config && config.continuingEffectCondition) {
+                    if (!config.continuingEffectCondition()) {
+                        // Effect has expired
+                        cardsToRemove.push(cardName);
+                        discardPile.push(cardName);
+                    }
+                }
+            });
+            
+            // Remove expired cards
+            cardsToRemove.forEach(cardName => {
+                const index = activeCards.indexOf(cardName);
+                if (index >= 0) {
+                    activeCards.splice(index, 1);
+                }
+            });
+            
+            if (cardsToRemove.length > 0) {
+                renderActiveCards();
+                updateDiscardPile();
             }
         }
         
