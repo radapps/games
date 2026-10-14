@@ -180,6 +180,7 @@ button{font:inherit;color:inherit}
 .sq-btn:active{transform:translateY(2px)}
 .hint{margin-top:6px;font-size:13px;line-height:1.35;color:var(--muted);min-height:1.35em}
 .hint.ok{color:var(--grass)}
+.hint{-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
 .preview{display:flex;flex-wrap:wrap;gap:6px}
 .pc{display:flex;align-items:center;gap:6px;padding:3px 8px 4px 4px;font:500 13px var(--font-display);background:var(--field);border:2px solid var(--field-edge)}
 .pc i{width:14px;height:14px;border:2px solid var(--panel-border);display:block}
@@ -233,6 +234,11 @@ details.how[open] summary::before{content:"\2013  "}
 .row-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .row-btns .wide{grid-column:1 / -1}
 .row-btns .btn{margin-top:10px}
+.row-btns.three{grid-template-columns:repeat(3,1fr)}
+.res-online{font-family:var(--font-display);font-size:15px;line-height:1.35;margin:-2px 0 10px;text-align:center;color:var(--muted)}
+.res-online.good{color:var(--text);font-weight:700}
+.board-list{margin:12px 0 4px;min-height:60px}
+.board-empty{padding:18px 6px;text-align:center;font-family:var(--font-display);font-size:15px;line-height:1.4;color:var(--muted)}
 
 @media (max-width:360px){
   .timer{font-size:24px;min-width:122px}
@@ -325,6 +331,7 @@ details.how[open] summary::before{content:"\2013  "}
 
       <button class="btn" id="startBtn">Start race</button>
       <div class="best" id="bestLine"></div>
+      <button type="button" class="btn stone small hidden" id="menuBoardBtn">World top 10</button>
 
       <details class="how">
         <summary>How to play</summary>
@@ -360,13 +367,38 @@ details.how[open] summary::before{content:"\2013  "}
       </div>
       <div class="res-world" id="resWorld"></div>
       <div class="res-pb" id="resPB"></div>
+      <div class="res-online hidden" id="resOnline" aria-live="polite"></div>
       <div id="resList"></div>
-      <div class="row-btns">
+      <div class="row-btns three" id="resBtns">
         <button class="btn wide" id="againBtn">Race again</button>
-        <button class="btn stone small" id="shareResBtn">Share result</button>
+        <button class="btn stone small hidden" id="resBoardBtn">Top 10</button>
+        <button class="btn stone small" id="shareResBtn">Share</button>
         <button class="btn stone small" id="menuBtn">Menu</button>
       </div>
       <div class="hint" id="resHint"></div>
+    </div>
+  </div>
+</div>
+
+<div id="shareSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="wrap">
+    <div class="panel">
+      <h2 class="p-title" id="shareTitle">Share this world</h2>
+      <p class="p-sub" id="shareSub"></p>
+      <button class="btn" id="shareLinkBtn">Share link</button>
+      <button class="btn stone" id="shareCodeBtn">Share code</button>
+      <button class="btn stone small" id="shareCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="boardSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="boardTitle">
+  <div class="wrap">
+    <div class="panel">
+      <h2 class="p-title" id="boardTitle">World top 10</h2>
+      <p class="p-sub" id="boardSub"></p>
+      <div class="board-list" id="boardList" aria-live="polite"></div>
+      <button class="btn stone" id="boardClose">Close</button>
     </div>
   </div>
 </div>
@@ -412,12 +444,42 @@ details.how[open] summary::before{content:"\2013  "}
     store.set('dd.bests', b);
   }
 
-  // copy/share text with graceful fallbacks
-  async function shareText(text) {
+  // Where the game lives. Share links point here with ?seed=CODE.
+  const GAME_URL = 'https://radapps.github.io/games/dropper-dash/';
+  const worldLink = (code) => GAME_URL + '?seed=' + encodeURIComponent(code);
+
+  // Online leaderboard: paste your Cloudflare Worker URL between the quotes, for example
+  // 'https://dropper-dash-scores.yourname.workers.dev'. Leave it empty to hide online scores.
+  const LEADERBOARD_URL = 'https://dropper-dash-scores.jradio.workers.dev';
+  const BOARD = LEADERBOARD_URL.trim().replace(/\/+$/, '');
+
+  // Anonymous player id so the leaderboard keeps one best time per player per world
+  let PID = store.get('dd.pid', null);
+  if (typeof PID !== 'string' || !/^[a-f0-9]{16,32}$/.test(PID)) {
+    const a = new Uint8Array(12);
+    try { crypto.getRandomValues(a); } catch (e) { for (let i = 0; i < a.length; i++) a[i] = (Math.random() * 256) | 0; }
+    PID = Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+    store.set('dd.pid', PID);
+  }
+  const boardCache = {};
+  async function boardFetch(path, opts) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), 8000) : 0;
+    try {
+      const res = await fetch(BOARD + path, Object.assign({ signal: ctl ? ctl.signal : undefined }, opts || {}));
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+      return { status: res.status, data: data };
+    } finally { clearTimeout(timer); }
+  }
+
+  // copy/share text (and an optional link) with graceful fallbacks
+  async function shareText(text, url) {
     if (navigator.share) {
-      try { await navigator.share({ text: text }); return 'shared'; }
+      try { await navigator.share(url ? { text: text, url: url } : { text: text }); return 'shared'; }
       catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
     }
+    if (url) text = text + ' ' + url;
     try { await navigator.clipboard.writeText(text); return 'copied'; } catch (e) { /* fall through */ }
     try {
       const ta = document.createElement('textarea');
@@ -1199,15 +1261,98 @@ details.how[open] summary::before{content:"\2013  "}
   });
   seedInput.addEventListener('change', () => { if (mode === 'custom') { clearTimeout(seedTimer); const p = parseCode(seedInput.value, world.diff); if (p) { customCode = p.code; store.set('dd.custom', customCode); } selectWorld(); } });
   seedInput.addEventListener('focus', () => { if (mode === 'custom') seedInput.select(); });
-  $('shareSeedBtn').addEventListener('click', async () => {
-    const msg = mode === 'daily'
-      ? 'Race today\'s Dropper Dash world with me! Seed: ' + world.code
-      : 'Race my Dropper Dash world (' + DIFFS[world.diff].name + ')! Seed: ' + world.code;
-    const res = await shareText(msg);
+  // Share button asks: link (opens the game with this seed) or just the code
+  const shareSheet = $('shareSheet');
+  let sheetReturn = null;
+  function openShareSheet() {
+    $('shareSub').textContent = (mode === 'daily' ? 'Today\'s world, seed ' : 'Seed ') + world.code;
+    sheetReturn = document.activeElement;
+    shareSheet.classList.remove('hidden');
+    $('shareLinkBtn').focus({ preventScroll: true });
+  }
+  function closeShareSheet() {
+    shareSheet.classList.add('hidden');
+    if (sheetReturn && sheetReturn.focus) sheetReturn.focus({ preventScroll: true });
+  }
+  function seedMessage() {
+    return mode === 'daily'
+      ? 'Race today\'s Dropper Dash world with me!'
+      : 'Race my Dropper Dash world (' + DIFFS[world.diff].name + ')!';
+  }
+  $('shareSeedBtn').addEventListener('click', openShareSheet);
+  $('shareCancelBtn').addEventListener('click', closeShareSheet);
+  shareSheet.addEventListener('click', (e) => { if (e.target === shareSheet) closeShareSheet(); });
+  shareSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeShareSheet(); });
+  $('shareCodeBtn').addEventListener('click', async () => {
+    closeShareSheet();
+    const res = await shareText(seedMessage() + ' Seed: ' + world.code);
     if (res === 'copied') setHint('Seed copied. Paste it to a friend.', true);
     else if (res === 'shared') setHint('Seed shared.', true);
     else if (res === 'fail') { setHint('Couldn\'t copy automatically. Select the seed above and copy it.'); seedInput.focus(); seedInput.select(); }
   });
+  $('shareLinkBtn').addEventListener('click', async () => {
+    closeShareSheet();
+    const url = worldLink(world.code);
+    const res = await shareText(seedMessage(), url);
+    if (res === 'copied') setHint('Link copied. Anyone who opens it gets this exact world.', true);
+    else if (res === 'shared') setHint('Link shared.', true);
+    else if (res === 'fail') setHint('Couldn\'t copy automatically. Here is the link: ' + url);
+  });
+
+  // ---------- world top 10 ----------
+  const boardSheet = $('boardSheet'), boardList = $('boardList');
+  let boardReturn = null;
+  function boardMessage(text) {
+    boardList.innerHTML = '';
+    const d = document.createElement('div'); d.className = 'board-empty'; d.textContent = text;
+    boardList.appendChild(d);
+  }
+  function renderBoard(top) {
+    if (!top.length) { boardMessage('No one has finished this world yet. Be the first!'); return; }
+    boardList.innerHTML = '';
+    const me = PID.slice(0, 8);
+    top.forEach((row) => {
+      const mine = row.pid === me;
+      const el = document.createElement('div'); el.className = 'res-row' + (mine ? ' me' : '');
+      const pl = document.createElement('div'); pl.className = 'medal sm m' + Math.min(row.rank, 4); pl.textContent = row.rank;
+      const nm = document.createElement('div'); nm.className = 'res-name';
+      const tx = document.createElement('span'); tx.className = 'nm'; tx.textContent = row.name; nm.appendChild(tx);
+      if (mine) { const y = document.createElement('span'); y.className = 'you'; y.textContent = '(you)'; nm.appendChild(y); }
+      const tm = document.createElement('div'); tm.className = 'res-time'; tm.textContent = fmt(row.time);
+      const sm = document.createElement('small'); sm.textContent = plural(row.crashes, 'crash'); tm.appendChild(sm);
+      el.appendChild(pl); el.appendChild(nm); el.appendChild(tm);
+      boardList.appendChild(el);
+    });
+  }
+  async function openBoard() {
+    if (!BOARD) return;
+    const code = world.code;
+    $('boardSub').textContent = worldLabel(world) + ', seed ' + code;
+    boardReturn = document.activeElement;
+    boardSheet.classList.remove('hidden');
+    $('boardClose').focus({ preventScroll: true });
+    if (boardCache[code]) renderBoard(boardCache[code]); else boardMessage('Loading scores\u2026');
+    try {
+      const r = await boardFetch('/scores?seed=' + encodeURIComponent(code));
+      if (r.status === 200 && r.data && Array.isArray(r.data.top)) {
+        boardCache[code] = r.data.top;
+        if (world.code === code) renderBoard(r.data.top);
+      } else if (!boardCache[code]) boardMessage('The leaderboard had a problem. Try again in a bit.');
+    } catch (e) {
+      if (!boardCache[code]) boardMessage('Couldn\'t reach the leaderboard. Check your connection and try again.');
+    }
+  }
+  function closeBoard() {
+    boardSheet.classList.add('hidden');
+    if (boardReturn && boardReturn.focus) boardReturn.focus({ preventScroll: true });
+  }
+  $('boardClose').addEventListener('click', closeBoard);
+  boardSheet.addEventListener('click', (e) => { if (e.target === boardSheet) closeBoard(); });
+  boardSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBoard(); });
+  $('menuBoardBtn').addEventListener('click', openBoard);
+  $('resBoardBtn').addEventListener('click', openBoard);
+  if (BOARD) { $('menuBoardBtn').classList.remove('hidden'); $('resBoardBtn').classList.remove('hidden'); }
+  else $('resBtns').classList.remove('three');
 
   // ---------- flow ----------
   function resetPlayer() {
@@ -1222,6 +1367,7 @@ details.how[open] summary::before{content:"\2013  "}
     store.set('dd.name', nameInput.value.trim().slice(0, 14));
     P.lvl = 0; P.fails = 0; P.finishTime = 0;
     raceTime = 0; paused = false; resultsData = null;
+    setOnline('off', '');
     bots = makeBots();
     buildTrack();
     ensureLevel(0);
@@ -1296,6 +1442,39 @@ details.how[open] summary::before{content:"\2013  "}
       if (cx >= pl.x && cx < pl.x + pl.s && cz >= pl.z && cz < pl.z + pl.s) land(); else crash();
     }
   }
+  // Sends the finished time to the world leaderboard and reports back on the results screen
+  let online = { state: 'off', text: '' };
+  function setOnline(state, text) {
+    online = { state: state, text: text };
+    const el = $('resOnline');
+    el.className = 'res-online' + (state === 'good' ? ' good' : '') + (state === 'off' ? ' hidden' : '');
+    el.textContent = text;
+  }
+  async function submitScore() {
+    if (!BOARD) { setOnline('off', ''); return; }
+    const code = world.code;
+    const typed = nameInput.value.trim().slice(0, 14);
+    const name = typed || 'Racer-' + PID.slice(0, 4).toUpperCase();
+    setOnline('busy', 'Sending your time to the world leaderboard\u2026');
+    try {
+      const r = await boardFetch('/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed: code, player: PID, name: name, time: Math.round(P.finishTime * 1000) / 1000, crashes: P.fails })
+      });
+      if (r.status === 200 && r.data && Array.isArray(r.data.top)) {
+        boardCache[code] = r.data.top;
+        const top = r.data.top;
+        if (r.data.rank) setOnline('good', 'You\'re #' + r.data.rank + ' on this world\'s top 10!' + (typed ? '' : ' Add a racer name in the menu to show up by name.'));
+        else if (top.length >= 10) setOnline('info', 'Not in the world top 10 yet. 10th place is ' + fmt(top[top.length - 1].time) + '.');
+        else setOnline('info', 'Time sent to the world leaderboard.');
+      } else if (r.status === 429) setOnline('info', 'Too many times sent in a row. Wait a minute, then race again.');
+      else if (r.status === 422) setOnline('info', 'The leaderboard didn\'t accept this time.');
+      else setOnline('info', 'The leaderboard had a problem. Your time is still saved on this device.');
+    } catch (e) {
+      setOnline('info', 'Couldn\'t reach the leaderboard. Your time is still saved on this device.');
+    }
+  }
   function finishRace() {
     sfx.finish();
     const all = bots.map((b) => ({ name: b.name, time: b.finish, fails: b.fails, color: b.color, me: false }));
@@ -1307,6 +1486,7 @@ details.how[open] summary::before{content:"\2013  "}
     if (isPB) setBest(world.code, P.finishTime);
     resultsData = { all: all, place: place, isPB: isPB, hadPrev: prev != null, best: isPB ? P.finishTime : prev };
     showBig(place === 1 ? '1st!' : 'Finish!', 'gold');
+    submitScore();
   }
   function showResults() {
     const r = resultsData; if (!r) return;
@@ -1423,21 +1603,39 @@ details.how[open] summary::before{content:"\2013  "}
   $('quitBtn').addEventListener('click', toMenu);
   $('shareResBtn').addEventListener('click', async () => {
     const r = resultsData; if (!r) return;
-    const msg = 'Dropper Dash, ' + worldLabel(world).toLowerCase() + ' ' + world.code + ': I finished ' + ordinal(r.place) + ' of ' + r.all.length +
-      ' in ' + fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash') + '. Can you beat it?';
-    const res = await shareText(msg);
+    const where = world.daily ? 'the daily world for ' + world.daily.label : 'the ' + DIFFS[world.diff].name + ' world';
+    const msg = 'Dropper Dash: I finished ' + ordinal(r.place) + ' of ' + r.all.length + ' in ' + fmt(P.finishTime) +
+      ' with ' + plural(P.fails, 'crash') + ' on ' + where + ' ' + world.code + '. Can you beat it?';
+    const res = await shareText(msg, worldLink(world.code));
     const hint = $('resHint');
     hint.className = 'hint' + (res === 'fail' ? '' : ' ok');
-    hint.textContent = res === 'copied' ? 'Result copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Seed: ' + world.code : '';
+    hint.textContent = res === 'copied' ? 'Result and link copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Link: ' + worldLink(world.code) : '';
   });
   const muteBtn = $('muteBtn');
   muteBtn.classList.toggle('off', sfx.isMuted());
   muteBtn.addEventListener('click', () => { muteBtn.classList.toggle('off', sfx.toggle()); });
 
   // ---------- boot ----------
+  // A shared link like ?seed=H-7KQ2XD loads that world straight away.
+  function seedFromUrl() {
+    try {
+      const q = new URLSearchParams(location.search);
+      const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const raw = q.get('seed') || h.get('seed');
+      return raw ? parseCode(raw, 'P') : null;
+    } catch (e) { return null; }
+  }
+  const linked = seedFromUrl();
+  if (linked) {
+    if (linked.code === todayInfo().code) mode = 'daily';
+    else { mode = 'custom'; customCode = linked.code; store.set('dd.custom', customCode); }
+    store.set('dd.mode', mode);
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+  }
   resize();
   selectWorld();
-  defaultHint();
+  if (linked) setHint('Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
+  else defaultHint();
   requestAnimationFrame(loop);
 })();
 </script>
