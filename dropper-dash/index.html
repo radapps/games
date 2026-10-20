@@ -84,6 +84,7 @@ body{font-family:var(--font-body);color:var(--text);-webkit-user-select:none;use
 button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 #stage{position:fixed;inset:0;touch-action:none;background:var(--bg)}
 #stage canvas{display:block}
@@ -111,8 +112,9 @@ button{font:inherit;color:inherit}
 #track .tick{position:absolute;left:50%;width:18px;height:2px;margin-left:-9px;background:var(--hud-muted)}
 #track .tick span{position:absolute;right:22px;top:-7px;font-size:11px;color:var(--hud-muted)}
 #track .goal{position:absolute;left:50%;bottom:-16px;width:28px;height:12px;margin-left:-14px;background:var(--water);border:2px solid #0b3c66}
-.dot{position:absolute;left:50%;top:0;width:20px;height:20px;transform:translate(-50%,-50%);border:2px solid #0b0d10;font-size:9px;font-weight:700;color:#0b0d10;display:grid;place-items:center;line-height:1}
-.dot.me{width:auto;min-width:34px;height:22px;padding:0 4px;background:var(--gold);border-color:#fff;outline:2px solid #0b0d10;z-index:3;font-size:10px}
+.dot{position:absolute;left:50%;top:0;width:20px;height:20px;transform:translate(-50%,-50%);border:2px solid #0b0d10;font-size:10px;font-weight:700;color:#0b0d10;display:grid;place-items:center;line-height:1}
+.dot.pb{outline:2px dashed #fff;outline-offset:1px}
+.dot.me{width:auto;min-width:34px;height:22px;padding:0 4px;background:var(--gold);border-color:#fff;outline:2px solid #0b0d10;z-index:30;font-size:10px}
 
 #crosshair{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;opacity:.75}
 #crosshair::before,#crosshair::after{content:"";position:absolute;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
@@ -152,50 +154,49 @@ button{font:inherit;color:inherit}
 
 /* ---------- Menus ---------- */
 .overlay{position:fixed;inset:0;z-index:20;display:flex;overflow-y:auto;background:var(--scrim);
-  padding:calc(env(safe-area-inset-top,0px) + 18px) calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 18px) calc(env(safe-area-inset-left,0px) + 16px)}
+  padding:calc(env(safe-area-inset-top,0px) + 14px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px)}
 .wrap{margin:auto;width:min(440px,100%)}
-.logo{margin:0;text-align:center;font-family:var(--font-display);font-weight:700;line-height:.9;font-size:clamp(46px,14vw,74px);color:var(--hud-fg);
-  text-shadow:0 4px 0 #3a3f46,0 8px 0 rgba(0,0,0,.5)}
-.logo span{display:block}
-.logo .dash{color:var(--gold);text-shadow:0 4px 0 var(--gold-shadow),0 8px 0 rgba(0,0,0,.5)}
-.tagline{margin:12px auto 16px;max-width:32ch;text-align:center;font-family:var(--font-display);color:var(--hud-fg);font-size:16px;line-height:1.35;text-shadow:1px 1px 0 #000}
-.panel{background:var(--panel);color:var(--text);border:4px solid var(--panel-border);box-shadow:inset 0 0 0 3px var(--panel-edge),0 8px 0 rgba(0,0,0,.4);padding:18px 16px 20px}
-.label{display:block;margin-bottom:6px;font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--muted)}
-.block{margin-top:14px}
-.input{width:100%;padding:10px 12px;font:600 18px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;outline:none;
+.logo{margin:0 0 12px;text-align:center;font-family:var(--font-display);font-weight:700;line-height:1;font-size:clamp(38px,11.5vw,64px);color:var(--hud-fg);white-space:nowrap;
+  text-shadow:0 4px 0 #3a3f46,0 7px 0 rgba(0,0,0,.5)}
+.logo .dash{color:var(--gold);text-shadow:0 4px 0 var(--gold-shadow),0 7px 0 rgba(0,0,0,.5)}
+.panel{background:var(--panel);color:var(--text);border:4px solid var(--panel-border);box-shadow:inset 0 0 0 3px var(--panel-edge),0 8px 0 rgba(0,0,0,.4);padding:14px 14px 16px}
+.label{display:block;margin-bottom:5px;font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--muted)}
+.block{margin-top:10px}
+.input{width:100%;padding:9px 11px;font:600 18px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;outline:none;
   -webkit-user-select:text;user-select:text;touch-action:manipulation}
+.input::placeholder{color:var(--muted);opacity:1}
 .input:focus-visible{border-color:var(--focus);outline:none}
 .seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
 .seg.d4{grid-template-columns:repeat(4,1fr)}
 @media (max-width:460px){.seg.d4{grid-template-columns:repeat(2,1fr)}}
-.seg button{padding:8px 4px 10px;font:600 16px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;cursor:pointer;touch-action:manipulation;
+.seg button{padding:7px 4px 9px;font:600 16px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;cursor:pointer;touch-action:manipulation;
   box-shadow:inset 0 -4px 0 rgba(0,0,0,.08)}
 .seg button[aria-pressed="true"]{color:#fff;background:var(--grass);border-color:var(--grass-edge);box-shadow:inset 0 -4px 0 var(--grass-lo),inset 0 3px 0 var(--grass-hi);text-shadow:1px 1px 0 rgba(0,0,0,.3)}
 .seed-row{display:grid;grid-template-columns:1fr auto auto;gap:6px}
 .seed-row .input{letter-spacing:.06em;text-transform:uppercase;min-width:0}
 .seed-row .input[readonly]{color:var(--muted)}
-.sq-btn{width:48px;display:grid;place-items:center;padding:0;cursor:pointer;color:#fff;background:var(--stone);border:3px solid var(--stone-edge);border-radius:0;
+.sq-btn{width:46px;display:grid;place-items:center;padding:0;cursor:pointer;color:#fff;background:var(--stone);border:3px solid var(--stone-edge);border-radius:0;
   box-shadow:inset 0 -4px 0 var(--stone-lo),inset 0 3px 0 var(--stone-hi);touch-action:manipulation}
 .sq-btn svg{width:20px;height:20px}
 .sq-btn:active{transform:translateY(2px)}
-.hint{margin-top:6px;font-size:13px;line-height:1.35;color:var(--muted);min-height:1.35em}
+.hint{margin-top:6px;font-size:13px;line-height:1.35;color:var(--muted);-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
+.hint:empty{display:none}
 .hint.ok{color:var(--grass)}
-.hint{-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
-.preview{display:flex;flex-wrap:wrap;gap:6px}
-.pc{display:flex;align-items:center;gap:6px;padding:3px 8px 4px 4px;font:500 13px var(--font-display);background:var(--field);border:2px solid var(--field-edge)}
-.pc i{width:14px;height:14px;border:2px solid var(--panel-border);display:block}
-.pc b{color:var(--muted);font-weight:600}
-.btn{display:block;width:100%;margin-top:14px;padding:13px 16px 17px;cursor:pointer;touch-action:manipulation;
-  font:700 22px var(--font-display);letter-spacing:.02em;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.35);
+.btn{display:block;width:100%;margin-top:12px;padding:12px 16px 15px;cursor:pointer;touch-action:manipulation;
+  font:700 21px var(--font-display);letter-spacing:.02em;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.35);
   background:var(--grass);border:3px solid var(--grass-edge);border-radius:0;box-shadow:inset 0 -6px 0 var(--grass-lo),inset 0 4px 0 var(--grass-hi)}
 .btn:active{transform:translateY(2px);box-shadow:inset 0 -3px 0 var(--grass-lo),inset 0 3px 0 var(--grass-hi)}
 .btn.stone{background:var(--stone);border-color:var(--stone-edge);box-shadow:inset 0 -6px 0 var(--stone-lo),inset 0 4px 0 var(--stone-hi)}
 .btn.stone:active{box-shadow:inset 0 -3px 0 var(--stone-lo),inset 0 3px 0 var(--stone-hi)}
-.btn.small{font-size:18px;padding:10px 10px 14px}
+.btn.small{font-size:18px;padding:9px 10px 12px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.best{margin-top:12px;text-align:center;font-family:var(--font-display);font-size:15px;color:var(--muted)}
+.best-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.best{font-family:var(--font-display);font-size:15px;color:var(--muted)}
 .best b{color:var(--text)}
-details.how{margin-top:14px;padding-top:12px;border-top:2px dashed var(--divider)}
+.mini-btn{flex:none;padding:5px 10px 7px;cursor:pointer;touch-action:manipulation;font:600 15px var(--font-display);color:#fff;white-space:nowrap;
+  background:var(--stone);border:3px solid var(--stone-edge);border-radius:0;box-shadow:inset 0 -3px 0 var(--stone-lo),inset 0 2px 0 var(--stone-hi)}
+.mini-btn:active{transform:translateY(1px)}
+details.how{margin-top:10px;padding-top:9px;border-top:2px dashed var(--divider)}
 details.how summary{cursor:pointer;list-style:none;font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--muted)}
 details.how summary::-webkit-details-marker{display:none}
 details.how summary::before{content:"+ "}
@@ -206,39 +207,41 @@ details.how[open] summary::before{content:"\2013  "}
 .ico.steer{background:var(--stone-hi)}
 .ico.dodge{background:#a0703f}
 .ico.splash{background:var(--water)}
+.ico.race{background:var(--silver)}
 .ico.seed{background:var(--gold)}
 .how b{font-family:var(--font-display);font-size:15px}
-.p-title{margin:0 0 4px;font-family:var(--font-display);font-size:30px;font-weight:700;text-align:center}
+.p-title{margin:0 0 4px;font-family:var(--font-display);font-size:28px;font-weight:700;text-align:center}
 .p-sub{margin:0;text-align:center;font-family:var(--font-display);font-size:15px;color:var(--muted)}
 
-.res-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.res-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .medal{display:grid;place-items:center;font-family:var(--font-display);font-weight:700;color:var(--on-medal);border:3px solid var(--panel-border);
   box-shadow:inset 0 -4px 0 rgba(0,0,0,.2),inset 0 3px 0 rgba(255,255,255,.4)}
-.medal.lg{width:66px;height:66px;font-size:22px;flex:none}
-.medal.sm{width:30px;height:30px;font-size:14px;border-width:2px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.medal.lg{width:58px;height:58px;font-size:20px;flex:none}
+.medal.sm{width:26px;height:26px;font-size:13px;border-width:2px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
 .m1{background:var(--gold)}.m2{background:var(--silver)}.m3{background:var(--bronze)}.m4{background:var(--stone);color:#fff}
-.res-title{font-family:var(--font-display);font-size:24px;font-weight:700;line-height:1.1}
-.res-sub{font-family:var(--font-display);color:var(--muted);font-size:15px;margin-top:5px}
-.res-world{font-family:var(--font-display);font-size:14px;color:var(--muted);margin-bottom:8px}
+.res-title{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.1}
+.res-sub{font-family:var(--font-display);color:var(--muted);font-size:15px;margin-top:4px}
+.res-world{font-family:var(--font-display);font-size:14px;color:var(--muted);margin-bottom:6px}
 .res-world b{color:var(--text);letter-spacing:.04em}
-.res-pb{font-family:var(--font-display);font-size:15px;padding:7px 10px;background:var(--field);border:2px solid var(--field-edge);margin-bottom:10px;text-align:center}
+.res-pb{font-family:var(--font-display);font-size:14px;padding:5px 10px;background:var(--field);border:2px solid var(--field-edge);margin-bottom:6px;text-align:center}
 .res-pb.new{background:var(--gold);color:var(--on-medal);border-color:var(--gold-shadow);font-weight:700}
-.res-row{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:7px 6px;border-bottom:2px dashed var(--divider);font-family:var(--font-display)}
-.res-row.me{background:var(--row-hi)}
-.res-name{display:flex;align-items:center;gap:8px;min-width:0;font-size:16px;font-weight:600}
-.res-name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.res-name .you{font-weight:500;color:var(--muted);font-size:13px;flex:none}
-.swatch{width:12px;height:12px;flex:none;border:2px solid var(--panel-border)}
-.res-time{text-align:right;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
-.res-time small{display:block;font-size:12px;font-weight:500;color:var(--muted)}
-.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-.row-btns .wide{grid-column:1 / -1}
-.row-btns .btn{margin-top:10px}
-.row-btns.three{grid-template-columns:repeat(3,1fr)}
-.res-online{font-family:var(--font-display);font-size:15px;line-height:1.35;margin:-2px 0 10px;text-align:center;color:var(--muted)}
+.res-online{font-family:var(--font-display);font-size:14px;line-height:1.35;margin:0 0 6px;text-align:center;color:var(--muted)}
 .res-online.good{color:var(--text);font-weight:700}
-.board-list{margin:12px 0 4px;min-height:60px}
+.res-row{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:4px 6px;border-bottom:2px dashed var(--divider);font-family:var(--font-display)}
+.res-row.me{background:var(--row-hi)}
+.res-row.after{margin-top:6px;border-top:2px dashed var(--divider)}
+.res-name{display:flex;align-items:center;gap:7px;min-width:0;font-size:15px;font-weight:600}
+.res-name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-name .you{font-weight:500;color:var(--muted);font-size:12px;flex:none}
+.res-time{text-align:right;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.res-time small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row-btns .wide{grid-column:1 / -1}
+.row-btns .btn{margin-top:8px}
+.board-list{margin:10px 0 2px;min-height:60px}
 .board-empty{padding:18px 6px;text-align:center;font-family:var(--font-display);font-size:15px;line-height:1.4;color:var(--muted)}
+.board-note{margin:8px 0 0;text-align:center;font-size:13px;color:var(--muted)}
+.board-note:empty{display:none}
 
 @media (max-width:360px){
   .timer{font-size:24px;min-width:122px}
@@ -259,7 +262,7 @@ details.how[open] summary::before{content:"\2013  "}
     <div class="chip hud-box"><span id="lvlNum">Level 1/5</span><small id="lvlName"></small></div>
     <div class="hud-center">
       <div class="timer hud-box" id="timer">00:00.00</div>
-      <div class="place hud-box" id="placeLine"><b>1st</b> of 6</div>
+      <div class="place hud-box" id="placeLine"><b>1st</b> of 11</div>
     </div>
     <div class="hud-btns">
       <button class="icon-btn hud-box" id="muteBtn" aria-label="Sound on or off">
@@ -286,28 +289,21 @@ details.how[open] summary::before{content:"\2013  "}
 
 <div id="menu" class="overlay">
   <div class="wrap">
-    <h1 class="logo"><span>Dropper</span><span class="dash">Dash</span></h1>
-    <p class="tagline">Race five rivals down five shafts. Play today's world or roll your own.</p>
+    <h1 class="logo">Dropper <span class="dash">Dash</span></h1>
     <div class="panel">
-      <label class="label" for="nameInput">Your racer name</label>
-      <input class="input" id="nameInput" maxlength="14" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="You">
+      <label class="sr-only" for="nameInput">Your racer name</label>
+      <input class="input" id="nameInput" maxlength="14" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your racer name">
 
-      <div class="block">
-        <span class="label">World</span>
-        <div class="seg" id="modeSeg">
-          <button type="button" data-mode="daily" aria-pressed="true">Daily world</button>
-          <button type="button" data-mode="custom" aria-pressed="false">Custom world</button>
-        </div>
+      <div class="block seg" id="modeSeg" role="group" aria-label="World">
+        <button type="button" data-mode="daily" aria-pressed="true">Daily world</button>
+        <button type="button" data-mode="custom" aria-pressed="false">Custom world</button>
       </div>
 
-      <div class="block" id="diffBlock">
-        <span class="label">Difficulty</span>
-        <div class="seg d4" id="diffSeg">
-          <button type="button" data-d="E" aria-pressed="false">Easy</button>
-          <button type="button" data-d="M" aria-pressed="false">Medium</button>
-          <button type="button" data-d="H" aria-pressed="false">Hard</button>
-          <button type="button" data-d="P" aria-pressed="true">Progressive</button>
-        </div>
+      <div class="block seg d4" id="diffSeg" role="group" aria-label="Difficulty">
+        <button type="button" data-d="E" aria-pressed="false">Easy</button>
+        <button type="button" data-d="M" aria-pressed="false">Medium</button>
+        <button type="button" data-d="P" aria-pressed="true">Progressive</button>
+        <button type="button" data-d="H" aria-pressed="false">Hard</button>
       </div>
 
       <div class="block">
@@ -317,21 +313,18 @@ details.how[open] summary::before{content:"\2013  "}
           <button type="button" class="sq-btn" id="diceBtn" aria-label="Roll a new random world">
             <svg viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h12v1h1v12h-1v1H2v-1H1V2h1zm0 2v10h12V3zm2 1h2v2H4zm6 0h2v2h-2zM7 7h2v2H7zm-3 3h2v2H4zm6 0h2v2h-2z" fill-rule="evenodd"/></svg>
           </button>
-          <button type="button" class="sq-btn" id="shareSeedBtn" aria-label="Share this world's seed">
+          <button type="button" class="sq-btn" id="shareSeedBtn" aria-label="Share this world">
             <svg viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 1h2v1h1v1h1v1h1v2H9v5H7V6H4V4h1V3h1V2h1zM2 8h3v2H4v3h8v-3h-1V8h3v7H2z"/></svg>
           </button>
         </div>
         <div class="hint" id="seedHint"></div>
       </div>
 
-      <div class="block">
-        <span class="label">Maps in this world</span>
-        <div class="preview" id="preview"></div>
-      </div>
-
       <button class="btn" id="startBtn">Start race</button>
-      <div class="best" id="bestLine"></div>
-      <button type="button" class="btn stone small hidden" id="menuBoardBtn">World top 10</button>
+      <div class="best-row">
+        <div class="best" id="bestLine"></div>
+        <button type="button" class="mini-btn" id="menuBoardBtn">Top 10</button>
+      </div>
 
       <details class="how">
         <summary>How to play</summary>
@@ -339,7 +332,8 @@ details.how[open] summary::before{content:"\2013  "}
           <li><span class="ico steer"></span><span><b>Steer</b><br>Drag anywhere on the screen. On a keyboard, use WASD or the arrow keys.</span></li>
           <li><span class="ico dodge"></span><span><b>Dodge</b><br>Touching a block sends you back to the top of that map. The clock keeps running.</span></li>
           <li><span class="ico splash"></span><span><b>Splash</b><br>Land in the water at the bottom to move on to the next map.</span></li>
-          <li><span class="ico seed"></span><span><b>Share worlds</b><br>Every world has a seed. Send it to a friend and they race the exact same five maps. Paste a seed into the box to load it.</span></li>
+          <li><span class="ico race"></span><span><b>Race the top 10</b><br>The numbered markers on the right are this world's top 10 runs. Beat a time to take its spot.</span></li>
+          <li><span class="ico seed"></span><span><b>Share worlds</b><br>Send a seed or link and a friend races the exact same five maps.</span></li>
         </ul>
       </details>
     </div>
@@ -369,9 +363,8 @@ details.how[open] summary::before{content:"\2013  "}
       <div class="res-pb" id="resPB"></div>
       <div class="res-online hidden" id="resOnline" aria-live="polite"></div>
       <div id="resList"></div>
-      <div class="row-btns three" id="resBtns">
+      <div class="row-btns">
         <button class="btn wide" id="againBtn">Race again</button>
-        <button class="btn stone small hidden" id="resBoardBtn">Top 10</button>
         <button class="btn stone small" id="shareResBtn">Share</button>
         <button class="btn stone small" id="menuBtn">Menu</button>
       </div>
@@ -398,6 +391,7 @@ details.how[open] summary::before{content:"\2013  "}
       <h2 class="p-title" id="boardTitle">World top 10</h2>
       <p class="p-sub" id="boardSub"></p>
       <div class="board-list" id="boardList" aria-live="polite"></div>
+      <p class="board-note" id="boardNote"></p>
       <button class="btn stone" id="boardClose">Close</button>
     </div>
   </div>
@@ -435,12 +429,18 @@ details.how[open] summary::before{content:"\2013  "}
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
   };
-  function getBest(code) { const b = store.get('dd.bests', {}); return typeof b[code] === 'number' ? b[code] : null; }
-  function setBest(code, t) {
+  // personal bests on this device: { code: { t: seconds, c: crashes } }
+  function getBest(code) {
+    const v = store.get('dd.bests', {})[code];
+    if (typeof v === 'number') return { t: v, c: 0 };
+    if (v && typeof v.t === 'number') return { t: v.t, c: v.c | 0 };
+    return null;
+  }
+  function setBest(code, t, c) {
     const b = store.get('dd.bests', {});
-    delete b[code]; b[code] = t;
+    delete b[code]; b[code] = { t: t, c: c };
     const keys = Object.keys(b);
-    while (keys.length > 80) delete b[keys.shift()];
+    while (keys.length > 120) delete b[keys.shift()];
     store.set('dd.bests', b);
   }
 
@@ -449,7 +449,7 @@ details.how[open] summary::before{content:"\2013  "}
   const worldLink = (code) => GAME_URL + '?seed=' + encodeURIComponent(code);
 
   // Online leaderboard: paste your Cloudflare Worker URL between the quotes, for example
-  // 'https://dropper-dash-scores.yourname.workers.dev'. Leave it empty to hide online scores.
+  // 'https://dropper-dash-scores.yourname.workers.dev'. Leave it empty to play offline.
   const LEADERBOARD_URL = 'https://dropper-dash-scores.jradio.workers.dev';
   const BOARD = LEADERBOARD_URL.trim().replace(/\/+$/, '');
 
@@ -461,7 +461,8 @@ details.how[open] summary::before{content:"\2013  "}
     PID = Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
     store.set('dd.pid', PID);
   }
-  const boardCache = {};
+  const ME8 = PID.slice(0, 8);
+  const serverTop = {};   // real online scores per world code
   async function boardFetch(path, opts) {
     const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const timer = ctl ? setTimeout(() => ctl.abort(), 8000) : 0;
@@ -565,6 +566,7 @@ details.how[open] summary::before{content:"\2013  "}
       const n = (r() - 0.5) * 24; g.fillStyle = rgb(col[0] + n, col[1] + n, col[2] + n); g.fillRect(ox + x, oy + y, 1, 1);
     }
   }
+  const RAINBOW = [[230, 60, 60], [240, 150, 40], [240, 220, 60], [80, 190, 80], [60, 140, 230], [150, 90, 210]];
   // Every material is described as data and drawn by one painter.
   const MAT = {
     stone:       { t: 'noise', c: [126, 126, 126], v: 28, s: [[[96, 96, 96], 0.12]] },
@@ -589,7 +591,7 @@ details.how[open] summary::before{content:"\2013  "}
     coralpink:   { t: 'noise', c: [214, 92, 140], v: 40, s: [[[250, 152, 192], 0.15]] },
     coralyellow: { t: 'noise', c: [222, 196, 60], v: 40, s: [[[250, 232, 120], 0.15]] },
     cloud:       { t: 'noise', c: [240, 245, 252], v: 10, s: [[[212, 224, 244], 0.14]] },
-    rainbow:     { t: 'rainbow' },
+    rainbow:     { t: 'layers', cs: RAINBOW, v: 14 },
     frost:       { t: 'noise', c: [66, 84, 106], v: 26, s: [[[150, 190, 230], 0.07]] },
     ice:         { t: 'ice', c: [150, 192, 250], v: 16 },
     snow:        { t: 'noise', c: [236, 244, 250], v: 12, s: [[[208, 222, 236], 0.08]] },
@@ -626,9 +628,66 @@ details.how[open] summary::before{content:"\2013  "}
     endstone:    { t: 'noise', c: [222, 224, 164], v: 22, s: [[[190, 190, 130], 0.13]] },
     obsidian:    { t: 'noise', c: [24, 18, 38], v: 16, s: [[[70, 44, 112], 0.12]] },
     purpur:      { t: 'bricks', c: [170, 124, 170], m: [118, 82, 120], v: 12, bw: 8, bh: 8 },
-    water:       { t: 'noise', c: [40, 98, 208], v: 22, s: [[[108, 172, 248], 0.11]] }
+    water:       { t: 'noise', c: [40, 98, 208], v: 22, s: [[[108, 172, 248], 0.11]] },
+    // added with the second set of 20 themes
+    bamboo:      { t: 'stalks', c: [112, 168, 64] },
+    lantern:     { t: 'tiles', c: [226, 72, 48], l: [120, 30, 20] },
+    moss:        { t: 'noise', c: [72, 122, 52], v: 30, s: [[[50, 90, 36], 0.18]] },
+    acacia:      { t: 'planks', c: [188, 102, 60] },
+    drygrass:    { t: 'noise', c: [192, 172, 92], v: 34, s: [[[160, 140, 70], 0.15]] },
+    acacialog:   { t: 'log', c: [112, 102, 92] },
+    mud:         { t: 'noise', c: [86, 70, 52], v: 30, s: [[[60, 48, 36], 0.2]] },
+    lilypad:     { t: 'dots', c: [62, 132, 52], d: [120, 186, 84] },
+    mangrove:    { t: 'log', c: [112, 58, 50] },
+    redsand:     { t: 'noise', c: [190, 102, 52], v: 26, s: [[[160, 80, 40], 0.12]] },
+    canyon:      { t: 'layers', cs: [[176, 84, 50], [206, 140, 90], [150, 70, 50], [220, 170, 120], [168, 96, 70]], v: 12 },
+    orangeterra: { t: 'noise', c: [204, 122, 60], v: 18, s: [[[180, 100, 48], 0.1]] },
+    frostbrick:  { t: 'bricks', c: [44, 60, 96], m: [24, 32, 60], v: 14, bw: 8, bh: 4 },
+    aurora:      { t: 'layers', cs: [[60, 220, 150], [60, 180, 210], [120, 110, 230], [210, 100, 210]], v: 18 },
+    darkprism:   { t: 'grid', c: [52, 92, 80], l: [30, 62, 54], cell: 8 },
+    sealantern:  { t: 'tiles', c: [212, 234, 228], l: [150, 192, 192] },
+    sponge:      { t: 'noise', c: [202, 190, 72], v: 40, s: [[[150, 140, 40], 0.2]] },
+    basalt:      { t: 'log', c: [82, 82, 90] },
+    blackstone:  { t: 'noise', c: [42, 38, 44], v: 20, s: [[[230, 180, 50], 0.04]] },
+    toywall:     { t: 'checker', cs: [[244, 204, 48], [244, 244, 236]], size: 8 },
+    toyred:      { t: 'studs', c: [220, 44, 44] },
+    toyblue:     { t: 'studs', c: [44, 112, 230] },
+    toyyellow:   { t: 'studs', c: [244, 196, 40] },
+    cookie:      { t: 'noise', c: [198, 142, 82], v: 26, s: [[[88, 50, 30], 0.08]] },
+    cake:        { t: 'layers', cs: [[250, 242, 232], [242, 152, 182], [250, 242, 232], [122, 72, 42]], v: 10 },
+    waffle:      { t: 'grid', c: [216, 162, 84], l: [160, 108, 50], cell: 4 },
+    bookshelf:   { t: 'books' },
+    darkplanks:  { t: 'planks', c: [96, 66, 42] },
+    parchment:   { t: 'noise', c: [232, 216, 172], v: 16, s: [[[200, 180, 130], 0.08]] },
+    carpet:      { t: 'noise', c: [170, 38, 42], v: 16, s: [[[200, 160, 60], 0.03]] },
+    brass:       { t: 'tiles', c: [204, 164, 72], l: [130, 96, 30] },
+    gear:        { t: 'dots', c: [122, 126, 134], d: [70, 72, 80] },
+    wetstone:    { t: 'noise', c: [80, 92, 96], v: 30, s: [[[60, 112, 112], 0.1]] },
+    shipwood:    { t: 'planks', c: [102, 74, 50] },
+    honeycomb:   { t: 'bricks', c: [230, 160, 40], m: [170, 100, 20], v: 16, bw: 4, bh: 4 },
+    honey:       { t: 'noise', c: [242, 172, 40], v: 20, s: [[[255, 212, 92], 0.12]] },
+    bee:         { t: 'stripes', cs: [[248, 200, 40], [34, 28, 22]], w: 4 },
+    darkstone:   { t: 'noise', c: [30, 34, 48], v: 18, s: [[[46, 52, 70], 0.12]] },
+    glowshroom:  { t: 'dots', c: [22, 42, 96], d: [84, 232, 255] },
+    arcadewall:  { t: 'noise', c: [12, 10, 18], v: 6, s: [[[255, 70, 70], 0.02], [[70, 255, 130], 0.02], [[70, 150, 255], 0.02], [[255, 230, 70], 0.02]] },
+    brickred:    { t: 'bricks', c: [192, 82, 42], m: [92, 40, 20], v: 18, bw: 8, bh: 4 },
+    goldtile:    { t: 'tiles', c: [242, 182, 40], l: [150, 92, 12] },
+    glass:       { t: 'tiles', c: [188, 218, 240], l: [244, 250, 255] },
+    stainedred:  { t: 'tiles', c: [222, 62, 82], l: [250, 204, 212] },
+    stainedblue: { t: 'tiles', c: [62, 112, 232], l: [204, 222, 252] },
+    marsrock:    { t: 'noise', c: [172, 80, 42], v: 34, s: [[[120, 50, 24], 0.15]] },
+    solar:       { t: 'grid', c: [26, 42, 92], l: [140, 162, 204], cell: 4 },
+    alienrock:   { t: 'noise', c: [88, 42, 112], v: 34, s: [[[142, 72, 172], 0.12]] },
+    alienplant:  { t: 'noise', c: [122, 222, 62], v: 40, s: [[[250, 82, 200], 0.06]] },
+    goo:         { t: 'noise', c: [222, 42, 182], v: 30, s: [[[255, 142, 232], 0.12]] },
+    mint:        { t: 'noise', c: [162, 230, 192], v: 16, s: [[[72, 42, 30], 0.08]] },
+    strawberry:  { t: 'noise', c: [246, 172, 192], v: 16, s: [[[222, 92, 122], 0.08]] },
+    vanilla:     { t: 'noise', c: [250, 240, 212], v: 10, s: [[[230, 214, 170], 0.06]] },
+    sandbrick:   { t: 'bricks', c: [226, 210, 162], m: [190, 170, 122], v: 14, bw: 8, bh: 4 },
+    shell:       { t: 'noise', c: [250, 228, 216], v: 18, s: [[[240, 172, 162], 0.12]] },
+    driftwood:   { t: 'planks', c: [152, 132, 112] }
   };
-  const RAINBOW = [[230, 60, 60], [240, 150, 40], [240, 220, 60], [80, 190, 80], [60, 140, 230], [150, 90, 210]];
+  const BOOK_COLORS = [[150, 40, 40], [40, 80, 150], [50, 120, 60], [160, 120, 40], [100, 50, 110], [70, 70, 70]];
   function paint(g, ox, oy, r, m) {
     const px = (x, y, c, d) => { g.fillStyle = rgb(c[0] + d, c[1] + d, c[2] + d); g.fillRect(ox + x, oy + y, 1, 1); };
     switch (m.t) {
@@ -645,8 +704,17 @@ details.how[open] summary::before{content:"\2013  "}
       case 'log':
         for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.c, (r() - 0.5) * 20 + (x % 4 === 0 ? -26 : 0) + (x % 4 === 2 ? 8 : 0));
         break;
+      case 'stalks':
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+          const gap = x % 4 === 3;
+          px(x, y, m.c, (r() - 0.5) * 16 + (gap ? -55 : 0) + (!gap && y % 8 === 0 ? -32 : 0) + (x % 4 === 0 ? 14 : 0));
+        }
+        break;
       case 'bands':
         for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.c, (r() - 0.5) * m.v - (y % m.every === m.every - 1 ? m.dark : 0));
+        break;
+      case 'layers':
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[Math.min(m.cs.length - 1, Math.floor(y * m.cs.length / 16))], (r() - 0.5) * (m.v || 14));
         break;
       case 'bricks': {
         noiseFill(g, ox, oy, r, m.c, m.v);
@@ -672,9 +740,30 @@ details.how[open] summary::before{content:"\2013  "}
           px(x, y, on ? m.l : m.c, (r() - 0.5) * (on ? 20 : 8));
         }
         break;
+      case 'checker':
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[(((x / m.size) | 0) + ((y / m.size) | 0)) % 2], (r() - 0.5) * 10);
+        break;
       case 'stripes':
         for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[Math.floor(((x + y) % 16) / m.w) % m.cs.length], (r() - 0.5) * 10);
         break;
+      case 'studs':
+        noiseFill(g, ox, oy, r, m.c, 10);
+        [[3, 3], [10, 3], [3, 10], [10, 10]].forEach((s) => {
+          for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) px(s[0] + dx, s[1] + dy, m.c, 30 - dy * 10);
+          for (let dx = 0; dx < 3; dx++) px(s[0] + dx, s[1] + 3, m.c, -42);
+        });
+        for (let i = 0; i < 16; i++) { px(i, 15, m.c, -38); px(15, i, m.c, -38); }
+        break;
+      case 'books': {
+        const cols = [];
+        for (let s = 0; s < 16; s++) cols.push(BOOK_COLORS[(r() * BOOK_COLORS.length) | 0]);
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+          const sy = y % 8;
+          if (sy === 0 || sy === 7) px(x, y, [150, 110, 64], (r() - 0.5) * 14 - (sy === 7 ? 24 : 0));
+          else px(x, y, cols[(y >> 3) * 8 + (x >> 1)], (r() - 0.5) * 12 - (x % 2 ? 26 : 0) + (sy === 1 ? -18 : 0));
+        }
+        break;
+      }
       case 'dots': {
         noiseFill(g, ox, oy, r, m.c, 20);
         [[3, 3], [11, 5], [6, 11], [13, 13], [1, 9]].forEach((s) => {
@@ -686,9 +775,6 @@ details.how[open] summary::before{content:"\2013  "}
         noiseFill(g, ox, oy, r, m.c, m.v);
         g.fillStyle = 'rgba(255,255,255,0.6)';
         for (let i = 0; i < 16; i++) { if (r() < 0.7) g.fillRect(ox + i, oy + ((19 - i) % 16), 1, 1); if (r() < 0.4) g.fillRect(ox + i, oy + ((26 - i) % 16), 1, 1); }
-        break;
-      case 'rainbow':
-        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, RAINBOW[Math.min(5, Math.floor(y * 6 / 16))], (r() - 0.5) * 14);
         break;
     }
     if (m.s) m.s.forEach((sp) => specks(g, ox, oy, r, sp[0], sp[1]));
@@ -736,28 +822,48 @@ details.how[open] summary::before{content:"\2013  "}
     return texCache[key];
   }
 
-  // ---------- themes ----------
+  // ---------- themes (40) ----------
   const THEMES = [
-    { name: 'Stone Shaft',     fog: 0x1b2330, wall: 'stone',      ore: [[34, 34, 34], 0.3],     blocks: ['planks', 'cobble'],        floor: 'grass',      ui: '#a8784a' },
-    { name: 'Grassy Hollow',   fog: 0x1d2914, wall: 'dirt',       ore: [[150, 140, 130], 0.25], blocks: ['grass', 'hay'],            floor: 'grass',      ui: '#5c9c38' },
-    { name: 'Jungle Drop',     fog: 0x0e2617, wall: 'mossy',      ore: [[52, 104, 40], 0.35],   blocks: ['leaves', 'log'],           floor: 'grass',      ui: '#3e8a2c' },
-    { name: 'Autumn Woods',    fog: 0x2a180c, wall: 'darklog',    ore: null,                    blocks: ['autumn', 'hay'],           floor: 'grass',      ui: '#d66c26' },
-    { name: 'Cherry Grove',    fog: 0x2d1a26, wall: 'cherrywood', ore: null,                    blocks: ['blossom', 'cherrylog'],    floor: 'grass',      ui: '#f2a6c6' },
-    { name: 'Desert Well',     fog: 0x3a2812, wall: 'sandstone',  ore: [[190, 120, 70], 0.2],   blocks: ['cactus', 'terracotta'],    floor: 'sand',       ui: '#dbcfa3' },
-    { name: 'Tropical Lagoon', fog: 0x08343a, wall: 'prismarine', ore: [[240, 240, 220], 0.15], blocks: ['coralpink', 'coralyellow'], floor: 'sand',      ui: '#4fb3a9' },
-    { name: 'Sky Islands',     fog: 0x8fbde6, wall: 'cloud',      ore: null,                    blocks: ['grass', 'rainbow'],        floor: 'grass',      ui: '#8fbde6' },
-    { name: 'Frozen Depths',   fog: 0x0b2238, wall: 'frost',      ore: [[210, 236, 255], 0.3],  blocks: ['snow', 'ice'],             floor: 'snow',       ui: '#96c0fa' },
-    { name: 'Mushroom Grove',  fog: 0x241a24, wall: 'mycelium',   ore: [[200, 170, 200], 0.2],  blocks: ['mushred', 'mushstem'],     floor: 'mycelium',   ui: '#c62824' },
-    { name: 'Crystal Geode',   fog: 0x1c0f2e, wall: 'amethyst',   ore: [[240, 230, 255], 0.3],  blocks: ['calcite', 'crystal'],      floor: 'calcite',    ui: '#a070e0' },
-    { name: 'Gold Mine',       fog: 0x18150f, wall: 'deepslate',  ore: [[250, 210, 60], 0.35],  blocks: ['planks', 'gold'],          floor: 'gravel',     ui: '#f6d03c' },
-    { name: 'Ancient Temple',  fog: 0x1e1d14, wall: 'stonebrick', ore: [[70, 110, 50], 0.3],    blocks: ['gold', 'mossybrick'],      floor: 'sandstone',  ui: '#7c8a68' },
-    { name: 'Haunted Hollow',  fog: 0x120e0a, wall: 'soulsand',   ore: [[90, 210, 230], 0.2],   blocks: ['pumpkin', 'bone'],         floor: 'soulsand',   ui: '#e07818' },
-    { name: 'Candy Chasm',     fog: 0x3a1b2e, wall: 'candy',      ore: null,                    blocks: ['frosting', 'choco'],       floor: 'frosting',   ui: '#e84a80' },
-    { name: 'Redstone Works',  fog: 0x161214, wall: 'iron',       ore: [[200, 30, 20], 0.25],   blocks: ['redstone', 'copper'],      floor: 'metal',      ui: '#c0281a' },
-    { name: 'Lava Core',       fog: 0x2c0d0a, wall: 'netherrack', ore: [[236, 226, 214], 0.25], blocks: ['netherbrick', 'magma'],    floor: 'netherrack', ui: '#ff802a' },
-    { name: 'Neon Grid',       fog: 0x070414, wall: 'neonwall',   ore: null,                    blocks: ['neonpink', 'neoncyan'],    floor: 'neonfloor',  ui: '#2ce4ff', glow: true },
-    { name: 'Moon Base',       fog: 0x05060f, wall: 'starfield',  ore: null,                    blocks: ['moonrock', 'metal'],       floor: 'moonrock',   ui: '#a0a0a8' },
-    { name: 'End Void',        fog: 0x130a20, wall: 'endstone',   ore: [[150, 100, 190], 0.25], blocks: ['obsidian', 'purpur'],      floor: 'endstone',   ui: '#aa7caa' }
+    { name: 'Stone Shaft',      fog: 0x1b2330, wall: 'stone',      ore: [[34, 34, 34], 0.3],     blocks: ['planks', 'cobble'],          floor: 'grass' },
+    { name: 'Grassy Hollow',    fog: 0x1d2914, wall: 'dirt',       ore: [[150, 140, 130], 0.25], blocks: ['grass', 'hay'],              floor: 'grass' },
+    { name: 'Jungle Drop',      fog: 0x0e2617, wall: 'mossy',      ore: [[52, 104, 40], 0.35],   blocks: ['leaves', 'log'],             floor: 'grass' },
+    { name: 'Autumn Woods',     fog: 0x2a180c, wall: 'darklog',    ore: null,                    blocks: ['autumn', 'hay'],             floor: 'grass' },
+    { name: 'Cherry Grove',     fog: 0x2d1a26, wall: 'cherrywood', ore: null,                    blocks: ['blossom', 'cherrylog'],      floor: 'grass' },
+    { name: 'Desert Well',      fog: 0x3a2812, wall: 'sandstone',  ore: [[190, 120, 70], 0.2],   blocks: ['cactus', 'terracotta'],      floor: 'sand' },
+    { name: 'Tropical Lagoon',  fog: 0x08343a, wall: 'prismarine', ore: [[240, 240, 220], 0.15], blocks: ['coralpink', 'coralyellow'],  floor: 'sand' },
+    { name: 'Sky Islands',      fog: 0x8fbde6, wall: 'cloud',      ore: null,                    blocks: ['grass', 'rainbow'],          floor: 'grass' },
+    { name: 'Frozen Depths',    fog: 0x0b2238, wall: 'frost',      ore: [[210, 236, 255], 0.3],  blocks: ['snow', 'ice'],               floor: 'snow' },
+    { name: 'Mushroom Grove',   fog: 0x241a24, wall: 'mycelium',   ore: [[200, 170, 200], 0.2],  blocks: ['mushred', 'mushstem'],       floor: 'mycelium' },
+    { name: 'Crystal Geode',    fog: 0x1c0f2e, wall: 'amethyst',   ore: [[240, 230, 255], 0.3],  blocks: ['calcite', 'crystal'],        floor: 'calcite' },
+    { name: 'Gold Mine',        fog: 0x18150f, wall: 'deepslate',  ore: [[250, 210, 60], 0.35],  blocks: ['planks', 'gold'],            floor: 'gravel' },
+    { name: 'Ancient Temple',   fog: 0x1e1d14, wall: 'stonebrick', ore: [[70, 110, 50], 0.3],    blocks: ['gold', 'mossybrick'],        floor: 'sandstone' },
+    { name: 'Haunted Hollow',   fog: 0x120e0a, wall: 'soulsand',   ore: [[90, 210, 230], 0.2],   blocks: ['pumpkin', 'bone'],           floor: 'soulsand' },
+    { name: 'Candy Chasm',      fog: 0x3a1b2e, wall: 'candy',      ore: null,                    blocks: ['frosting', 'choco'],         floor: 'frosting' },
+    { name: 'Redstone Works',   fog: 0x161214, wall: 'iron',       ore: [[200, 30, 20], 0.25],   blocks: ['redstone', 'copper'],        floor: 'metal' },
+    { name: 'Lava Core',        fog: 0x2c0d0a, wall: 'netherrack', ore: [[236, 226, 214], 0.25], blocks: ['netherbrick', 'magma'],      floor: 'netherrack' },
+    { name: 'Neon Grid',        fog: 0x070414, wall: 'neonwall',   ore: null,                    blocks: ['neonpink', 'neoncyan'],      floor: 'neonfloor', glow: true },
+    { name: 'Moon Base',        fog: 0x05060f, wall: 'starfield',  ore: null,                    blocks: ['moonrock', 'metal'],         floor: 'moonrock' },
+    { name: 'End Void',         fog: 0x130a20, wall: 'endstone',   ore: [[150, 100, 190], 0.25], blocks: ['obsidian', 'purpur'],        floor: 'endstone' },
+    { name: 'Bamboo Forest',    fog: 0x10241a, wall: 'bamboo',     ore: null,                    blocks: ['lantern', 'darkplanks'],     floor: 'moss' },
+    { name: 'Savanna Sunset',   fog: 0x3a1c0e, wall: 'acacia',     ore: null,                    blocks: ['drygrass', 'acacialog'],     floor: 'drygrass' },
+    { name: 'Swamp Bog',        fog: 0x161e0e, wall: 'mud',        ore: [[60, 90, 40], 0.3],     blocks: ['lilypad', 'mangrove'],       floor: 'mud' },
+    { name: 'Badlands Canyon',  fog: 0x3a160c, wall: 'canyon',     ore: null,                    blocks: ['drygrass', 'orangeterra'],   floor: 'redsand' },
+    { name: 'Polar Night',      fog: 0x050e1c, wall: 'frostbrick', ore: null,                    blocks: ['aurora', 'snow'],            floor: 'snow' },
+    { name: 'Deep Sea Trench',  fog: 0x041420, wall: 'darkprism',  ore: [[120, 220, 200], 0.15], blocks: ['sealantern', 'sponge'],      floor: 'gravel' },
+    { name: 'Basalt Volcano',   fog: 0x1a0c08, wall: 'basalt',     ore: [[255, 120, 30], 0.25],  blocks: ['blackstone', 'magma'],       floor: 'blackstone' },
+    { name: 'Toy Box',          fog: 0x1a1430, wall: 'toywall',    ore: null,                    blocks: ['toyred', 'toyblue'],         floor: 'toyyellow' },
+    { name: 'Cookie Crumble',   fog: 0x2a1a10, wall: 'cookie',     ore: null,                    blocks: ['cake', 'waffle'],            floor: 'cookie' },
+    { name: 'Grand Library',    fog: 0x1c120c, wall: 'bookshelf',  ore: null,                    blocks: ['parchment', 'darkplanks'],   floor: 'carpet' },
+    { name: 'Clockwork Tower',  fog: 0x1a140a, wall: 'brass',      ore: null,                    blocks: ['gear', 'iron'],              floor: 'metal' },
+    { name: 'Pirate Cove',      fog: 0x0c1e22, wall: 'wetstone',   ore: [[250, 210, 60], 0.15],  blocks: ['shipwood', 'gold'],          floor: 'sand' },
+    { name: 'Honey Hive',       fog: 0x2a1a04, wall: 'honeycomb',  ore: null,                    blocks: ['honey', 'bee'],              floor: 'honeycomb' },
+    { name: 'Glowshroom Caves', fog: 0x060c1e, wall: 'darkstone',  ore: [[80, 230, 255], 0.25],  blocks: ['glowshroom', 'mushstem'],    floor: 'darkstone', glow: true },
+    { name: 'Retro Arcade',     fog: 0x08060e, wall: 'arcadewall', ore: null,                    blocks: ['brickred', 'goldtile'],      floor: 'brickred', glow: true },
+    { name: 'Prism Spire',      fog: 0x10182a, wall: 'glass',      ore: null,                    blocks: ['stainedred', 'stainedblue'], floor: 'calcite' },
+    { name: 'Mars Colony',      fog: 0x2a0e06, wall: 'marsrock',   ore: [[120, 50, 24], 0.2],    blocks: ['metal', 'solar'],            floor: 'marsrock' },
+    { name: 'Alien Jungle',     fog: 0x1a0624, wall: 'alienrock',  ore: [[250, 82, 200], 0.2],   blocks: ['alienplant', 'goo'],         floor: 'alienrock' },
+    { name: 'Ice Cream Parlor', fog: 0x2a1a24, wall: 'waffle',     ore: null,                    blocks: ['mint', 'strawberry'],        floor: 'vanilla' },
+    { name: 'Sandcastle Beach', fog: 0x7cc0e6, wall: 'sandbrick',  ore: null,                    blocks: ['shell', 'driftwood'],        floor: 'sand' }
   ];
 
   // ---------- world + level generation ----------
@@ -770,12 +876,12 @@ details.how[open] summary::before{content:"\2013  "}
   const PLAYER_R = 0.3, BODY_H = 1.8, EYE = 1.6;
   const ALPHA = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
-  // difficulty "d" runs 0 (old map 1) to 4 (old map 5)
+  // difficulty "d" runs 0 (gentlest) to 4 (hardest)
   const DIFFS = {
     E: { name: 'Easy',        d: [0, 0.3, 0.6, 1, 1.2] },
     M: { name: 'Medium',      d: [1.8, 2, 2, 2.2, 2.4] },
-    H: { name: 'Hard',        d: [3, 3.3, 3.6, 4, 4] },
-    P: { name: 'Progressive', d: [0, 1, 2, 3, 4] }
+    P: { name: 'Progressive', d: [0, 1, 2, 3, 4] },
+    H: { name: 'Hard',        d: [3, 3.3, 3.6, 4, 4] }
   };
   const PATTERNS = [
     ['hole', 'cross', 'bars2', 'multi', 'islands'],
@@ -870,20 +976,66 @@ details.how[open] summary::before{content:"\2013  "}
     return { diff: diff, body: body, code: diff + '-' + body };
   }
   function bodyFromRng(r) { let s = ''; for (let i = 0; i < 6; i++) s += ALPHA[(r() * ALPHA.length) | 0]; return s; }
-  function todayInfo() {
+  // One daily body per date; each difficulty gets its own world from it (E-, M-, P-, H-)
+  function todayInfo(d) {
     const n = new Date();
     const ymd = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
     let label;
     try { label = n.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { label = ymd; }
-    return { ymd: ymd, label: label, code: 'P-' + bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymd))) };
+    const body = bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymd)));
+    return { ymd: ymd, label: label, body: body, code: (d || 'P') + '-' + body };
   }
   function genWorld(code, daily) {
     const p = parseCode(code, 'P');
+    // Layout stream. Keep this exactly as it is: the leaderboard Worker mirrors it to check times.
     const rng = mulberry32(hashStr('world:' + p.code));
-    const order = shuffle(THEMES.map((_, i) => i), rng).slice(0, NUM);
-    const levels = order.map((ti, i) => genLevel((rng() * 4294967296) >>> 0, DIFFS[p.diff].d[i], THEMES[ti], i));
-    return { code: p.code, diff: p.diff, levels: levels, daily: daily || null };
+    for (let i = 19; i > 0; i--) rng();
+    const ds = DIFFS[p.diff].d;
+    const seeds = ds.map(() => (rng() * 4294967296) >>> 0);
+    // Theme stream (looks only), picked from all 40 themes
+    const order = shuffle(THEMES.map((_, i) => i), mulberry32(hashStr('themes:' + p.code))).slice(0, NUM);
+    const levels = seeds.map((s, i) => genLevel(s, ds[i], THEMES[order[i]], i));
+    const perfect = levels.reduce((a, L) => a + L.fallTime, 0) + (NUM - 1) * TRANSITION;
+    return { code: p.code, diff: p.diff, levels: levels, perfect: perfect, daily: daily || null };
   }
+
+  // ---------- the world top 10 ----------
+  // Every world starts with ten made-up runs, built from its seed so everyone sees the same ones.
+  // Real times (online, or your own on this device) push them off the board.
+  const BOT_NAMES = ['CubeKnight', 'PixelPaws', 'LavaLuke', 'BlockyBella', 'SkyDiverSam', 'RedstoneRay', 'MossyMia', 'GravelGus', 'PrismPip', 'TurboTess',
+    'CobbleCody', 'FrostFinn', 'DrippyDan', 'SplashSally', 'VoxelVic', 'BrickBea', 'QuartzQuinn', 'EmberEli', 'NovaNico', 'TidalTara',
+    'GlimmerGwen', 'ZigzagZed', 'PebblePia', 'RocketRio', 'HoverHal', 'MapleMax', 'DuneDara', 'OrbitOtis', 'JellyJun', 'CometCass'];
+  const defaultCache = {};
+  function defaultsFor(w) {
+    if (defaultCache[w.code]) return defaultCache[w.code];
+    const r = mulberry32(hashStr('defaults:' + w.code));
+    const names = shuffle(BOT_NAMES.slice(), r);
+    const out = [];
+    let crashes = 3 + (r() < 0.4 ? 1 : 0);
+    let time = w.perfect + crashes * (RESPAWN_DELAY + 1.4 + r() * 1.6) + 0.8 + r() * 2.2;
+    for (let i = 0; i < 10; i++) {
+      if (i > 0) {
+        const dc = [0, 1, 1, 2][(r() * 4) | 0];
+        crashes += dc;
+        time += Math.max(2 + r() * 3, dc * (RESPAWN_DELAY + 0.6) + 0.4);
+      }
+      out.push({ name: names[i], time: Math.round(time * 100) / 100, crashes: crashes, pid: 'ghost' + i, mine: false });
+    }
+    return (defaultCache[w.code] = out);
+  }
+  function myName() { return nameInput.value.trim().slice(0, 14) || 'You'; }
+  function boardFor(w, n) {
+    const real = (serverTop[w.code] || []).map((e) => ({ name: e.name, time: e.time, crashes: e.crashes | 0, pid: e.pid, mine: e.pid === ME8 }));
+    const lb = getBest(w.code);
+    if (lb) {
+      const mine = real.find((e) => e.mine);
+      if (!mine) real.push({ name: myName(), time: lb.t, crashes: lb.c, pid: ME8, mine: true });
+      else if (lb.t < mine.time - 0.005) { mine.time = lb.t; mine.crashes = lb.c; }
+    }
+    return real.concat(defaultsFor(w)).sort((a, b) => a.time - b.time).slice(0, n || 10)
+      .map((e, i) => Object.assign({}, e, { rank: i + 1 }));
+  }
+  const RANK_COLORS = ['#f5c542', '#cfd6de', '#d99057', '#ff6b6b', '#4dabf7', '#b197fc', '#3bc9db', '#ff922b', '#69db7c', '#f783ac'];
 
   // ---------- level meshes ----------
   const levelGroup = new THREE.Group();
@@ -1015,45 +1167,60 @@ details.how[open] summary::before{content:"\2013  "}
 
   // ---------- game state ----------
   let state = 'menu', paused = false, raceTime = 0, cd = 0, lastCount = 4, stateT = 0, shake = 0, menuAng = 0;
-  const P = { name: 'You', lvl: 0, x: W / 2, y: 0, z: W / 2, vx: 0, vz: 0, vy: 0, fails: 0, crashProg: 0, finishTime: 0 };
-  let world = null, bots = [], resultsData = null, dots = [];
+  const P = { lvl: 0, x: W / 2, y: 0, z: W / 2, vx: 0, vz: 0, vy: 0, fails: 0, crashProg: 0, finishTime: 0 };
+  let world = null, ghosts = [], resultsData = null, dots = [];
 
-  const BOT_NAMES = ['CubeKnight', 'PixelPaws', 'LavaLuke', 'BlockyBella', 'SkyDiverSam', 'RedstoneRay', 'MossyMia', 'GravelGus', 'PrismPip', 'TurboTess', 'CobbleCody', 'FrostFinn'];
-  const BOT_COLORS = ['#ff6b6b', '#4dabf7', '#b197fc', '#3bc9db', '#ff922b'];
-  const BOT_SKILLS = [0.92, 0.78, 0.64, 0.5, 0.36];
-
-  // Each rival gets a pre-simulated run: timed segments of falling, crashing and respawning.
-  // Skill wobbles race to race, and harder maps make everyone crash more.
-  function makeBots() {
-    const names = shuffle(BOT_NAMES.filter((n) => n.toLowerCase() !== P.name.toLowerCase()));
-    return BOT_SKILLS.map((base, i) => {
-      const skill = clamp(base + (Math.random() - 0.5) * 0.24, 0.12, 0.97);
-      const segs = []; let t = 0, fails = 0;
-      world.levels.forEach((L, l) => {
-        for (let attempt = 1; ; attempt++) {
-          const react = 0.1 + Math.random() * 0.7 * (1.2 - skill);
-          const pFail = clamp(0.08 + (1 - skill) * 0.5 + L.d * 0.06, 0, 0.8);
-          if (attempt < 8 && Math.random() < pFail) {
-            const f = 0.15 + Math.random() * 0.8, d = react + L.fallTime * f;
-            segs.push({ l: l, t0: t, t1: t + d, f0: 0, f1: f }); t += d;
-            segs.push({ l: l, t0: t, t1: t + RESPAWN_DELAY, f0: f, f1: f }); t += RESPAWN_DELAY;
-            fails++;
-          } else {
-            const d = react + L.fallTime;
-            segs.push({ l: l, t0: t, t1: t + d, f0: 0, f1: 1 }); t += d;
-            if (l < NUM - 1) { segs.push({ l: l, t0: t, t1: t + TRANSITION, f0: 1, f1: 1 }); t += TRANSITION; }
-            break;
-          }
-        }
-      });
-      return { name: names[i], color: BOT_COLORS[i], segs: segs, si: 0, finish: t, fails: fails, announced: false };
+  // Turns a top-10 entry (total time + crashes) into a believable run to race against.
+  function makeGhost(e) {
+    const r = mulberry32(hashStr(world.code + '|' + e.name + '|' + Math.round(e.time * 100)));
+    const L = world.levels;
+    const crashAt = new Array(NUM).fill(0);
+    const wts = L.map((l) => 1 + l.d), wsum = wts.reduce((a, b) => a + b, 0);
+    for (let k = 0; k < e.crashes; k++) {
+      let x = r() * wsum, li = 0;
+      while (li < NUM - 1 && x > wts[li]) { x -= wts[li]; li++; }
+      crashAt[li]++;
+    }
+    const slack = Math.max(0, e.time - world.perfect - e.crashes * RESPAWN_DELAY);
+    const partialBudget = e.crashes ? slack * (0.6 + r() * 0.3) : 0;
+    const crashF = [], weights = [];
+    let ws = 0;
+    for (let l = 0; l < NUM; l++) {
+      crashF.push([]);
+      for (let k = 0; k < crashAt[l]; k++) { const w = 0.3 + r(); weights.push([l, w]); ws += w; }
+    }
+    let used = 0;
+    weights.forEach((cw) => {
+      const ft = L[cw[0]].fallTime;
+      const f = clamp(partialBudget * cw[1] / ws / ft, 0.05, 0.95);
+      crashF[cw[0]].push(f); used += f * ft;
     });
+    const attempts = NUM + e.crashes, reactLeft = Math.max(0, slack - used), rw = [];
+    let rs = 0;
+    for (let a = 0; a < attempts; a++) { const w = 0.2 + r(); rw.push(w); rs += w; }
+    let ai = 0;
+    const react = () => reactLeft * rw[ai++] / rs;
+    const segs = []; let t = 0;
+    for (let l = 0; l < NUM; l++) {
+      const ft = L[l].fallTime;
+      crashF[l].forEach((f) => {
+        const d = react() + ft * f;
+        segs.push({ l: l, t0: t, t1: t + d, f0: 0, f1: f }); t += d;
+        segs.push({ l: l, t0: t, t1: t + RESPAWN_DELAY, f0: f, f1: f }); t += RESPAWN_DELAY;
+      });
+      const d = react() + ft;
+      segs.push({ l: l, t0: t, t1: t + d, f0: 0, f1: 1 }); t += d;
+      if (l < NUM - 1) { segs.push({ l: l, t0: t, t1: t + TRANSITION, f0: 1, f1: 1 }); t += TRANSITION; }
+    }
+    const k = t > 0 ? e.time / t : 1;
+    segs.forEach((s) => { s.t0 *= k; s.t1 *= k; });
+    return { entry: e, segs: segs, si: 0, finish: e.time, announced: false, color: RANK_COLORS[e.rank - 1] };
   }
-  function botProgress(b, t) {
-    if (t >= b.finish) return NUM;
-    const segs = b.segs;
-    while (b.si < segs.length - 1 && t >= segs[b.si].t1) b.si++;
-    const s = segs[b.si];
+  function ghostProgress(g, t) {
+    if (t >= g.finish) return NUM;
+    const segs = g.segs;
+    while (g.si < segs.length - 1 && t >= segs[g.si].t1) g.si++;
+    const s = segs[g.si];
     const u = s.t1 > s.t0 ? clamp((t - s.t0) / (s.t1 - s.t0), 0, 1) : 1;
     return s.l + s.f0 + (s.f1 - s.f0) * u;
   }
@@ -1143,10 +1310,6 @@ details.how[open] summary::before{content:"\2013  "}
     setTimeout(() => d.remove(), 2600);
     while (toastsEl.children.length > 3) toastsEl.firstChild.remove();
   }
-  function initials(n) {
-    const caps = n.match(/[A-Z]/g);
-    return caps && caps.length >= 2 ? caps[0] + caps[1] : n.slice(0, 2).toUpperCase();
-  }
   function buildTrack() {
     track.innerHTML = '<div class="rail hud-box"></div><div class="goal" title="Finish"></div>';
     for (let i = 0; i < NUM; i++) {
@@ -1155,9 +1318,12 @@ details.how[open] summary::before{content:"\2013  "}
       t.innerHTML = '<span>' + (i + 1) + '</span>';
       track.appendChild(t);
     }
-    dots = bots.map((b) => {
+    dots = ghosts.map((g) => {
       const d = document.createElement('div');
-      d.className = 'dot'; d.style.background = b.color; d.textContent = initials(b.name); d.title = b.name;
+      d.className = 'dot' + (g.entry.mine ? ' pb' : '');
+      d.style.background = g.color; d.style.zIndex = String(20 - g.entry.rank);
+      d.textContent = g.entry.rank;
+      d.title = '#' + g.entry.rank + ' ' + g.entry.name + (g.entry.mine ? ' (your best)' : '');
       track.appendChild(d); return d;
     });
     const me = document.createElement('div');
@@ -1168,27 +1334,25 @@ details.how[open] summary::before{content:"\2013  "}
     timerEl.textContent = fmt(raceTime);
     const pp = playerProgress();
     let place = 1;
-    bots.forEach((b, i) => {
-      const prog = botProgress(b, raceTime);
+    ghosts.forEach((g, i) => {
+      const prog = ghostProgress(g, raceTime);
       dots[i].style.top = (prog / NUM * 100) + '%';
-      const done = raceTime >= b.finish;
-      if (state === 'finished' ? b.finish < P.finishTime : (done || prog > pp)) place++;
+      if (state === 'finished' ? g.finish < P.finishTime : (raceTime >= g.finish || prog > pp)) place++;
     });
     dots[dots.length - 1].style.top = (pp / NUM * 100) + '%';
-    placeEl.innerHTML = '<b>' + ordinal(place) + '</b> of ' + (bots.length + 1) + (P.fails ? ' &nbsp;' + plural(P.fails, 'crash') : '');
+    placeEl.innerHTML = '<b>' + ordinal(place) + '</b> of ' + (ghosts.length + 1) + (P.fails ? ' &nbsp;' + plural(P.fails, 'crash') : '');
   }
-  function checkBotFinishes() {
+  function checkGhostFinishes() {
     if (state === 'finished') return;
-    bots.forEach((b) => {
-      if (!b.announced && raceTime >= b.finish) {
-        b.announced = true;
-        const place = 1 + bots.filter((o) => o.finish < b.finish).length;
-        toast('<span class="sw" style="background:' + b.color + '"></span>' + esc(b.name) + ' finished ' + ordinal(place));
-      }
+    ghosts.forEach((g) => {
+      if (g.announced || raceTime < g.finish) return;
+      g.announced = true;
+      if (g.entry.mine) toast('<span class="sw" style="background:' + g.color + '"></span>Your best time just finished');
+      else if (g.entry.rank <= 3) toast('<span class="sw" style="background:' + g.color + '"></span>#' + g.entry.rank + ' ' + esc(g.entry.name) + ' finished');
     });
   }
   function worldLabel(w) {
-    return w.daily ? 'Daily world for ' + w.daily.label : DIFFS[w.diff].name + ' world';
+    return DIFFS[w.diff].name + (w.daily ? ' daily world, ' + w.daily.label : ' world');
   }
 
   // ---------- menu: world selection ----------
@@ -1196,55 +1360,44 @@ details.how[open] summary::before{content:"\2013  "}
   let mode = store.get('dd.mode', 'daily') === 'custom' ? 'custom' : 'daily';
   let customCode = store.get('dd.custom', null);
   if (!customCode || !parseCode(customCode, 'P')) customCode = 'P-' + bodyFromRng(Math.random);
-  let hintTimer = 0;
+  let diff = store.get('dd.diff', null);
+  if (!DIFFS[diff]) diff = parseCode(customCode, 'P').diff;
 
-  function setHint(text, ok) {
-    seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : '');
-    clearTimeout(hintTimer);
-  }
-  function defaultHint() {
-    setHint(mode === 'daily'
-      ? 'Same five maps for everyone today, on Progressive difficulty. A new world arrives at midnight.'
-      : 'Type or paste a friend\'s seed to race their world, or roll a new one.');
-  }
+  function setHint(text, ok) { seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : ''); }
+  function defaultHint() { setHint(mode === 'custom' ? 'Type or paste a seed to load a friend\'s world.' : ''); }
+  function setDiff(d) { diff = d; store.set('dd.diff', d); }
+  function setCustom(code) { customCode = code; store.set('dd.custom', code); }
   function selectWorld(keepInput) {
-    if (mode === 'daily') { const t = todayInfo(); world = genWorld(t.code, t); }
+    if (mode === 'daily') { const t = todayInfo(diff); world = genWorld(t.code, t); }
     else world = genWorld(customCode, null);
     renderMenu(keepInput);
     if (state === 'menu') ensureLevel(0);
+    prefetchBoard();
   }
   function renderMenu(keepInput) {
     $('modeSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
     $('diffSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === world.diff)));
-    $('diffBlock').classList.toggle('hidden', mode === 'daily');
     $('diceBtn').classList.toggle('hidden', mode === 'daily');
-    $('seedLabel').textContent = mode === 'daily' ? 'Today\'s seed (' + world.daily.label + ')' : 'World seed';
+    $('seedLabel').textContent = mode === 'daily' ? 'Today\'s seed, ' + world.daily.label : 'World seed';
     seedInput.readOnly = mode === 'daily';
     if (!keepInput) seedInput.value = world.code;
-    const pv = $('preview'); pv.innerHTML = '';
-    world.levels.forEach((L, i) => {
-      const c = document.createElement('span'); c.className = 'pc';
-      const sw = document.createElement('i'); sw.style.background = L.theme.ui;
-      const n = document.createElement('b'); n.textContent = String(i + 1);
-      c.appendChild(sw); c.appendChild(n); c.appendChild(document.createTextNode(L.theme.name));
-      pv.appendChild(c);
-    });
     const best = getBest(world.code);
-    bestLine.innerHTML = best == null ? 'You haven\'t raced this world yet' : 'Your best on this world: <b>' + fmt(best) + '</b>';
+    bestLine.innerHTML = best == null ? 'No run on this world yet' : 'Your best: <b>' + fmt(best.t) + '</b>';
   }
   $('modeSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     mode = b.dataset.mode; store.set('dd.mode', mode);
+    if (mode === 'custom') setCustom(diff + '-' + parseCode(customCode, diff).body);
     selectWorld(); defaultHint();
   });
   $('diffSeg').addEventListener('click', (e) => {
-    const b = e.target.closest('button'); if (!b || mode !== 'custom') return;
-    const p = parseCode(customCode, b.dataset.d);
-    customCode = b.dataset.d + '-' + p.body; store.set('dd.custom', customCode);
+    const b = e.target.closest('button'); if (!b) return;
+    setDiff(b.dataset.d);
+    if (mode === 'custom') setCustom(diff + '-' + parseCode(customCode, diff).body);
     selectWorld();
   });
   $('diceBtn').addEventListener('click', () => {
-    customCode = world.diff + '-' + bodyFromRng(Math.random); store.set('dd.custom', customCode);
+    setCustom(diff + '-' + bodyFromRng(Math.random));
     selectWorld(); setHint('Rolled a new world.', true);
   });
   let seedTimer = 0;
@@ -1252,20 +1405,27 @@ details.how[open] summary::before{content:"\2013  "}
     if (mode !== 'custom') return;
     clearTimeout(seedTimer);
     seedTimer = setTimeout(() => {
-      const p = parseCode(seedInput.value, world.diff);
+      const p = parseCode(seedInput.value, diff);
       if (!p) { setHint('Enter a seed, like P-7KQ2XD.'); return; }
-      customCode = p.code; store.set('dd.custom', customCode);
+      setCustom(p.code); setDiff(p.diff);
       selectWorld(true);
       setHint('Loaded ' + DIFFS[p.diff].name + ' world ' + p.code + '.', true);
     }, 350);
   });
-  seedInput.addEventListener('change', () => { if (mode === 'custom') { clearTimeout(seedTimer); const p = parseCode(seedInput.value, world.diff); if (p) { customCode = p.code; store.set('dd.custom', customCode); } selectWorld(); } });
+  seedInput.addEventListener('change', () => {
+    if (mode !== 'custom') return;
+    clearTimeout(seedTimer);
+    const p = parseCode(seedInput.value, diff);
+    if (p) { setCustom(p.code); setDiff(p.diff); }
+    selectWorld();
+  });
   seedInput.addEventListener('focus', () => { if (mode === 'custom') seedInput.select(); });
+
   // Share button asks: link (opens the game with this seed) or just the code
   const shareSheet = $('shareSheet');
   let sheetReturn = null;
   function openShareSheet() {
-    $('shareSub').textContent = (mode === 'daily' ? 'Today\'s world, seed ' : 'Seed ') + world.code;
+    $('shareSub').textContent = (mode === 'daily' ? 'Today\'s ' + DIFFS[world.diff].name + ' world, seed ' : 'Seed ') + world.code;
     sheetReturn = document.activeElement;
     shareSheet.classList.remove('hidden');
     $('shareLinkBtn').focus({ preventScroll: true });
@@ -1276,7 +1436,7 @@ details.how[open] summary::before{content:"\2013  "}
   }
   function seedMessage() {
     return mode === 'daily'
-      ? 'Race today\'s Dropper Dash world with me!'
+      ? 'Race today\'s ' + DIFFS[world.diff].name + ' Dropper Dash world with me!'
       : 'Race my Dropper Dash world (' + DIFFS[world.diff].name + ')!';
   }
   $('shareSeedBtn').addEventListener('click', openShareSheet);
@@ -1299,48 +1459,34 @@ details.how[open] summary::before{content:"\2013  "}
     else if (res === 'fail') setHint('Couldn\'t copy automatically. Here is the link: ' + url);
   });
 
-  // ---------- world top 10 ----------
+  // ---------- world top 10 sheet ----------
   const boardSheet = $('boardSheet'), boardList = $('boardList');
   let boardReturn = null;
-  function boardMessage(text) {
-    boardList.innerHTML = '';
-    const d = document.createElement('div'); d.className = 'board-empty'; d.textContent = text;
-    boardList.appendChild(d);
-  }
-  function renderBoard(top) {
-    if (!top.length) { boardMessage('No one has finished this world yet. Be the first!'); return; }
-    boardList.innerHTML = '';
-    const me = PID.slice(0, 8);
-    top.forEach((row) => {
-      const mine = row.pid === me;
-      const el = document.createElement('div'); el.className = 'res-row' + (mine ? ' me' : '');
+  // rows: [{ rank, name, time, crashes, mine, run }]; where: 'board' or 'results'
+  function renderRows(container, rows, where) {
+    container.innerHTML = '';
+    rows.forEach((row) => {
+      const el = document.createElement('div');
+      el.className = 'res-row' + ((where === 'results' ? row.run : row.mine) ? ' me' : '') + (row.after ? ' after' : '');
       const pl = document.createElement('div'); pl.className = 'medal sm m' + Math.min(row.rank, 4); pl.textContent = row.rank;
       const nm = document.createElement('div'); nm.className = 'res-name';
       const tx = document.createElement('span'); tx.className = 'nm'; tx.textContent = row.name; nm.appendChild(tx);
-      if (mine) { const y = document.createElement('span'); y.className = 'you'; y.textContent = '(you)'; nm.appendChild(y); }
+      const tag = row.run ? '(this run)' : row.mine ? (where === 'results' ? '(your best)' : '(you)') : '';
+      if (tag) { const y = document.createElement('span'); y.className = 'you'; y.textContent = tag; nm.appendChild(y); }
       const tm = document.createElement('div'); tm.className = 'res-time'; tm.textContent = fmt(row.time);
       const sm = document.createElement('small'); sm.textContent = plural(row.crashes, 'crash'); tm.appendChild(sm);
       el.appendChild(pl); el.appendChild(nm); el.appendChild(tm);
-      boardList.appendChild(el);
+      container.appendChild(el);
     });
   }
-  async function openBoard() {
-    if (!BOARD) return;
-    const code = world.code;
-    $('boardSub').textContent = worldLabel(world) + ', seed ' + code;
+  function openBoard() {
+    $('boardSub').textContent = worldLabel(world) + ', seed ' + world.code;
+    $('boardNote').textContent = BOARD ? '' : 'Online scores aren\'t connected, so this board shows your own times on this device.';
+    renderRows(boardList, boardFor(world), 'board');
     boardReturn = document.activeElement;
     boardSheet.classList.remove('hidden');
     $('boardClose').focus({ preventScroll: true });
-    if (boardCache[code]) renderBoard(boardCache[code]); else boardMessage('Loading scores\u2026');
-    try {
-      const r = await boardFetch('/scores?seed=' + encodeURIComponent(code));
-      if (r.status === 200 && r.data && Array.isArray(r.data.top)) {
-        boardCache[code] = r.data.top;
-        if (world.code === code) renderBoard(r.data.top);
-      } else if (!boardCache[code]) boardMessage('The leaderboard had a problem. Try again in a bit.');
-    } catch (e) {
-      if (!boardCache[code]) boardMessage('Couldn\'t reach the leaderboard. Check your connection and try again.');
-    }
+    refreshBoard(world.code);
   }
   function closeBoard() {
     boardSheet.classList.add('hidden');
@@ -1350,31 +1496,51 @@ details.how[open] summary::before{content:"\2013  "}
   boardSheet.addEventListener('click', (e) => { if (e.target === boardSheet) closeBoard(); });
   boardSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBoard(); });
   $('menuBoardBtn').addEventListener('click', openBoard);
-  $('resBoardBtn').addEventListener('click', openBoard);
-  if (BOARD) { $('menuBoardBtn').classList.remove('hidden'); $('resBoardBtn').classList.remove('hidden'); }
-  else $('resBtns').classList.remove('three');
+
+  async function refreshBoard(code) {
+    if (!BOARD) return;
+    try {
+      const r = await boardFetch('/scores?seed=' + encodeURIComponent(code));
+      if (r.status === 200 && r.data && Array.isArray(r.data.top)) { serverTop[code] = r.data.top; onBoardUpdate(code); }
+    } catch (e) { /* offline is fine: the default board still works */ }
+  }
+  let prefetchTimer = 0;
+  function prefetchBoard() {
+    if (!BOARD) return;
+    clearTimeout(prefetchTimer);
+    const code = world.code;
+    prefetchTimer = setTimeout(() => refreshBoard(code), 250);
+  }
+  function onBoardUpdate(code) {
+    if (!world || world.code !== code) return;
+    if (!boardSheet.classList.contains('hidden')) renderRows(boardList, boardFor(world), 'board');
+    if (state === 'countdown') startGhosts();   // fresh scores arrived before GO
+  }
 
   // ---------- flow ----------
   function resetPlayer() {
     const L = world.levels[P.lvl];
     P.x = W / 2; P.z = W / 2; P.y = L.depth; P.vx = 0; P.vz = 0; P.vy = 0;
   }
+  function startGhosts() {
+    ghosts = boardFor(world, 10).map(makeGhost);
+    buildTrack();
+  }
   function startRace() {
     sfx.unlock();
     nameInput.blur(); seedInput.blur();
-    if (mode === 'daily' && world.daily && world.daily.ymd !== todayInfo().ymd) selectWorld();
-    P.name = (nameInput.value.trim() || 'You').slice(0, 14);
+    if (mode === 'daily' && world.daily && world.daily.ymd !== todayInfo(diff).ymd) selectWorld();
     store.set('dd.name', nameInput.value.trim().slice(0, 14));
     P.lvl = 0; P.fails = 0; P.finishTime = 0;
     raceTime = 0; paused = false; resultsData = null;
     setOnline('off', '');
-    bots = makeBots();
-    buildTrack();
+    startGhosts();
+    refreshBoard(world.code);
     ensureLevel(0);
     resetPlayer();
     toastsEl.innerHTML = '';
     releaseJoy();
-    $('menu').classList.add('hidden'); $('results').classList.add('hidden'); $('pauseMenu').classList.add('hidden');
+    ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet'].forEach((id) => $(id).classList.add('hidden'));
     hud.classList.remove('hidden'); joyEl.classList.remove('hidden');
     state = 'countdown'; cd = 3; lastCount = 4;
     updateHUD();
@@ -1384,7 +1550,8 @@ details.how[open] summary::before{content:"\2013  "}
     P.lvl = 0;
     releaseJoy();
     hud.classList.add('hidden'); joyEl.classList.add('hidden');
-    $('results').classList.add('hidden'); $('pauseMenu').classList.add('hidden'); $('menu').classList.remove('hidden');
+    ['results', 'pauseMenu', 'boardSheet', 'shareSheet'].forEach((id) => $(id).classList.add('hidden'));
+    $('menu').classList.remove('hidden');
     selectWorld(); defaultHint();
   }
   const RACING = ['countdown', 'falling', 'crashed', 'transition'];
@@ -1442,20 +1609,21 @@ details.how[open] summary::before{content:"\2013  "}
       if (cx >= pl.x && cx < pl.x + pl.s && cz >= pl.z && cz < pl.z + pl.s) land(); else crash();
     }
   }
-  // Sends the finished time to the world leaderboard and reports back on the results screen
+
+  // Sends the finished time to the online leaderboard and reports back on the results screen
   let online = { state: 'off', text: '' };
-  function setOnline(state, text) {
-    online = { state: state, text: text };
+  function setOnline(st, text) {
+    online = { state: st, text: text };
     const el = $('resOnline');
-    el.className = 'res-online' + (state === 'good' ? ' good' : '') + (state === 'off' ? ' hidden' : '');
+    el.className = 'res-online' + (st === 'good' ? ' good' : '') + (st === 'off' ? ' hidden' : '');
     el.textContent = text;
   }
-  async function submitScore() {
+  async function submitScore(onBoard) {
     if (!BOARD) { setOnline('off', ''); return; }
     const code = world.code;
     const typed = nameInput.value.trim().slice(0, 14);
     const name = typed || 'Racer-' + PID.slice(0, 4).toUpperCase();
-    setOnline('busy', 'Sending your time to the world leaderboard\u2026');
+    setOnline('busy', 'Saving your time online\u2026');
     try {
       const r = await boardFetch('/scores', {
         method: 'POST',
@@ -1463,11 +1631,9 @@ details.how[open] summary::before{content:"\2013  "}
         body: JSON.stringify({ seed: code, player: PID, name: name, time: Math.round(P.finishTime * 1000) / 1000, crashes: P.fails })
       });
       if (r.status === 200 && r.data && Array.isArray(r.data.top)) {
-        boardCache[code] = r.data.top;
-        const top = r.data.top;
-        if (r.data.rank) setOnline('good', 'You\'re #' + r.data.rank + ' on this world\'s top 10!' + (typed ? '' : ' Add a racer name in the menu to show up by name.'));
-        else if (top.length >= 10) setOnline('info', 'Not in the world top 10 yet. 10th place is ' + fmt(top[top.length - 1].time) + '.');
-        else setOnline('info', 'Time sent to the world leaderboard.');
+        serverTop[code] = r.data.top;
+        if (onBoard) setOnline('good', 'Saved to the world top 10.' + (typed ? '' : ' Add a racer name in the menu to show up by name.'));
+        else setOnline('off', '');
       } else if (r.status === 429) setOnline('info', 'Too many times sent in a row. Wait a minute, then race again.');
       else if (r.status === 422) setOnline('info', 'The leaderboard didn\'t accept this time.');
       else setOnline('info', 'The leaderboard had a problem. Your time is still saved on this device.');
@@ -1477,45 +1643,39 @@ details.how[open] summary::before{content:"\2013  "}
   }
   function finishRace() {
     sfx.finish();
-    const all = bots.map((b) => ({ name: b.name, time: b.finish, fails: b.fails, color: b.color, me: false }));
-    all.push({ name: P.name, time: P.finishTime, fails: P.fails, color: '#f5c542', me: true });
-    all.sort((a, b) => a.time - b.time);
-    const place = all.findIndex((r) => r.me) + 1;
+    const t = P.finishTime;
+    const pool = boardFor(world, 11);   // taken before saving this run, with one spare in case your old entry drops off
     const prev = getBest(world.code);
-    const isPB = prev == null || P.finishTime < prev;
-    if (isPB) setBest(world.code, P.finishTime);
-    resultsData = { all: all, place: place, isPB: isPB, hadPrev: prev != null, best: isPB ? P.finishTime : prev };
-    showBig(place === 1 ? '1st!' : 'Finish!', 'gold');
-    submitScore();
+    const isPB = !prev || t < prev.t;
+    if (isPB) setBest(world.code, t, P.fails);
+    const run = { name: myName(), time: t, crashes: P.fails, mine: true, run: true };
+    const all = pool.filter((e) => !(e.mine && t < e.time)).concat([run]).sort((a, b) => a.time - b.time);
+    all.forEach((e, i) => { e.rank = i + 1; });
+    const myBest = all.find((e) => e.mine && !e.run) || null;
+    resultsData = { all: all, run: run, myBest: myBest, isPB: isPB, hadPrev: !!prev, best: isPB ? t : prev.t };
+    showBig(run.rank === 1 ? 'Record!' : 'Finish!', 'gold');
+    submitScore(!myBest && run.rank <= 10);
   }
   function showResults() {
     const r = resultsData; if (!r) return;
     releaseJoy();
     hud.classList.add('hidden'); joyEl.classList.add('hidden');
+    const rank = r.run.rank;
     const medal = $('resPlace');
-    medal.textContent = ordinal(r.place);
-    medal.className = 'medal lg m' + Math.min(r.place, 4);
-    $('resTitle').textContent = r.place === 1 ? 'You won the race!' : 'You finished ' + ordinal(r.place);
+    medal.textContent = ordinal(rank);
+    medal.className = 'medal lg m' + Math.min(rank, 4);
+    let title;
+    if (r.myBest) title = r.myBest.rank <= 10 ? 'Your best is still #' + r.myBest.rank : 'Not in the top 10 yet';
+    else title = rank === 1 ? 'New world record!' : rank <= 10 ? 'You took #' + rank + '!' : 'Not in the top 10 yet';
+    $('resTitle').textContent = title;
     $('resSub').textContent = fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash');
     $('resWorld').innerHTML = esc(worldLabel(world)) + ', seed <b>' + esc(world.code) + '</b>';
     const pb = $('resPB');
     pb.className = 'res-pb' + (r.isPB ? ' new' : '');
-    pb.textContent = r.isPB ? (r.hadPrev ? 'New best on this world!' : 'First time on this world. That\'s your time to beat.') : 'Your best on this world: ' + fmt(r.best);
-    const list = $('resList'); list.innerHTML = '';
-    r.all.forEach((row, i) => {
-      const el = document.createElement('div'); el.className = 'res-row' + (row.me ? ' me' : '');
-      const pl = document.createElement('div'); pl.className = 'medal sm m' + Math.min(i + 1, 4); pl.textContent = i + 1;
-      const nm = document.createElement('div'); nm.className = 'res-name';
-      const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = row.color;
-      const tx = document.createElement('span'); tx.className = 'nm'; tx.textContent = row.name;
-      nm.appendChild(sw); nm.appendChild(tx);
-      if (row.me) { const y = document.createElement('span'); y.className = 'you'; y.textContent = '(you)'; nm.appendChild(y); }
-      const tm = document.createElement('div'); tm.className = 'res-time';
-      tm.textContent = fmt(row.time);
-      const sm = document.createElement('small'); sm.textContent = plural(row.fails, 'crash'); tm.appendChild(sm);
-      el.appendChild(pl); el.appendChild(nm); el.appendChild(tm);
-      list.appendChild(el);
-    });
+    pb.textContent = r.isPB ? (r.hadPrev ? 'New personal best!' : 'First run on this world.') : 'Your best on this world: ' + fmt(r.best);
+    const rows = r.all.slice(0, 10);
+    if (rank > 10) rows.push(Object.assign({}, r.run, { after: true }));
+    renderRows($('resList'), rows, 'results');
     $('resHint').textContent = '';
     $('results').classList.remove('hidden');
     $('againBtn').focus({ preventScroll: true });
@@ -1568,7 +1728,7 @@ details.how[open] summary::before{content:"\2013  "}
     updateSplash(dt);
     updateCamera(dt);
     updateStreaks(camera.position.y, state === 'falling' ? P.vy : 0);
-    if (state !== 'menu') { checkBotFinishes(); updateHUD(); }
+    if (state !== 'menu') { checkGhostFinishes(); updateHUD(); }
   }
   let last = performance.now();
   function loop(now) {
@@ -1603,9 +1763,9 @@ details.how[open] summary::before{content:"\2013  "}
   $('quitBtn').addEventListener('click', toMenu);
   $('shareResBtn').addEventListener('click', async () => {
     const r = resultsData; if (!r) return;
-    const where = world.daily ? 'the daily world for ' + world.daily.label : 'the ' + DIFFS[world.diff].name + ' world';
-    const msg = 'Dropper Dash: I finished ' + ordinal(r.place) + ' of ' + r.all.length + ' in ' + fmt(P.finishTime) +
-      ' with ' + plural(P.fails, 'crash') + ' on ' + where + ' ' + world.code + '. Can you beat it?';
+    const where = 'the ' + DIFFS[world.diff].name + (world.daily ? ' daily world for ' + world.daily.label : ' world') + ' ' + world.code;
+    const what = !r.myBest && r.run.rank <= 10 ? 'took #' + r.run.rank + ' on ' + where : 'raced ' + where;
+    const msg = 'Dropper Dash: I ' + what + ' in ' + fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash') + '. Can you beat it?';
     const res = await shareText(msg, worldLink(world.code));
     const hint = $('resHint');
     hint.className = 'hint' + (res === 'fail' ? '' : ' ok');
@@ -1627,8 +1787,9 @@ details.how[open] summary::before{content:"\2013  "}
   }
   const linked = seedFromUrl();
   if (linked) {
-    if (linked.code === todayInfo().code) mode = 'daily';
-    else { mode = 'custom'; customCode = linked.code; store.set('dd.custom', customCode); }
+    setDiff(linked.diff);
+    if (linked.body === todayInfo(linked.diff).body) mode = 'daily';
+    else { mode = 'custom'; setCustom(linked.code); }
     store.set('dd.mode', mode);
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
   }
