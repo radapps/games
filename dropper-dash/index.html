@@ -329,8 +329,8 @@ details.how[open] summary::before{content:"\2013  "}
       <details class="how">
         <summary>How to play</summary>
         <ul>
-          <li><span class="ico steer"></span><span><b>Steer</b><br>Drag anywhere on the screen. On a keyboard, use WASD or the arrow keys.</span></li>
-          <li><span class="ico dodge"></span><span><b>Dodge</b><br>Touching a block sends you back to the top of that map. The clock keeps running.</span></li>
+          <li><span class="ico steer"></span><span><b>Steer</b><br>Drag anywhere on the screen. On a keyboard, use WASD or the arrow keys. Steering slows your fall a little, so the most direct line is the fastest.</span></li>
+          <li><span class="ico dodge"></span><span><b>Dodge</b><br>Landing on top of a block sends you back to the top of that map, and the clock keeps running. Brushing the side of a block is fine.</span></li>
           <li><span class="ico splash"></span><span><b>Splash</b><br>Land in the water at the bottom to move on to the next map.</span></li>
           <li><span class="ico race"></span><span><b>Race the top 10</b><br>The numbered markers on the right are this world's top 10 runs. Beat a time to take its spot.</span></li>
           <li><span class="ico seed"></span><span><b>Share worlds</b><br>Send a seed or link and a friend races the exact same five maps.</span></li>
@@ -451,7 +451,8 @@ details.how[open] summary::before{content:"\2013  "}
   // Online leaderboard: paste your Cloudflare Worker URL between the quotes, for example
   // 'https://dropper-dash-scores.yourname.workers.dev'. Leave it empty to play offline.
   const LEADERBOARD_URL = 'https://dropper-dash-scores.jradio.workers.dev';
-  const BOARD = LEADERBOARD_URL.trim().replace(/\/+$/, '');
+  // Claude's preview can't reach outside sites, so online scores switch off there
+  const BOARD = /claude/i.test(location.hostname) ? '' : LEADERBOARD_URL.trim().replace(/\/+$/, '');
 
   // Anonymous player id so the leaderboard keeps one best time per player per world
   let PID = store.get('dd.pid', null);
@@ -685,7 +686,114 @@ details.how[open] summary::before{content:"\2013  "}
     vanilla:     { t: 'noise', c: [250, 240, 212], v: 10, s: [[[230, 214, 170], 0.06]] },
     sandbrick:   { t: 'bricks', c: [226, 210, 162], m: [190, 170, 122], v: 14, bw: 8, bh: 4 },
     shell:       { t: 'noise', c: [250, 228, 216], v: 18, s: [[[240, 172, 162], 0.12]] },
-    driftwood:   { t: 'planks', c: [152, 132, 112] }
+    driftwood:   { t: 'planks', c: [152, 132, 112] },
+    // added with the third set of 40 themes (retro-inspired first)
+    ow_brick:     { t: 'bricks', c: [196, 92, 36], m: [40, 20, 10], v: 14, bw: 8, bh: 4 },
+    ow_ground:    { t: 'layers', cs: [[72, 196, 52], [72, 196, 52], [176, 112, 56], [176, 112, 56], [150, 92, 44]], v: 10 },
+    bb_wall:      { t: 'frame', c: [12, 12, 24], l: [110, 110, 140], bw: 1 },
+    bb_red:       { t: 'bricks', c: [232, 64, 64], m: [60, 10, 10], v: 10, bw: 16, bh: 8 },
+    bb_yellow:    { t: 'bricks', c: [244, 210, 60], m: [80, 60, 10], v: 10, bw: 16, bh: 8 },
+    pm_wall:      { t: 'frame', c: [0, 0, 8], l: [40, 70, 255], bw: 2 },
+    pm_block:     { t: 'frame', c: [16, 24, 120], l: [90, 130, 255], bw: 2 },
+    pm_pellet:    { t: 'dots', c: [0, 0, 16], d: [255, 200, 160] },
+    pm_floor:     { t: 'noise', c: [0, 0, 10], v: 4, s: [[[255, 200, 160], 0.02]] },
+    vv_wall:      { t: 'frame', c: [0, 0, 0], l: [60, 255, 120], bw: 1, v: 2 },
+    vv_white:     { t: 'frame', c: [10, 10, 10], l: [255, 255, 255], bw: 1, v: 2 },
+    vv_green:     { t: 'frame', c: [0, 30, 12], l: [60, 255, 120], bw: 1, v: 2 },
+    dungeonwall:  { t: 'bricks', c: [86, 86, 92], m: [40, 40, 46], v: 22, bw: 8, bh: 8 },
+    dungeonfloor: { t: 'bricks', c: [70, 66, 62], m: [34, 30, 28], v: 18, bw: 8, bh: 8 },
+    pg_wall:      { t: 'bricks', c: [48, 98, 48], m: [15, 56, 15], v: 4, bw: 8, bh: 4 },
+    pg_light:     { t: 'tiles', c: [139, 172, 15], l: [48, 98, 48] },
+    pg_dark:      { t: 'tiles', c: [48, 98, 48], l: [15, 56, 15] },
+    pg_floor:     { t: 'dither', c: [139, 172, 15], l: [155, 188, 15], p: 0.3 },
+    cga_wall:     { t: 'grid', c: [0, 0, 0], l: [255, 85, 255], cell: 4 },
+    cga_cyan:     { t: 'frame', c: [85, 255, 255], l: [255, 255, 255], bw: 2, v: 0 },
+    cga_magenta:  { t: 'frame', c: [255, 85, 255], l: [0, 0, 0], bw: 2, v: 0 },
+    cga_floor:    { t: 'checker', cs: [[0, 0, 0], [85, 255, 255]], size: 2 },
+    cabinetwood:  { t: 'planks', c: [124, 78, 44] },
+    arcadebutton: { t: 'dots', c: [28, 28, 34], d: [232, 44, 44] },
+    marquee:      { t: 'layers', cs: [[255, 220, 60], [255, 130, 40], [232, 44, 96], [120, 60, 200]], v: 10 },
+    pinwall:      { t: 'layers', cs: [[40, 20, 110], [90, 30, 150], [200, 40, 120], [250, 120, 40]], v: 12 },
+    bumper:       { t: 'dots', c: [232, 40, 64], d: [255, 240, 200] },
+    chrome:       { t: 'tiles', c: [204, 210, 218], l: [120, 126, 136] },
+    playfield:    { t: 'noise', c: [30, 22, 86], v: 14, s: [[[255, 200, 60], 0.03], [[60, 220, 255], 0.03]] },
+    checkflag:    { t: 'checker', cs: [[20, 20, 20], [240, 240, 240]], size: 4 },
+    tire:         { t: 'bands', c: [34, 34, 38], v: 10, every: 2, dark: 10 },
+    curb:         { t: 'vstripes', cs: [[220, 40, 40], [240, 240, 240]], w: 4 },
+    asphalt:      { t: 'noise', c: [62, 62, 66], v: 22, s: [[[90, 90, 94], 0.08]] },
+    shoji:        { t: 'grid', c: [236, 228, 200], l: [84, 52, 30], cell: 8 },
+    lacquer:      { t: 'tiles', c: [184, 32, 32], l: [60, 14, 14] },
+    rooftile:     { t: 'bricks', c: [60, 70, 90], m: [30, 34, 46], v: 12, bw: 4, bh: 4 },
+    tatami:       { t: 'bands', c: [186, 180, 112], v: 14, every: 8, dark: 40 },
+    hullpanel:    { t: 'tiles', c: [72, 62, 104], l: [40, 30, 62] },
+    techglow:     { t: 'grid', c: [20, 20, 40], l: [255, 124, 40], cell: 8 },
+    biomass:      { t: 'noise', c: [126, 44, 126], v: 30, s: [[[200, 90, 200], 0.1]] },
+    castlegray:   { t: 'bricks', c: [100, 100, 108], m: [50, 50, 56], v: 16, bw: 8, bh: 8 },
+    waterbrick:   { t: 'bricks', c: [40, 92, 172], m: [20, 52, 112], v: 14, bw: 8, bh: 4 },
+    seaweed:      { t: 'stalks', c: [56, 150, 80] },
+    hullwood:     { t: 'planks', c: [124, 86, 52] },
+    synthgrid:    { t: 'grid', c: [32, 10, 54], l: [255, 60, 200], cell: 8 },
+    sunset:       { t: 'layers', cs: [[255, 222, 84], [255, 152, 62], [255, 84, 124], [204, 60, 184]], v: 10 },
+    synthcyan:    { t: 'tiles', c: [44, 222, 255], l: [20, 80, 160] },
+    onebit_wall:  { t: 'dither', c: [0, 0, 0], l: [255, 255, 255], p: 0.22 },
+    onebit_white: { t: 'frame', c: [255, 255, 255], l: [0, 0, 0], bw: 1, v: 0 },
+    onebit_black: { t: 'frame', c: [16, 16, 16], l: [255, 255, 255], bw: 1, v: 0 },
+    onebit_floor: { t: 'dither', c: [0, 0, 0], l: [255, 255, 255], p: 0.5 },
+    terminal:     { t: 'bands', c: [8, 26, 12], v: 6, every: 2, dark: 6, s: [[[60, 255, 90], 0.05]] },
+    term_block:   { t: 'frame', c: [10, 44, 16], l: [60, 255, 90], bw: 1, v: 4 },
+    term_bright:  { t: 'noise', c: [52, 220, 84], v: 20, s: [[[180, 255, 190], 0.08]] },
+    gothic:       { t: 'bricks', c: [72, 52, 72], m: [30, 20, 34], v: 16, bw: 8, bh: 8 },
+    bloodstone:   { t: 'noise', c: [130, 14, 24], v: 22, s: [[[80, 6, 12], 0.15]] },
+    candle:       { t: 'tiles', c: [240, 230, 196], l: [180, 160, 110] },
+    danmaku:      { t: 'noise', c: [10, 10, 30], v: 8, s: [[[255, 80, 180], 0.03], [[60, 200, 255], 0.03]] },
+    orbpink:      { t: 'dots', c: [255, 84, 180], d: [255, 232, 250] },
+    orbcyan:      { t: 'dots', c: [44, 200, 255], d: [232, 250, 255] },
+    redwood:      { t: 'log', c: [140, 62, 42] },
+    fern:         { t: 'noise', c: [84, 150, 60], v: 40, s: [[[40, 90, 30], 0.18], [[140, 200, 100], 0.06]] },
+    tulipwall:    { t: 'layers', cs: [[230, 44, 64], [250, 204, 44], [242, 124, 182], [255, 142, 44]], v: 16 },
+    tulipred:     { t: 'dots', c: [72, 142, 52], d: [232, 44, 64] },
+    tulipyellow:  { t: 'dots', c: [72, 142, 52], d: [250, 212, 44] },
+    lavender:     { t: 'noise', c: [142, 112, 192], v: 30, s: [[[184, 152, 224], 0.12], [[90, 120, 70], 0.06]] },
+    lavbush:      { t: 'noise', c: [112, 80, 172], v: 34, s: [[[160, 120, 220], 0.15]] },
+    barnred:      { t: 'planks', c: [172, 46, 40] },
+    sunflower:    { t: 'dots', c: [250, 200, 32], d: [92, 60, 22] },
+    tilled:       { t: 'bands', c: [104, 72, 46], v: 16, every: 2, dark: 22 },
+    saltcrust:    { t: 'grid', c: [242, 240, 234], l: [204, 198, 190], cell: 8 },
+    saltrock:     { t: 'noise', c: [222, 214, 204], v: 18, s: [[[196, 188, 178], 0.1]] },
+    pinksalt:     { t: 'noise', c: [240, 172, 172], v: 22, s: [[[255, 214, 214], 0.12]] },
+    granite:      { t: 'noise', c: [112, 112, 118], v: 40, s: [[[172, 172, 178], 0.08], [[62, 62, 68], 0.1]] },
+    pine:         { t: 'noise', c: [32, 72, 52], v: 24, s: [[[20, 46, 34], 0.2]] },
+    windows:      { t: 'windows', c: [62, 66, 84], lit: [250, 214, 110], dark: [30, 34, 50] },
+    acunit:       { t: 'tiles', c: [192, 196, 202], l: [122, 126, 132] },
+    tarroof:      { t: 'noise', c: [50, 50, 54], v: 14, s: [[[70, 70, 74], 0.08]] },
+    subwaytile:   { t: 'bricks', c: [236, 236, 226], m: [150, 150, 140], v: 8, bw: 8, bh: 4 },
+    graffiti:     { t: 'noise', c: [80, 80, 86], v: 10, s: [[[255, 60, 160], 0.08], [[60, 200, 255], 0.08], [[250, 220, 60], 0.08]] },
+    moltensteel:  { t: 'noise', c: [255, 140, 36], v: 34, s: [[[255, 230, 120], 0.12]] },
+    girder:       { t: 'grid', c: [72, 74, 80], l: [40, 42, 46], cell: 4 },
+    scaffold:     { t: 'grid', c: [60, 60, 66], l: [210, 164, 40], cell: 8 },
+    hazard:       { t: 'stripes', cs: [[250, 202, 32], [32, 32, 32]], w: 4 },
+    concrete:     { t: 'noise', c: [154, 154, 150], v: 14, s: [[[128, 128, 124], 0.08]] },
+    cheesewall:   { t: 'dots', c: [242, 202, 72], d: [202, 152, 34] },
+    cracker:      { t: 'tiles', c: [222, 182, 112], l: [182, 132, 72] },
+    grapes:       { t: 'dots', c: [112, 42, 122], d: [172, 92, 182] },
+    circus:       { t: 'vstripes', cs: [[230, 40, 40], [250, 250, 240]], w: 4 },
+    circusblue:   { t: 'tiles', c: [40, 80, 202], l: [250, 210, 60] },
+    sawdust:      { t: 'noise', c: [202, 172, 112], v: 26, s: [[[170, 140, 84], 0.12]] },
+    paper:        { t: 'grid', c: [242, 238, 228], l: [220, 214, 202], cell: 8 },
+    paperred:     { t: 'noise', c: [232, 82, 82], v: 6 },
+    paperblue:    { t: 'noise', c: [82, 142, 232], v: 6 },
+    cardboard:    { t: 'bands', c: [192, 152, 102], v: 12, every: 3, dark: 14 },
+    emerald:      { t: 'tiles', c: [40, 202, 112], l: [10, 112, 52] },
+    patina:       { t: 'noise', c: [82, 172, 152], v: 30, s: [[[192, 110, 82], 0.06]] },
+    cutcopper:    { t: 'tiles', c: [192, 112, 82], l: [132, 72, 52] },
+    logcabin:     { t: 'bands', c: [132, 92, 58], v: 18, every: 4, dark: 42 },
+    dawncloud:    { t: 'noise', c: [252, 222, 232], v: 12, s: [[[255, 242, 204], 0.12]] },
+    sunrise:      { t: 'layers', cs: [[255, 202, 122], [255, 152, 142], [222, 132, 202]], v: 10 },
+    nightrock:    { t: 'noise', c: [30, 40, 72], v: 20, s: [[[182, 202, 242], 0.02]] },
+    moonstone:    { t: 'noise', c: [202, 212, 232], v: 14, s: [[[232, 240, 255], 0.1]] },
+    petrified:    { t: 'layers', cs: [[152, 112, 92], [182, 142, 112], [122, 92, 82], [202, 162, 132]], v: 14 },
+    stonelog:     { t: 'log', c: [142, 122, 112] },
+    agate:        { t: 'layers', cs: [[202, 82, 62], [232, 162, 92], [152, 62, 92], [232, 162, 92]], v: 10 }
   };
   const BOOK_COLORS = [[150, 40, 40], [40, 80, 150], [50, 120, 60], [160, 120, 40], [100, 50, 110], [70, 70, 70]];
   function paint(g, ox, oy, r, m) {
@@ -743,6 +851,27 @@ details.how[open] summary::before{content:"\2013  "}
       case 'checker':
         for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[(((x / m.size) | 0) + ((y / m.size) | 0)) % 2], (r() - 0.5) * 10);
         break;
+      case 'vstripes':
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[Math.floor(x / m.w) % m.cs.length], (r() - 0.5) * 10);
+        break;
+      case 'frame': {
+        const bw = m.bw || 1, vary = m.v != null ? m.v : 6;
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+          const edge = x < bw || y < bw || x > 15 - bw || y > 15 - bw;
+          px(x, y, edge ? m.l : m.c, (r() - 0.5) * (edge ? Math.min(vary, 10) : vary));
+        }
+        break;
+      }
+      case 'dither':
+        for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, r() < m.p ? m.l : m.c, 0);
+        break;
+      case 'windows':
+        noiseFill(g, ox, oy, r, m.c, 10);
+        [[2, 2], [10, 2], [2, 10], [10, 10]].forEach((s) => {
+          const lit = r() < 0.55;
+          for (let dy = 0; dy < 4; dy++) for (let dx = 0; dx < 4; dx++) px(s[0] + dx, s[1] + dy, lit ? m.lit : m.dark, (r() - 0.5) * 10 + (dy === 0 ? 12 : 0));
+        });
+        break;
       case 'stripes':
         for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) px(x, y, m.cs[Math.floor(((x + y) % 16) / m.w) % m.cs.length], (r() - 0.5) * 10);
         break;
@@ -799,7 +928,7 @@ details.how[open] summary::before{content:"\2013  "}
   }
   // 4x4 atlas of variants so long walls don't look like one repeating tile
   function wallTex(name, ore) {
-    const key = 'w' + name;
+    const key = 'w' + name + (ore ? ':' + ore[0].join(',') : '');
     if (!texCache[key]) {
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const g = c.getContext('2d'), r = mulberry32(hashStr('wall' + name));
@@ -822,7 +951,7 @@ details.how[open] summary::before{content:"\2013  "}
     return texCache[key];
   }
 
-  // ---------- themes (40) ----------
+  // ---------- themes (80) ----------
   const THEMES = [
     { name: 'Stone Shaft',      fog: 0x1b2330, wall: 'stone',      ore: [[34, 34, 34], 0.3],     blocks: ['planks', 'cobble'],          floor: 'grass' },
     { name: 'Grassy Hollow',    fog: 0x1d2914, wall: 'dirt',       ore: [[150, 140, 130], 0.25], blocks: ['grass', 'hay'],              floor: 'grass' },
@@ -863,7 +992,49 @@ details.how[open] summary::before{content:"\2013  "}
     { name: 'Mars Colony',      fog: 0x2a0e06, wall: 'marsrock',   ore: [[120, 50, 24], 0.2],    blocks: ['metal', 'solar'],            floor: 'marsrock' },
     { name: 'Alien Jungle',     fog: 0x1a0624, wall: 'alienrock',  ore: [[250, 82, 200], 0.2],   blocks: ['alienplant', 'goo'],         floor: 'alienrock' },
     { name: 'Ice Cream Parlor', fog: 0x2a1a24, wall: 'waffle',     ore: null,                    blocks: ['mint', 'strawberry'],        floor: 'vanilla' },
-    { name: 'Sandcastle Beach', fog: 0x7cc0e6, wall: 'sandbrick',  ore: null,                    blocks: ['shell', 'driftwood'],        floor: 'sand' }
+    { name: 'Sandcastle Beach', fog: 0x7cc0e6, wall: 'sandbrick',  ore: null,                    blocks: ['shell', 'driftwood'],        floor: 'sand' },
+    // retro-inspired
+    { name: '8-Bit Overworld',   fog: 0x78a8f0, wall: 'ow_brick',    ore: null,                    blocks: ['ow_ground', 'goldtile'],       floor: 'ow_ground', glow: true },
+    { name: 'Brick Breaker',     fog: 0x06060e, wall: 'bb_wall',     ore: null,                    blocks: ['bb_red', 'bb_yellow'],         floor: 'metal', glow: true },
+    { name: 'Pellet Maze',       fog: 0x000006, wall: 'pm_wall',     ore: null,                    blocks: ['pm_block', 'pm_pellet'],       floor: 'pm_floor', glow: true },
+    { name: 'Vector Void',       fog: 0x000000, wall: 'vv_wall',     ore: null,                    blocks: ['vv_white', 'vv_green'],        floor: 'vv_wall', glow: true },
+    { name: 'Dungeon Crawl',     fog: 0x0e0b08, wall: 'dungeonwall', ore: [[255, 170, 40], 0.2],   blocks: ['darkplanks', 'cobble'],        floor: 'dungeonfloor' },
+    { name: 'Pocket Green',      fog: 0x0f380f, wall: 'pg_wall',     ore: null,                    blocks: ['pg_light', 'pg_dark'],         floor: 'pg_floor', glow: true },
+    { name: 'CGA Cyber',         fog: 0x000000, wall: 'cga_wall',    ore: null,                    blocks: ['cga_cyan', 'cga_magenta'],     floor: 'cga_floor', glow: true },
+    { name: 'Coin-Op Cabinet',   fog: 0x0c0a12, wall: 'cabinetwood', ore: null,                    blocks: ['arcadebutton', 'marquee'],     floor: 'arcadewall' },
+    { name: 'Pinball Plunge',    fog: 0x120a2a, wall: 'pinwall',     ore: null,                    blocks: ['bumper', 'chrome'],            floor: 'playfield', glow: true },
+    { name: 'Checkered Flag',    fog: 0x202428, wall: 'checkflag',   ore: null,                    blocks: ['tire', 'curb'],                floor: 'asphalt' },
+    { name: 'Ninja Fortress',    fog: 0x1a1410, wall: 'shoji',       ore: null,                    blocks: ['lacquer', 'rooftile'],         floor: 'tatami' },
+    { name: 'Alien Station',     fog: 0x0a0814, wall: 'hullpanel',   ore: null,                    blocks: ['techglow', 'biomass'],         floor: 'metal' },
+    { name: 'Boss Castle',       fog: 0x2a0606, wall: 'castlegray',  ore: [[255, 110, 30], 0.2],   blocks: ['magma', 'obsidian'],           floor: 'magma' },
+    { name: 'Water Level',       fog: 0x0a3060, wall: 'waterbrick',  ore: null,                    blocks: ['coralpink', 'seaweed'],        floor: 'sand' },
+    { name: 'Airship Armada',    fog: 0x88b8e8, wall: 'hullwood',    ore: null,                    blocks: ['metal', 'brass'],              floor: 'shipwood' },
+    { name: 'Synthwave Sunset',  fog: 0x1a0630, wall: 'synthgrid',   ore: null,                    blocks: ['sunset', 'synthcyan'],         floor: 'neonfloor', glow: true },
+    { name: '1-Bit Monochrome',  fog: 0x101010, wall: 'onebit_wall', ore: null,                    blocks: ['onebit_white', 'onebit_black'], floor: 'onebit_floor', glow: true },
+    { name: 'Terminal Green',    fog: 0x020a04, wall: 'terminal',    ore: null,                    blocks: ['term_block', 'term_bright'],   floor: 'terminal', glow: true },
+    { name: 'Vampire Keep',      fog: 0x14060c, wall: 'gothic',      ore: [[230, 180, 60], 0.12],  blocks: ['bloodstone', 'candle'],        floor: 'carpet' },
+    { name: 'Danmaku Sky',       fog: 0x0a0820, wall: 'danmaku',     ore: null,                    blocks: ['orbpink', 'orbcyan'],          floor: 'starfield', glow: true },
+    // places and everyday things
+    { name: 'Redwood Grove',     fog: 0x1a1208, wall: 'redwood',     ore: null,                    blocks: ['fern', 'mushred'],             floor: 'moss' },
+    { name: 'Tulip Fields',      fog: 0x1c2a14, wall: 'tulipwall',   ore: null,                    blocks: ['tulipred', 'tulipyellow'],     floor: 'grass' },
+    { name: 'Lavender Hills',    fog: 0x241a30, wall: 'lavender',    ore: null,                    blocks: ['lavbush', 'calcite'],          floor: 'grass' },
+    { name: 'Sunflower Farm',    fog: 0x2a2010, wall: 'barnred',     ore: null,                    blocks: ['sunflower', 'hay'],            floor: 'tilled' },
+    { name: 'Salt Flats',        fog: 0xbcd8ee, wall: 'saltcrust',   ore: null,                    blocks: ['pinksalt', 'saltrock'],        floor: 'saltcrust' },
+    { name: 'Northern Fjord',    fog: 0x10202a, wall: 'granite',     ore: null,                    blocks: ['snow', 'pine'],                floor: 'granite' },
+    { name: 'Downtown Rooftops', fog: 0x14182a, wall: 'windows',     ore: null,                    blocks: ['acunit', 'neonpink'],          floor: 'tarroof' },
+    { name: 'Subway Tunnel',     fog: 0x101214, wall: 'subwaytile',  ore: null,                    blocks: ['graffiti', 'metal'],           floor: 'gravel' },
+    { name: 'Greenhouse',        fog: 0x1c2c1c, wall: 'glass',       ore: null,                    blocks: ['leaves', 'terracotta'],        floor: 'tilled' },
+    { name: 'Steel Foundry',     fog: 0x1a0e06, wall: 'girder',      ore: [[255, 140, 36], 0.25],  blocks: ['moltensteel', 'iron'],         floor: 'metal' },
+    { name: 'Construction Site', fog: 0x2a2416, wall: 'scaffold',    ore: null,                    blocks: ['hazard', 'concrete'],          floor: 'dirt' },
+    { name: 'Cheese Cave',       fog: 0x2a2008, wall: 'cheesewall',  ore: null,                    blocks: ['cracker', 'grapes'],           floor: 'cheesewall' },
+    { name: 'Circus Big Top',    fog: 0x2a0c10, wall: 'circus',      ore: null,                    blocks: ['gold', 'circusblue'],          floor: 'sawdust' },
+    { name: 'Paper Craft',       fog: 0x2a2620, wall: 'paper',       ore: null,                    blocks: ['paperred', 'paperblue'],       floor: 'cardboard' },
+    { name: 'Emerald Cavern',    fog: 0x061810, wall: 'deepslate',   ore: [[40, 202, 112], 0.35],  blocks: ['emerald', 'calcite'],          floor: 'deepslate' },
+    { name: 'Copper Ruins',      fog: 0x0c2420, wall: 'patina',      ore: null,                    blocks: ['cutcopper', 'copper'],         floor: 'patina' },
+    { name: 'Winter Cabin',      fog: 0x101a26, wall: 'logcabin',    ore: null,                    blocks: ['snow', 'log'],                 floor: 'snow' },
+    { name: 'Dawn Clouds',       fog: 0xf0b8c8, wall: 'dawncloud',   ore: null,                    blocks: ['cloud', 'sunrise'],            floor: 'cloud' },
+    { name: 'Moonlit Lake',      fog: 0x060a1c, wall: 'nightrock',   ore: null,                    blocks: ['moonstone', 'lilypad'],        floor: 'nightrock' },
+    { name: 'Petrified Forest',  fog: 0x2a1c14, wall: 'petrified',   ore: null,                    blocks: ['stonelog', 'agate'],           floor: 'redsand' }
   ];
 
   // ---------- world + level generation ----------
@@ -873,6 +1044,7 @@ details.how[open] summary::before{content:"\2013  "}
   const ACCEL_TIME = 0.5;    // time to reach full fall speed
   const RESPAWN_DELAY = 0.9;
   const TRANSITION = 0.7;
+  const STEER_DRAG = 0.15;   // full sideways speed slows your fall by 15%
   const PLAYER_R = 0.3, BODY_H = 1.8, EYE = 1.6;
   const ALPHA = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
@@ -992,7 +1164,7 @@ details.how[open] summary::before{content:"\2013  "}
     for (let i = 19; i > 0; i--) rng();
     const ds = DIFFS[p.diff].d;
     const seeds = ds.map(() => (rng() * 4294967296) >>> 0);
-    // Theme stream (looks only), picked from all 40 themes
+    // Theme stream (looks only), picked from all 80 themes
     const order = shuffle(THEMES.map((_, i) => i), mulberry32(hashStr('themes:' + p.code))).slice(0, NUM);
     const levels = seeds.map((s, i) => genLevel(s, ds[i], THEMES[order[i]], i));
     const perfect = levels.reduce((a, L) => a + L.fallTime, 0) + (NUM - 1) * TRANSITION;
@@ -1597,12 +1769,19 @@ details.how[open] summary::before{content:"\2013  "}
     const inp = readInput(), k = Math.min(1, dt * 12);
     P.vx += (inp.x * H_SPEED - P.vx) * k;
     P.vz += (inp.z * H_SPEED - P.vz) * k;
-    P.vy = Math.min(L.speed, P.vy + (L.speed / ACCEL_TIME) * dt);
-    const px = P.x, py = P.y, pz = P.z;
-    P.x = clamp(P.x + P.vx * dt, PLAYER_R, W - PLAYER_R);
-    P.z = clamp(P.z + P.vz * dt, PLAYER_R, W - PLAYER_R);
-    P.y -= P.vy * dt;
-    if (hitsLayer(L, P.x, P.y, P.z)) { P.x = px; P.y = py; P.z = pz; crash(); return; }
+    // Moving sideways costs a little fall speed, so the most direct line down is the fastest
+    const steer = Math.min(1, Math.hypot(P.vx, P.vz) / H_SPEED);
+    const accel = L.speed / ACCEL_TIME;
+    P.vy += clamp(L.speed * (1 - STEER_DRAG * steer) - P.vy, -accel * 0.5 * dt, accel * dt);
+    // Sideways into a block: you just slide along it
+    const nx = clamp(P.x + P.vx * dt, PLAYER_R, W - PLAYER_R);
+    if (hitsLayer(L, nx, P.y, P.z)) P.vx = 0; else P.x = nx;
+    const nz = clamp(P.z + P.vz * dt, PLAYER_R, W - PLAYER_R);
+    if (hitsLayer(L, P.x, P.y, nz)) P.vz = 0; else P.z = nz;
+    // Falling onto the top of a block is a crash
+    const ny = P.y - P.vy * dt;
+    if (hitsLayer(L, P.x, ny, P.z)) { crash(); return; }
+    P.y = ny;
     if (P.y <= 0) {
       P.y = 0;
       const cx = Math.floor(P.x), cz = Math.floor(P.z), pl = L.pool;
