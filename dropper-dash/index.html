@@ -179,6 +179,18 @@ button{font:inherit;color:inherit}
   box-shadow:inset 0 -4px 0 var(--stone-lo),inset 0 3px 0 var(--stone-hi);touch-action:manipulation}
 .sq-btn svg{width:20px;height:20px}
 .sq-btn:active{transform:translateY(2px)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
+.cal-month{font-family:var(--font-display);font-size:20px;font-weight:700;text-align:center}
+.cal-nav{height:40px}
+.cal-nav:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--muted);padding:0 0 2px}
+.cal-day{position:relative;aspect-ratio:1/1;display:grid;place-items:center;padding:0;font:600 16px var(--font-display);color:var(--text);background:var(--field);border:2px solid var(--field-edge);border-radius:0;cursor:pointer;touch-action:manipulation}
+.cal-day:disabled{opacity:.3;cursor:not-allowed}
+.cal-day.today{border:3px solid var(--text)}
+.cal-day[aria-pressed="true"]{color:#fff;background:var(--grass);border-color:var(--grass-edge);text-shadow:1px 1px 0 rgba(0,0,0,.3)}
+.cal-day.played::after{content:"";position:absolute;bottom:3px;left:50%;width:6px;height:6px;margin-left:-3px;background:var(--gold);box-shadow:0 0 0 1px var(--gold-shadow)}
+.cal-key{margin:8px 0 0;text-align:center;font-size:13px;line-height:1.35;color:var(--muted)}
 .hint{margin-top:6px;font-size:13px;line-height:1.35;color:var(--muted);-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
 .hint:empty{display:none}
 .hint.ok{color:var(--grass)}
@@ -310,6 +322,9 @@ details.how[open] summary::before{content:"\2013  "}
         <label class="label" for="seedInput" id="seedLabel">World seed</label>
         <div class="seed-row">
           <input class="input" id="seedInput" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button type="button" class="sq-btn hidden" id="calBtn" aria-label="Pick a past daily world">
+            <svg viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 1h2v2h6V1h2v2h2v12H1V3h2zM3 6v7h10V6zM4 7h2v2H4zm3 0h2v2H7zm3 0h2v2h-2zM4 10h2v2H4zm3 0h2v2H7z" fill-rule="evenodd"/></svg>
+          </button>
           <button type="button" class="sq-btn" id="diceBtn" aria-label="Roll a new random world">
             <svg viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h12v1h1v12h-1v1H2v-1H1V2h1zm0 2v10h12V3zm2 1h2v2H4zm6 0h2v2h-2zM7 7h2v2H7zm-3 3h2v2H4zm6 0h2v2h-2z" fill-rule="evenodd"/></svg>
           </button>
@@ -385,6 +400,26 @@ details.how[open] summary::before{content:"\2013  "}
   </div>
 </div>
 
+<div id="calSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+  <div class="wrap">
+    <div class="panel">
+      <h2 class="p-title" id="calTitle">Daily worlds</h2>
+      <p class="p-sub" id="calSub"></p>
+      <div class="cal-head">
+        <button type="button" class="sq-btn cal-nav" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></button>
+        <div class="cal-month" id="calMonth" aria-live="polite"></div>
+        <button type="button" class="sq-btn cal-nav" id="calNext" aria-label="Next month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <p class="cal-key">A gold mark means you’ve finished that day on this difficulty.</p>
+      <div class="row-btns">
+        <button class="btn small" id="calToday">Today</button>
+        <button class="btn stone small" id="calClose">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="boardSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="boardTitle">
   <div class="wrap">
     <div class="panel">
@@ -429,6 +464,11 @@ details.how[open] summary::before{content:"\2013  "}
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
   };
+  // Cookie backup for the racer name and player id, in case a browser clears local storage
+  const cookie = {
+    get(k) { try { const m = document.cookie.match(new RegExp('(?:^|; )' + k + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; } catch (e) { return ''; } },
+    set(k, v) { try { document.cookie = k + '=' + encodeURIComponent(v) + '; max-age=34560000; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (e) { /* cookies unavailable */ } }
+  };
   // personal bests on this device: { code: { t: seconds, c: crashes } }
   function getBest(code) {
     const v = store.get('dd.bests', {})[code];
@@ -446,7 +486,8 @@ details.how[open] summary::before{content:"\2013  "}
 
   // Where the game lives. Share links point here with ?seed=CODE.
   const GAME_URL = 'https://radapps.github.io/games/dropper-dash/';
-  const worldLink = (code) => GAME_URL + '?seed=' + encodeURIComponent(code);
+  // Daily worlds add &day=YYYY-MM-DD so a past day's link opens in Daily mode on that date
+  const worldLink = (code, day) => GAME_URL + '?seed=' + encodeURIComponent(code) + (day ? '&day=' + day : '');
 
   // Online leaderboard: paste your Cloudflare Worker URL between the quotes, for example
   // 'https://dropper-dash-scores.yourname.workers.dev'. Leave it empty to play offline.
@@ -456,12 +497,13 @@ details.how[open] summary::before{content:"\2013  "}
 
   // Anonymous player id so the leaderboard keeps one best time per player per world
   let PID = store.get('dd.pid', null);
-  if (typeof PID !== 'string' || !/^[a-f0-9]{16,32}$/.test(PID)) {
+  if (typeof PID !== 'string' || !/^[a-f0-9]{16,32}$/.test(PID)) PID = cookie.get('dd_pid');
+  if (!/^[a-f0-9]{16,32}$/.test(PID || '')) {
     const a = new Uint8Array(12);
     try { crypto.getRandomValues(a); } catch (e) { for (let i = 0; i < a.length; i++) a[i] = (Math.random() * 256) | 0; }
     PID = Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
-    store.set('dd.pid', PID);
   }
+  store.set('dd.pid', PID); cookie.set('dd_pid', PID);
   const ME8 = PID.slice(0, 8);
   const serverTop = {};   // real online scores per world code
   async function boardFetch(path, opts) {
@@ -494,7 +536,11 @@ details.how[open] summary::before{content:"\2013  "}
   }
 
   const nameInput = $('nameInput'), startBtn = $('startBtn'), bestLine = $('bestLine');
-  nameInput.value = store.get('dd.name', '');
+  // The racer name is saved as you type, to local storage and a cookie
+  nameInput.value = store.get('dd.name', '') || cookie.get('dd_name');
+  function saveName() { const v = nameInput.value.trim().slice(0, 14); store.set('dd.name', v); cookie.set('dd_name', v); }
+  nameInput.addEventListener('input', saveName);
+  nameInput.addEventListener('change', saveName);
 
   if (typeof THREE === 'undefined') {
     startBtn.disabled = true;
@@ -1148,15 +1194,18 @@ details.how[open] summary::before{content:"\2013  "}
     return { diff: diff, body: body, code: diff + '-' + body };
   }
   function bodyFromRng(r) { let s = ''; for (let i = 0; i < 6; i++) s += ALPHA[(r() * ALPHA.length) | 0]; return s; }
+  function ymdOf(dt) { return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
+  function dateOf(ymd) { const p = ymd.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  const FIRST_DAY = '2026-10-01';   // earliest daily world the calendar offers
   // One daily body per date; each difficulty gets its own world from it (E-, M-, P-, H-)
-  function todayInfo(d) {
-    const n = new Date();
-    const ymd = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  function dayInfo(ymd, d) {
+    const dt = dateOf(ymd), now = new Date();
     let label;
-    try { label = n.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (e) { label = ymd; }
+    try { label = dt.toLocaleDateString(undefined, dt.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { label = ymd; }
     const body = bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymd)));
-    return { ymd: ymd, label: label, body: body, code: (d || 'P') + '-' + body };
+    return { ymd: ymd, label: label, body: body, code: (d || 'P') + '-' + body, isToday: ymd === ymdOf(now) };
   }
+  function todayInfo(d) { return dayInfo(ymdOf(new Date()), d); }
   function genWorld(code, daily) {
     const p = parseCode(code, 'P');
     // Layout stream. Keep this exactly as it is: the leaderboard Worker mirrors it to check times.
@@ -1534,13 +1583,16 @@ details.how[open] summary::before{content:"\2013  "}
   if (!customCode || !parseCode(customCode, 'P')) customCode = 'P-' + bodyFromRng(Math.random);
   let diff = store.get('dd.diff', null);
   if (!DIFFS[diff]) diff = parseCode(customCode, 'P').diff;
+  let dailyPick = null;   // date (YYYY-MM-DD) of a past daily world, or null for today
 
   function setHint(text, ok) { seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : ''); }
-  function defaultHint() { setHint(mode === 'custom' ? 'Type or paste a seed to load a friend\'s world.' : ''); }
+  function defaultHint() {
+    setHint(mode === 'custom' ? 'Type or paste a seed to load a friend’s world.' : dailyPick ? 'You’re racing a past daily world. Tap the calendar to switch days.' : '');
+  }
   function setDiff(d) { diff = d; store.set('dd.diff', d); }
   function setCustom(code) { customCode = code; store.set('dd.custom', code); }
   function selectWorld(keepInput) {
-    if (mode === 'daily') { const t = todayInfo(diff); world = genWorld(t.code, t); }
+    if (mode === 'daily') { const t = dailyPick ? dayInfo(dailyPick, diff) : todayInfo(diff); world = genWorld(t.code, t); }
     else world = genWorld(customCode, null);
     renderMenu(keepInput);
     if (state === 'menu') ensureLevel(0);
@@ -1550,7 +1602,8 @@ details.how[open] summary::before{content:"\2013  "}
     $('modeSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
     $('diffSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === world.diff)));
     $('diceBtn').classList.toggle('hidden', mode === 'daily');
-    $('seedLabel').textContent = mode === 'daily' ? 'Today\'s seed, ' + world.daily.label : 'World seed';
+    $('calBtn').classList.toggle('hidden', mode !== 'daily');
+    $('seedLabel').textContent = mode === 'daily' ? (world.daily.isToday ? 'Today’s seed, ' : 'Daily seed, ') + world.daily.label : 'World seed';
     seedInput.readOnly = mode === 'daily';
     if (!keepInput) seedInput.value = world.code;
     const best = getBest(world.code);
@@ -1597,7 +1650,7 @@ details.how[open] summary::before{content:"\2013  "}
   const shareSheet = $('shareSheet');
   let sheetReturn = null;
   function openShareSheet() {
-    $('shareSub').textContent = (mode === 'daily' ? 'Today\'s ' + DIFFS[world.diff].name + ' world, seed ' : 'Seed ') + world.code;
+    $('shareSub').textContent = (mode === 'daily' ? (world.daily.isToday ? 'Today’s ' : world.daily.label + ' ') + DIFFS[world.diff].name + ' daily world, seed ' : 'Seed ') + world.code;
     sheetReturn = document.activeElement;
     shareSheet.classList.remove('hidden');
     $('shareLinkBtn').focus({ preventScroll: true });
@@ -1607,9 +1660,10 @@ details.how[open] summary::before{content:"\2013  "}
     if (sheetReturn && sheetReturn.focus) sheetReturn.focus({ preventScroll: true });
   }
   function seedMessage() {
-    return mode === 'daily'
-      ? 'Race today\'s ' + DIFFS[world.diff].name + ' Dropper Dash world with me!'
-      : 'Race my Dropper Dash world (' + DIFFS[world.diff].name + ')!';
+    if (mode !== 'daily') return 'Race my Dropper Dash world (' + DIFFS[world.diff].name + ')!';
+    return world.daily.isToday
+      ? 'Race today’s ' + DIFFS[world.diff].name + ' Dropper Dash world with me!'
+      : 'Race the ' + world.daily.label + ' ' + DIFFS[world.diff].name + ' daily Dropper Dash world with me!';
   }
   $('shareSeedBtn').addEventListener('click', openShareSheet);
   $('shareCancelBtn').addEventListener('click', closeShareSheet);
@@ -1624,7 +1678,7 @@ details.how[open] summary::before{content:"\2013  "}
   });
   $('shareLinkBtn').addEventListener('click', async () => {
     closeShareSheet();
-    const url = worldLink(world.code);
+    const url = worldLink(world.code, world.daily && world.daily.ymd);
     const res = await shareText(seedMessage(), url);
     if (res === 'copied') setHint('Link copied. Anyone who opens it gets this exact world.', true);
     else if (res === 'shared') setHint('Link shared.', true);
@@ -1667,6 +1721,69 @@ details.how[open] summary::before{content:"\2013  "}
   $('boardClose').addEventListener('click', closeBoard);
   boardSheet.addEventListener('click', (e) => { if (e.target === boardSheet) closeBoard(); });
   boardSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBoard(); });
+
+  // ---------- past daily worlds (calendar) ----------
+  const calSheet = $('calSheet');
+  let calMonth = null, calReturn = null;   // calMonth = first day of the month on screen
+  function openCalendar() {
+    const sel = dateOf(world.daily ? world.daily.ymd : ymdOf(new Date()));
+    calMonth = new Date(sel.getFullYear(), sel.getMonth(), 1);
+    renderCalendar();
+    calReturn = document.activeElement;
+    calSheet.classList.remove('hidden');
+    (calSheet.querySelector('.cal-day[aria-pressed="true"]') || $('calToday')).focus({ preventScroll: true });
+  }
+  function closeCalendar() {
+    calSheet.classList.add('hidden');
+    if (calReturn && calReturn.focus) calReturn.focus({ preventScroll: true });
+  }
+  function renderCalendar() {
+    const today = ymdOf(new Date()), selected = world.daily ? world.daily.ymd : today;
+    const y = calMonth.getFullYear(), m = calMonth.getMonth(), first = dateOf(FIRST_DAY), now = new Date();
+    let title;
+    try { title = calMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } catch (e) { title = y + '-' + (m + 1); }
+    $('calMonth').textContent = title;
+    $('calSub').textContent = DIFFS[diff].name + ' difficulty';
+    $('calPrev').disabled = y < first.getFullYear() || (y === first.getFullYear() && m <= first.getMonth());
+    $('calNext').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
+    const grid = $('calGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 7; i++) {   // weekday letters, starting Sunday (Jan 1 2023 was a Sunday)
+      const d = document.createElement('div');
+      d.className = 'cal-dow'; d.setAttribute('aria-hidden', 'true');
+      try { d.textContent = new Date(2023, 0, 1 + i).toLocaleDateString(undefined, { weekday: 'narrow' }); } catch (e) { d.textContent = 'SMTWTFS'[i]; }
+      grid.appendChild(d);
+    }
+    const lead = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < lead; i++) grid.appendChild(document.createElement('div'));
+    for (let n = 1; n <= days; n++) {
+      const dt = new Date(y, m, n), ymd = ymdOf(dt);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cal-day' + (ymd === today ? ' today' : '');
+      b.textContent = n;
+      b.dataset.ymd = ymd;
+      b.disabled = ymd > today || ymd < FIRST_DAY;
+      b.setAttribute('aria-pressed', String(ymd === selected));
+      let label;
+      try { label = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { label = ymd; }
+      if (!b.disabled && getBest(dayInfo(ymd, diff).code)) { b.classList.add('played'); label += ', finished'; }
+      b.setAttribute('aria-label', label + (ymd === today ? ', today' : ''));
+      grid.appendChild(b);
+    }
+  }
+  function pickDay(ymd) {
+    dailyPick = ymd === ymdOf(new Date()) ? null : ymd;
+    selectWorld(); defaultHint(); closeCalendar();
+  }
+  $('calBtn').addEventListener('click', openCalendar);
+  $('calGrid').addEventListener('click', (e) => { const b = e.target.closest('.cal-day'); if (b && !b.disabled) pickDay(b.dataset.ymd); });
+  $('calPrev').addEventListener('click', () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
+  $('calNext').addEventListener('click', () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });
+  $('calToday').addEventListener('click', () => pickDay(ymdOf(new Date())));
+  $('calClose').addEventListener('click', closeCalendar);
+  calSheet.addEventListener('click', (e) => { if (e.target === calSheet) closeCalendar(); });
+  calSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCalendar(); });
   $('menuBoardBtn').addEventListener('click', openBoard);
 
   async function refreshBoard(code) {
@@ -1701,8 +1818,8 @@ details.how[open] summary::before{content:"\2013  "}
   function startRace() {
     sfx.unlock();
     nameInput.blur(); seedInput.blur();
-    if (mode === 'daily' && world.daily && world.daily.ymd !== todayInfo(diff).ymd) selectWorld();
-    store.set('dd.name', nameInput.value.trim().slice(0, 14));
+    if (mode === 'daily' && !dailyPick && world.daily && world.daily.ymd !== todayInfo(diff).ymd) selectWorld();
+    saveName();
     P.lvl = 0; P.fails = 0; P.finishTime = 0;
     raceTime = 0; paused = false; resultsData = null;
     setOnline('off', '');
@@ -1712,7 +1829,7 @@ details.how[open] summary::before{content:"\2013  "}
     resetPlayer();
     toastsEl.innerHTML = '';
     releaseJoy();
-    ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet'].forEach((id) => $(id).classList.add('hidden'));
+    ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet'].forEach((id) => $(id).classList.add('hidden'));
     hud.classList.remove('hidden'); joyEl.classList.remove('hidden');
     state = 'countdown'; cd = 3; lastCount = 4;
     updateHUD();
@@ -1722,7 +1839,7 @@ details.how[open] summary::before{content:"\2013  "}
     P.lvl = 0;
     releaseJoy();
     hud.classList.add('hidden'); joyEl.classList.add('hidden');
-    ['results', 'pauseMenu', 'boardSheet', 'shareSheet'].forEach((id) => $(id).classList.add('hidden'));
+    ['results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet'].forEach((id) => $(id).classList.add('hidden'));
     $('menu').classList.remove('hidden');
     selectWorld(); defaultHint();
   }
@@ -1972,10 +2089,10 @@ details.how[open] summary::before{content:"\2013  "}
     const where = 'the ' + DIFFS[world.diff].name + (world.daily ? ' daily world for ' + world.daily.label : ' world') + ' ' + world.code;
     const what = !r.myBest && r.run.rank <= 10 ? 'took #' + r.run.rank + ' on ' + where : 'raced ' + where;
     const msg = 'Dropper Dash: I ' + what + ' in ' + fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash') + '. Can you beat it?';
-    const res = await shareText(msg, worldLink(world.code));
+    const res = await shareText(msg, worldLink(world.code, world.daily && world.daily.ymd));
     const hint = $('resHint');
     hint.className = 'hint' + (res === 'fail' ? '' : ' ok');
-    hint.textContent = res === 'copied' ? 'Result and link copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Link: ' + worldLink(world.code) : '';
+    hint.textContent = res === 'copied' ? 'Result and link copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Link: ' + worldLink(world.code, world.daily && world.daily.ymd) : '';
   });
   const muteBtn = $('muteBtn');
   muteBtn.classList.toggle('off', sfx.isMuted());
@@ -1988,20 +2105,24 @@ details.how[open] summary::before{content:"\2013  "}
       const q = new URLSearchParams(location.search);
       const h = new URLSearchParams(location.hash.replace(/^#/, ''));
       const raw = q.get('seed') || h.get('seed');
-      return raw ? parseCode(raw, 'P') : null;
+      const p = raw ? parseCode(raw, 'P') : null;
+      if (p) p.day = q.get('day') || h.get('day') || '';
+      return p;
     } catch (e) { return null; }
   }
   const linked = seedFromUrl();
   if (linked) {
     setDiff(linked.diff);
+    const day = linked.day, isDay = /^\d{4}-\d{2}-\d{2}$/.test(day) && day >= FIRST_DAY && day <= ymdOf(new Date()) && dayInfo(day, linked.diff).body === linked.body;
     if (linked.body === todayInfo(linked.diff).body) mode = 'daily';
+    else if (isDay) { mode = 'daily'; dailyPick = day; }
     else { mode = 'custom'; setCustom(linked.code); }
     store.set('dd.mode', mode);
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
   }
   resize();
   selectWorld();
-  if (linked) setHint('Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
+  if (linked) setHint(dailyPick ? 'Loaded the ' + world.daily.label + ' ' + DIFFS[world.diff].name + ' daily world. Good luck!' : 'Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
   else defaultHint();
   requestAnimationFrame(loop);
 })();
