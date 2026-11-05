@@ -44,6 +44,11 @@
   --hud-muted:rgba(255,255,255,.76);
   --danger:#ff6b6b;
   --water:#7fd3ff;
+  --ludi:#5b2a86;
+  --ludi-edge:#2a0f45;
+  --ludi-lo:#3b1660;
+  --ludi-hi:#8a4fc0;
+  --ludi-text:#ffe27a;
   --font-display:"Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-body:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -172,6 +177,15 @@ button{font:inherit;color:inherit}
 .seg button{padding:7px 4px 9px;font:600 16px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;cursor:pointer;touch-action:manipulation;
   box-shadow:inset 0 -4px 0 rgba(0,0,0,.08)}
 .seg button[aria-pressed="true"]{color:#fff;background:var(--grass);border-color:var(--grass-edge);box-shadow:inset 0 -4px 0 var(--grass-lo),inset 0 3px 0 var(--grass-hi);text-shadow:1px 1px 0 rgba(0,0,0,.3)}
+.seg.d4 button[data-d="L"]{grid-column:1 / -1;display:flex;align-items:center;justify-content:center;gap:8px}
+.seg button.locked{color:var(--muted);border-style:dashed;box-shadow:none}
+.seg button[data-d="L"][aria-pressed="true"]{color:var(--ludi-text);background:var(--ludi);border-color:var(--ludi-edge);box-shadow:inset 0 -4px 0 var(--ludi-lo),inset 0 3px 0 var(--ludi-hi)}
+.seg button .lock{width:14px;height:14px;flex:none}
+.pips{display:inline-flex;gap:3px}
+.pips i{width:8px;height:8px;border:2px solid currentColor;display:block}
+.pips i.on{background:var(--gold);border-color:var(--gold-shadow)}
+.res-unlock{font-family:var(--font-display);font-size:14px;line-height:1.35;padding:6px 10px;margin-bottom:6px;text-align:center;color:var(--ludi-text);background:var(--ludi);border:2px solid var(--ludi-edge)}
+.ico.ludi{background:var(--ludi)}
 .seed-row{display:grid;grid-template-columns:1fr auto auto;gap:6px}
 .seed-row .input{letter-spacing:.06em;text-transform:uppercase;min-width:0}
 .seed-row .input[readonly]{color:var(--muted)}
@@ -316,6 +330,7 @@ details.how[open] summary::before{content:"\2013  "}
         <button type="button" data-d="M" aria-pressed="false">Medium</button>
         <button type="button" data-d="P" aria-pressed="true">Progressive</button>
         <button type="button" data-d="H" aria-pressed="false">Hard</button>
+        <button type="button" data-d="L" aria-pressed="false" class="hidden"><svg class="lock" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h6v2h1v4h2v8H2V7h2V3h1zm1 2v4h4V3zM7 9h2v3H7z" fill-rule="evenodd"/></svg><span>Ludicrous</span><span class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
       </div>
 
       <div class="block">
@@ -348,6 +363,7 @@ details.how[open] summary::before{content:"\2013  "}
           <li><span class="ico dodge"></span><span><b>Dodge</b><br>Landing on top of a block sends you back to the top of that map, and the clock keeps running. Brushing the side of a block is fine.</span></li>
           <li><span class="ico splash"></span><span><b>Splash</b><br>Land in the water at the bottom to move on to the next map.</span></li>
           <li><span class="ico race"></span><span><b>Race the top 10</b><br>The numbered markers on the right are this world's top 10 runs. Beat a time to take its spot.</span></li>
+          <li><span class="ico ludi"></span><span><b>Ludicrous</b><br>Finish a day’s daily world on all four difficulties without crashing to unlock its secret Ludicrous world.</span></li>
           <li><span class="ico seed"></span><span><b>Share worlds</b><br>Send a seed or link and a friend races the exact same five maps.</span></li>
         </ul>
       </details>
@@ -376,6 +392,7 @@ details.how[open] summary::before{content:"\2013  "}
       </div>
       <div class="res-world" id="resWorld"></div>
       <div class="res-pb" id="resPB"></div>
+      <div class="res-unlock hidden" id="resUnlock"></div>
       <div class="res-online hidden" id="resOnline" aria-live="polite"></div>
       <div id="resList"></div>
       <div class="row-btns">
@@ -411,7 +428,7 @@ details.how[open] summary::before{content:"\2013  "}
         <button type="button" class="sq-btn cal-nav" id="calNext" aria-label="Next month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      <p class="cal-key">A gold mark means you’ve finished that day on this difficulty.</p>
+      <p class="cal-key" id="calKey">A gold mark means you’ve finished that day on this difficulty.</p>
       <div class="row-btns">
         <button class="btn small" id="calToday">Today</button>
         <button class="btn stone small" id="calClose">Close</button>
@@ -1099,8 +1116,11 @@ details.how[open] summary::before{content:"\2013  "}
     E: { name: 'Easy',        d: [0, 0.3, 0.6, 1, 1.2] },
     M: { name: 'Medium',      d: [1.8, 2, 2, 2.2, 2.4] },
     P: { name: 'Progressive', d: [0, 1, 2, 3, 4] },
-    H: { name: 'Hard',        d: [3, 3.3, 3.6, 4, 4] }
+    H: { name: 'Hard',        d: [3, 3.3, 3.6, 4, 4] },
+    // Earned only: maps 2.5x longer, faster and darker, with some layers that switch layouts
+    L: { name: 'Ludicrous',   d: [4.4, 4.6, 4.8, 5, 5], mult: 2.5 }
   };
+  const BLINK = 1.6, BLINK_WARN = 0.45;   // Ludicrous layers switch every 1.6 s, flashing a warning first
   const PATTERNS = [
     ['hole', 'cross', 'bars2', 'multi', 'islands'],
     ['multi', 'donut', 'bars2', 'scatter', 'cross', 'islands'],
@@ -1156,9 +1176,9 @@ details.how[open] summary::before{content:"\2013  "}
     }
     return [clamp(Math.round(tx - s / 2), 0, W - s), clamp(Math.round(tz - s / 2), 0, W - s)];
   }
-  function genLevel(seed, d, theme, index) {
+  function genLevel(seed, d, theme, index, mult, ludi) {
     const cfg = tierCfg(d), rng = mulberry32(seed);
-    const depth = Math.round(100 + 8 * d + (rng() - 0.5) * 12);
+    const depth = Math.round((100 + 8 * d + (rng() - 0.5) * 12) * (mult || 1));
     const layers = [];
     let tx = W / 2, tz = W / 2, gap = 13, y = depth - gap, prev = '';
     while (y >= 10) {
@@ -1170,7 +1190,15 @@ details.how[open] summary::before{content:"\2013  "}
       const spot = pickSpot(rng, tx, tz, rMin, rMax, cfg.hole);
       carve(grid, spot[0], spot[1], cfg.hole);
       tx = spot[0] + cfg.hole / 2; tz = spot[1] + cfg.hole / 2;
-      layers.push({ y: y, grid: grid, mat: layers.length % 2 });
+      const layer = { y: y, grid: grid, mat: layers.length % 2 };
+      // Ludicrous: some layers switch to a second layout; the hole you need stays open in both
+      if (ludi && layers.length > 0 && rng() < 0.35) {
+        let t2;
+        do { t2 = cfg.patterns[(rng() * cfg.patterns.length) | 0]; } while (t2 === type);
+        layer.gridB = makePattern(t2, rng);
+        carve(layer.gridB, spot[0], spot[1], cfg.hole);
+      }
+      layers.push(layer);
       gap = Math.round(cfg.gapMin + rng() * (cfg.gapMax - cfg.gapMin));
       y -= gap;
     }
@@ -1178,16 +1206,17 @@ details.how[open] summary::before{content:"\2013  "}
     const rMax = Math.min(4.2, H_SPEED * (lastY / cfg.speed) * 0.6);
     const ps = pickSpot(rng, tx, tz, rMax * 0.35, rMax, cfg.pool);
     return {
-      index: index, d: d, depth: depth, speed: cfg.speed, theme: theme, layers: layers,
+      index: index, d: d, depth: depth, speed: cfg.speed, theme: theme, layers: layers, ludi: !!ludi,
       pool: { x: ps[0], z: ps[1], s: cfg.pool },
       fallTime: ACCEL_TIME * 0.5 + depth / cfg.speed
     };
   }
 
   // Seeds look like "P-7KQ2XD": difficulty letter, dash, body. Any letters/digits work as a body.
-  function parseCode(raw, fallbackDiff) {
+  // L (Ludicrous) codes are only ever made inside the game, never typed in or linked
+  function parseCode(raw, fallbackDiff, allowL) {
     const s = String(raw || '').toUpperCase().replace(/[^A-Z0-9-]/g, '');
-    const m = s.match(/^([EMHP])-(.*)$/);
+    const m = s.match(allowL ? /^([EMHPL])-(.*)$/ : /^([EMHP])-(.*)$/);
     const diff = m ? m[1] : fallbackDiff;
     const body = (m ? m[2] : s).replace(/-/g, '').slice(0, 16);
     if (!body) return null;
@@ -1203,21 +1232,37 @@ details.how[open] summary::before{content:"\2013  "}
     let label;
     try { label = dt.toLocaleDateString(undefined, dt.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { label = ymd; }
     const body = bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymd)));
-    return { ymd: ymd, label: label, body: body, code: (d || 'P') + '-' + body, isToday: ymd === ymdOf(now) };
+    return { ymd: ymd, label: label, body: body, code: d === 'L' ? ludiCode(body) : (d || 'P') + '-' + body, isToday: ymd === ymdOf(now) };
   }
   function todayInfo(d) { return dayInfo(ymdOf(new Date()), d); }
+  // Ludicrous: each day has a hidden code, unlocked by clean runs on all four difficulties that day
+  function ludiCode(body) { return 'L-' + bodyFromRng(mulberry32(hashStr('ludicrous:' + body))); }
+  function cleanDone(code) {
+    if (store.get('dd.clean', {})[code]) return true;
+    const v = store.get('dd.bests', {})[code];
+    return !!(v && typeof v === 'object' && v.c === 0);
+  }
+  function markClean(code) {
+    const c = store.get('dd.clean', {});
+    delete c[code]; c[code] = 1;
+    const keys = Object.keys(c);
+    while (keys.length > 400) delete c[keys.shift()];
+    store.set('dd.clean', c);
+  }
+  function ludiProgress(body) { return ['E', 'M', 'P', 'H'].filter((d) => cleanDone(d + '-' + body)).length; }
+  function ludiUnlocked(body) { return ludiProgress(body) === 4; }
   function genWorld(code, daily) {
-    const p = parseCode(code, 'P');
+    const p = parseCode(code, 'P', true);
     // Layout stream. Keep this exactly as it is: the leaderboard Worker mirrors it to check times.
     const rng = mulberry32(hashStr('world:' + p.code));
     for (let i = 19; i > 0; i--) rng();
-    const ds = DIFFS[p.diff].d;
+    const ds = DIFFS[p.diff].d, mult = DIFFS[p.diff].mult || 1, ludi = p.diff === 'L';
     const seeds = ds.map(() => (rng() * 4294967296) >>> 0);
     // Theme stream (looks only), picked from all 80 themes
     const order = shuffle(THEMES.map((_, i) => i), mulberry32(hashStr('themes:' + p.code))).slice(0, NUM);
-    const levels = seeds.map((s, i) => genLevel(s, ds[i], THEMES[order[i]], i));
+    const levels = seeds.map((s, i) => genLevel(s, ds[i], THEMES[order[i]], i, mult, ludi));
     const perfect = levels.reduce((a, L) => a + L.fallTime, 0) + (NUM - 1) * TRANSITION;
-    return { code: p.code, diff: p.diff, levels: levels, perfect: perfect, daily: daily || null };
+    return { code: p.code, diff: p.diff, levels: levels, perfect: perfect, mult: mult, hidden: ludi, daily: daily || null };
   }
 
   // ---------- the world top 10 ----------
@@ -1233,12 +1278,13 @@ details.how[open] summary::before{content:"\2013  "}
     const names = shuffle(BOT_NAMES.slice(), r);
     const out = [];
     let crashes = 3 + (r() < 0.4 ? 1 : 0);
-    let time = w.perfect + crashes * (RESPAWN_DELAY + 1.4 + r() * 1.6) + 0.8 + r() * 2.2;
+    const m = w.mult || 1;   // longer maps make each crash cost more
+    let time = w.perfect + crashes * (RESPAWN_DELAY + (1.4 + r() * 1.6) * m) + 0.8 + r() * 2.2;
     for (let i = 0; i < 10; i++) {
       if (i > 0) {
         const dc = [0, 1, 1, 2][(r() * 4) | 0];
         crashes += dc;
-        time += Math.max(2 + r() * 3, dc * (RESPAWN_DELAY + 0.6) + 0.4);
+        time += Math.max(2 + r() * 3, dc * (RESPAWN_DELAY + 0.6 * m) + 0.4);
       }
       out.push({ name: names[i], time: Math.round(time * 100) / 100, crashes: crashes, pid: 'ghost' + i, mine: false });
     }
@@ -1262,7 +1308,7 @@ details.how[open] summary::before{content:"\2013  "}
   const levelGroup = new THREE.Group();
   scene.add(levelGroup);
   const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-  let builtKey = '', builtLevel = null;
+  let builtKey = '', builtLevel = null, blinkMeshes = null;
 
   function clearLevel() {
     while (levelGroup.children.length) {
@@ -1277,6 +1323,7 @@ details.how[open] summary::before{content:"\2013  "}
     const th = L.theme;
     scene.fog.color.setHex(th.fog);
     scene.background.setHex(th.fog);
+    scene.fog.near = L.ludi ? 3 : 5; scene.fog.far = L.ludi ? 30 : 54;   // Ludicrous: less to see ahead
 
     // walls: four big planes with a tiled block texture
     const top = L.depth + 24, bottom = -4, h = top - bottom, cy = (top + bottom) / 2;
@@ -1291,7 +1338,9 @@ details.how[open] summary::before{content:"\2013  "}
     // obstacle layers (two block types, alternating per layer)
     const BlockMat = th.glow ? THREE.MeshBasicMaterial : THREE.MeshLambertMaterial;
     const counts = [0, 0];
-    L.layers.forEach((l) => { for (let i = 0; i < W * W; i++) if (l.grid[i]) counts[l.mat]++; });
+    // a switching layer's always-solid cells go here; its two changing parts get their own meshes below
+    const solidAt = (l, i) => (l.gridB ? l.grid[i] && l.gridB[i] : l.grid[i]);
+    L.layers.forEach((l) => { for (let i = 0; i < W * W; i++) if (solidAt(l, i)) counts[l.mat]++; });
     const meshes = th.blocks.map((name, k) => {
       const im = new THREE.InstancedMesh(boxGeo, new BlockMat({ map: blockTex(name) }), Math.max(1, counts[k]));
       im.count = counts[k];
@@ -1302,7 +1351,7 @@ details.how[open] summary::before{content:"\2013  "}
     L.layers.forEach((l) => {
       const im = meshes[l.mat];
       for (let z = 0; z < W; z++) for (let x = 0; x < W; x++) {
-        if (!l.grid[z * W + x]) continue;
+        if (!solidAt(l, z * W + x)) continue;
         m4.makeTranslation(x + 0.5, l.y + 0.5, z + 0.5);
         im.setMatrixAt(idx[l.mat], m4);
         const s = 0.84 + rng() * 0.16; col.setRGB(s, s, s);
@@ -1311,6 +1360,29 @@ details.how[open] summary::before{content:"\2013  "}
       }
     });
     meshes.forEach((im) => { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; });
+    blinkMeshes = null;
+    if (L.layers.some((l) => l.gridB)) {
+      const cnt = [[0, 0], [0, 0]];
+      const phaseOf = (l, i) => (l.grid[i] && !l.gridB[i] ? 0 : l.gridB[i] && !l.grid[i] ? 1 : -1);
+      L.layers.forEach((l) => { if (l.gridB) for (let i = 0; i < W * W; i++) { const ph = phaseOf(l, i); if (ph >= 0) cnt[ph][l.mat]++; } });
+      blinkMeshes = [0, 1].map((ph) => th.blocks.map((name, k) => {
+        const im = new THREE.InstancedMesh(boxGeo, new BlockMat({ map: blockTex(name), transparent: true }), Math.max(1, cnt[ph][k]));
+        im.count = cnt[ph][k];
+        levelGroup.add(im);
+        return im;
+      }));
+      const bi = [[0, 0], [0, 0]];
+      L.layers.forEach((l) => {
+        if (!l.gridB) return;
+        for (let z = 0; z < W; z++) for (let x = 0; x < W; x++) {
+          const ph = phaseOf(l, z * W + x);
+          if (ph < 0) continue;
+          m4.makeTranslation(x + 0.5, l.y + 0.5, z + 0.5);
+          blinkMeshes[ph][l.mat].setMatrixAt(bi[ph][l.mat]++, m4);
+        }
+      });
+      blinkMeshes.forEach((p) => p.forEach((im) => { im.instanceMatrix.needsUpdate = true; }));
+    }
 
     // floor with the landing pool
     const p = L.pool, fcount = W * W - p.s * p.s;
@@ -1582,17 +1654,24 @@ details.how[open] summary::before{content:"\2013  "}
   let customCode = store.get('dd.custom', null);
   if (!customCode || !parseCode(customCode, 'P')) customCode = 'P-' + bodyFromRng(Math.random);
   let diff = store.get('dd.diff', null);
-  if (!DIFFS[diff]) diff = parseCode(customCode, 'P').diff;
+  if (!DIFFS[diff] || (diff === 'L' && mode === 'custom')) diff = parseCode(customCode, 'P').diff;
+  let ludiFallback = false;
   let dailyPick = null;   // date (YYYY-MM-DD) of a past daily world, or null for today
 
   function setHint(text, ok) { seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : ''); }
   function defaultHint() {
+    if (ludiFallback) { ludiFallback = false; setHint('Ludicrous isn’t unlocked for that day yet, so you’re on Hard.'); return; }
+    if (world && world.hidden) { setHint('Ludicrous: maps 2.5× longer, faster and darker, and some layers switch. This seed stays secret.', true); return; }
     setHint(mode === 'custom' ? 'Type or paste a seed to load a friend’s world.' : dailyPick ? 'You’re racing a past daily world. Tap the calendar to switch days.' : '');
   }
   function setDiff(d) { diff = d; store.set('dd.diff', d); }
   function setCustom(code) { customCode = code; store.set('dd.custom', code); }
   function selectWorld(keepInput) {
-    if (mode === 'daily') { const t = dailyPick ? dayInfo(dailyPick, diff) : todayInfo(diff); world = genWorld(t.code, t); }
+    if (mode === 'daily') {
+      let t = dailyPick ? dayInfo(dailyPick, diff) : todayInfo(diff);
+      if (diff === 'L' && !ludiUnlocked(t.body)) { setDiff('H'); t = dayInfo(t.ymd, 'H'); ludiFallback = true; }
+      world = genWorld(t.code, t);
+    }
     else world = genWorld(customCode, null);
     renderMenu(keepInput);
     if (state === 'menu') ensureLevel(0);
@@ -1601,25 +1680,41 @@ details.how[open] summary::before{content:"\2013  "}
   function renderMenu(keepInput) {
     $('modeSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
     $('diffSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === world.diff)));
+    const lb = $('diffSeg').querySelector('[data-d="L"]');
+    lb.classList.toggle('hidden', mode !== 'daily');
+    if (mode === 'daily') {
+      const n = ludiProgress(world.daily.body), open = n === 4;
+      lb.classList.toggle('locked', !open);
+      lb.querySelector('.lock').style.display = open ? 'none' : '';
+      lb.querySelector('.pips').style.display = open ? 'none' : '';
+      lb.querySelectorAll('.pips i').forEach((p, i) => p.classList.toggle('on', i < n));
+      lb.setAttribute('aria-label', open ? 'Ludicrous' : 'Ludicrous, locked, ' + n + ' of 4 clean runs done');
+    }
     $('diceBtn').classList.toggle('hidden', mode === 'daily');
     $('calBtn').classList.toggle('hidden', mode !== 'daily');
-    $('seedLabel').textContent = mode === 'daily' ? (world.daily.isToday ? 'Today’s seed, ' : 'Daily seed, ') + world.daily.label : 'World seed';
+    $('seedLabel').textContent = mode === 'daily' ? (world.hidden ? 'Ludicrous world, ' : world.daily.isToday ? 'Today’s seed, ' : 'Daily seed, ') + world.daily.label : 'World seed';
     seedInput.readOnly = mode === 'daily';
-    if (!keepInput) seedInput.value = world.code;
+    if (!keepInput) seedInput.value = world.hidden ? 'Hidden' : world.code;
+    $('shareSeedBtn').classList.toggle('hidden', !!world.hidden);
     const best = getBest(world.code);
     bestLine.innerHTML = best == null ? 'No run on this world yet' : 'Your best: <b>' + fmt(best.t) + '</b>';
   }
   $('modeSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     mode = b.dataset.mode; store.set('dd.mode', mode);
-    if (mode === 'custom') setCustom(diff + '-' + parseCode(customCode, diff).body);
+    if (mode === 'custom') { if (diff === 'L') setDiff('H'); setCustom(diff + '-' + parseCode(customCode, diff).body); }
     selectWorld(); defaultHint();
   });
   $('diffSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.d === 'L') {
+      if (mode !== 'daily') return;
+      const n = ludiProgress(world.daily.body);
+      if (n < 4) { setHint('Finish Easy, Medium, Progressive and Hard on this day with no crashes to unlock Ludicrous. ' + n + ' of 4 done.'); return; }
+    }
     setDiff(b.dataset.d);
     if (mode === 'custom') setCustom(diff + '-' + parseCode(customCode, diff).body);
-    selectWorld();
+    selectWorld(); defaultHint();
   });
   $('diceBtn').addEventListener('click', () => {
     setCustom(diff + '-' + bodyFromRng(Math.random));
@@ -1706,7 +1801,7 @@ details.how[open] summary::before{content:"\2013  "}
     });
   }
   function openBoard() {
-    $('boardSub').textContent = worldLabel(world) + ', seed ' + world.code;
+    $('boardSub').textContent = worldLabel(world) + (world.hidden ? '' : ', seed ' + world.code);
     $('boardNote').textContent = BOARD ? '' : 'Online scores aren\'t connected, so this board shows your own times on this device.';
     renderRows(boardList, boardFor(world), 'board');
     boardReturn = document.activeElement;
@@ -1744,6 +1839,7 @@ details.how[open] summary::before{content:"\2013  "}
     try { title = calMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } catch (e) { title = y + '-' + (m + 1); }
     $('calMonth').textContent = title;
     $('calSub').textContent = DIFFS[diff].name + ' difficulty';
+    $('calKey').textContent = diff === 'L' ? 'You can pick days where you’ve unlocked Ludicrous. A gold mark means you’ve finished it.' : 'A gold mark means you’ve finished that day on this difficulty.';
     $('calPrev').disabled = y < first.getFullYear() || (y === first.getFullYear() && m <= first.getMonth());
     $('calNext').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
     const grid = $('calGrid');
@@ -1763,7 +1859,7 @@ details.how[open] summary::before{content:"\2013  "}
       b.className = 'cal-day' + (ymd === today ? ' today' : '');
       b.textContent = n;
       b.dataset.ymd = ymd;
-      b.disabled = ymd > today || ymd < FIRST_DAY;
+      b.disabled = ymd > today || ymd < FIRST_DAY || (diff === 'L' && !ludiUnlocked(dayInfo(ymd, 'P').body));
       b.setAttribute('aria-pressed', String(ymd === selected));
       let label;
       try { label = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { label = ymd; }
@@ -1847,11 +1943,12 @@ details.how[open] summary::before{content:"\2013  "}
   function setPaused(v) {
     if (v && RACING.indexOf(state) < 0) return;
     paused = v;
-    if (v) { $('pauseWorld').textContent = worldLabel(world) + ', seed ' + world.code; releaseJoy(); }
+    if (v) { $('pauseWorld').textContent = worldLabel(world) + (world.hidden ? '' : ', seed ' + world.code); releaseJoy(); }
     $('pauseMenu').classList.toggle('hidden', !v);
   }
   function togglePause() { if (RACING.indexOf(state) >= 0) setPaused(!paused); }
 
+  const blinkB = () => Math.floor(raceTime / BLINK) % 2 === 1;
   function hitsLayer(L, x, y, z) {
     const x0 = Math.floor(x - PLAYER_R), x1 = Math.floor(x + PLAYER_R - 1e-4);
     const z0 = Math.floor(z - PLAYER_R), z1 = Math.floor(z + PLAYER_R - 1e-4);
@@ -1860,7 +1957,7 @@ details.how[open] summary::before{content:"\2013  "}
       if (y >= l.y + 1 || y + BODY_H <= l.y) continue;
       for (let cz = z0; cz <= z1; cz++) for (let cx = x0; cx <= x1; cx++) {
         if (cx < 0 || cz < 0 || cx >= W || cz >= W) continue;
-        if (l.grid[cz * W + cx]) return true;
+        if ((l.gridB && blinkB() ? l.gridB : l.grid)[cz * W + cx]) return true;
       }
     }
     return false;
@@ -1944,11 +2041,23 @@ details.how[open] summary::before{content:"\2013  "}
     const prev = getBest(world.code);
     const isPB = !prev || t < prev.t;
     if (isPB) setBest(world.code, t, P.fails);
+    // Clean runs count toward unlocking that day's Ludicrous world
+    let unlockMsg = '';
+    if (P.fails === 0) {
+      const day = world.daily && !world.hidden ? world.daily.body : null;
+      const before = day ? ludiProgress(day) : 0;
+      markClean(world.code);
+      if (day) {
+        const after = ludiProgress(day);
+        if (after === 4 && before < 4) unlockMsg = 'Ludicrous unlocked for this day! Pick it from the difficulty buttons.';
+        else if (after < 4) unlockMsg = 'Clean run! Ludicrous unlocks after clean runs on all four difficulties: ' + after + ' of 4 done.';
+      }
+    }
     const run = { name: myName(), time: t, crashes: P.fails, mine: true, run: true };
     const all = pool.filter((e) => !(e.mine && t < e.time)).concat([run]).sort((a, b) => a.time - b.time);
     all.forEach((e, i) => { e.rank = i + 1; });
     const myBest = all.find((e) => e.mine && !e.run) || null;
-    resultsData = { all: all, run: run, myBest: myBest, isPB: isPB, hadPrev: !!prev, best: isPB ? t : prev.t };
+    resultsData = { all: all, run: run, myBest: myBest, isPB: isPB, hadPrev: !!prev, best: isPB ? t : prev.t, unlockMsg: unlockMsg };
     showBig(run.rank === 1 ? 'Record!' : 'Finish!', 'gold');
     submitScore(!myBest && run.rank <= 10);
   }
@@ -1965,7 +2074,9 @@ details.how[open] summary::before{content:"\2013  "}
     else title = rank === 1 ? 'New world record!' : rank <= 10 ? 'You took #' + rank + '!' : 'Not in the top 10 yet';
     $('resTitle').textContent = title;
     $('resSub').textContent = fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash');
-    $('resWorld').innerHTML = esc(worldLabel(world)) + ', seed <b>' + esc(world.code) + '</b>';
+    $('resWorld').innerHTML = esc(worldLabel(world)) + (world.hidden ? '' : ', seed <b>' + esc(world.code) + '</b>');
+    $('resUnlock').textContent = r.unlockMsg;
+    $('resUnlock').classList.toggle('hidden', !r.unlockMsg);
     const pb = $('resPB');
     pb.className = 'res-pb' + (r.isPB ? ' new' : '');
     pb.textContent = r.isPB ? (r.hadPrev ? 'New personal best!' : 'First run on this world.') : 'Your best on this world: ' + fmt(r.best);
@@ -2000,6 +2111,14 @@ details.how[open] summary::before{content:"\2013  "}
     const L = builtLevel;
     const wt = texCache.bwater;
     if (wt) { wt.offset.x = (wt.offset.x + dt * 0.12) % 1; wt.offset.y = (wt.offset.y + dt * 0.3) % 1; }
+    if (blinkMeshes) {   // switching layers: the active layout is solid, the next one flashes just before it arrives
+      const t = state === 'menu' ? performance.now() / 1000 : raceTime;
+      const ph = Math.floor(t / BLINK) % 2, into = t % BLINK, warn = into > BLINK - BLINK_WARN;
+      blinkMeshes.forEach((group, k) => group.forEach((im) => {
+        im.visible = k === ph || warn;
+        im.material.opacity = k === ph ? 1 : (Math.floor(into * 10) % 2 ? 0.5 : 0.18);
+      }));
+    }
     switch (state) {
       case 'countdown': {
         cd -= dt;
@@ -2086,13 +2205,15 @@ details.how[open] summary::before{content:"\2013  "}
   $('quitBtn').addEventListener('click', toMenu);
   $('shareResBtn').addEventListener('click', async () => {
     const r = resultsData; if (!r) return;
-    const where = 'the ' + DIFFS[world.diff].name + (world.daily ? ' daily world for ' + world.daily.label : ' world') + ' ' + world.code;
+    const where = 'the ' + DIFFS[world.diff].name + (world.daily ? ' daily world for ' + world.daily.label : ' world') + (world.hidden ? '' : ' ' + world.code);
     const what = !r.myBest && r.run.rank <= 10 ? 'took #' + r.run.rank + ' on ' + where : 'raced ' + where;
-    const msg = 'Dropper Dash: I ' + what + ' in ' + fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash') + '. Can you beat it?';
-    const res = await shareText(msg, worldLink(world.code, world.daily && world.daily.ymd));
+    const msg = 'Dropper Dash: I ' + what + ' in ' + fmt(P.finishTime) + ' with ' + plural(P.fails, 'crash') + '.' +
+      (world.hidden ? ' Clear all four difficulties without crashing to unlock it.' : ' Can you beat it?');
+    const link = world.hidden ? GAME_URL : worldLink(world.code, world.daily && world.daily.ymd);
+    const res = await shareText(msg, link);
     const hint = $('resHint');
     hint.className = 'hint' + (res === 'fail' ? '' : ' ok');
-    hint.textContent = res === 'copied' ? 'Result and link copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Link: ' + worldLink(world.code, world.daily && world.daily.ymd) : '';
+    hint.textContent = res === 'copied' ? 'Result and link copied. Paste it to a friend.' : res === 'shared' ? 'Result shared.' : res === 'fail' ? 'Couldn\'t copy automatically. Link: ' + link : '';
   });
   const muteBtn = $('muteBtn');
   muteBtn.classList.toggle('off', sfx.isMuted());
