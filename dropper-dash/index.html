@@ -236,7 +236,15 @@ button{font:inherit;color:inherit}
 .cal-day:disabled{opacity:.3;cursor:not-allowed}
 .cal-day.today{border:3px solid var(--text)}
 .cal-day[aria-pressed="true"]{color:#fff;background:var(--grass);border-color:var(--grass-edge);text-shadow:1px 1px 0 rgba(0,0,0,.3)}
-.cal-day.played::after{content:"";position:absolute;bottom:3px;left:50%;width:6px;height:6px;margin-left:-3px;background:var(--gold);box-shadow:0 0 0 1px var(--gold-shadow)}
+.cal-day[class*="st-"]::after{content:"";position:absolute;bottom:3px;left:50%;width:8px;height:8px;margin-left:-4px;background:var(--st);box-shadow:0 0 0 1px var(--panel-border)}
+.st-finish{--st:#ffffff}
+.st-p3{--st:#b87333}
+.st-p2{--st:#cfd6de}
+.st-p1{--st:#f5c542}
+.st-clean{--st:#9b59d0}
+.cal-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 12px;margin:10px 0 0;font-size:12px;color:var(--muted)}
+.cal-legend span{display:inline-flex;align-items:center;gap:5px}
+.cal-legend i{width:9px;height:9px;display:block;background:var(--st);box-shadow:0 0 0 1px var(--panel-border)}
 .cal-key{margin:8px 0 0;text-align:center;font-size:13px;line-height:1.35;color:var(--muted)}
 .hint{margin-top:6px;font-size:13px;line-height:1.35;color:var(--muted);-webkit-user-select:text;user-select:text;overflow-wrap:anywhere}
 .hint:empty{display:none}
@@ -327,10 +335,11 @@ details.how[open] summary::before{content:"\2013  "}
     <path fill="var(--i1)" d="M5 5h6v1h1v1h1v5h-1v1h-1v1H5v-1H4v-1H3V7h1V6h1z"/>
     <path fill="#fff" opacity=".45" d="M5 7h1v2H5z"/>
   </symbol>
-  <symbol id="i-drop" viewBox="0 0 16 16">
-    <path fill="var(--i1)" d="M7 1h2v2h1v2h1v2h1v2h1v4h-1v1h-1v1H5v-1H4v-1H3V9h1V7h1V5h1V3h1z"/>
-    <path fill="#fff" opacity=".85" d="M5 9h1v3H5zM6 12h1v1H6z"/>
-    <path fill="var(--i2)" d="M13 1h1v1h1v1h-1v1h-1V3h-1V2h1zM1 4h1v1H1z"/>
+  <symbol id="i-trophy" viewBox="0 0 16 16">
+    <path fill="var(--i3)" d="M1 2h3v1H2v2h1v1h1v1H2V6H1zM12 2h3v5h-2V6h1V5h1V3h-3zM7 10h2v2H7zM5 12h6v1H5zM4 13h8v2H4z"/>
+    <path fill="var(--i1)" d="M4 1h8v6h-1v1h-1v1H9v1H7V9H6V8H5V7H4z"/>
+    <path fill="#fff" opacity=".6" d="M5 2h1v4H5z"/>
+    <path fill="var(--i2)" d="M14 8h1v1h-1zM0 9h1v1H0zM13 0h1v1h-1z"/>
   </symbol>
   <symbol id="i-crown" viewBox="0 0 16 16">
     <path fill="var(--i1)" d="M1 3h2v3h1V5h1V2h2v3h2V2h2v3h1v1h1V3h2v9H1z"/>
@@ -510,7 +519,10 @@ details.how[open] summary::before{content:"\2013  "}
         <button type="button" class="sq-btn cal-nav" id="calNext" aria-label="Next month"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      <p class="cal-key" id="calKey">A gold mark means you’ve finished that day on this difficulty.</p>
+      <div class="cal-legend" aria-hidden="true">
+        <span><i class="st-finish"></i>Finished</span><span><i class="st-p3"></i>3rd</span><span><i class="st-p2"></i>2nd</span><span><i class="st-p1"></i>1st</span><span><i class="st-clean"></i>No crashes</span>
+      </div>
+      <p class="cal-key hidden" id="calKey">You can pick days where you’ve unlocked Ludicrous.</p>
       <div class="row-btns">
         <button class="btn small" id="calToday">Today</button>
         <button class="btn stone small" id="calClose">Close</button>
@@ -1903,6 +1915,8 @@ details.how[open] summary::before{content:"\2013  "}
   boardSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBoard(); });
 
   // ---------- past daily worlds (calendar) ----------
+  // Calendar day marks, lowest to highest: finished, 3rd, 2nd, 1st, no crashes
+  const CAL_STATUS = { finish: 'finished', p3: 'finished 3rd', p2: 'finished 2nd', p1: 'finished 1st', clean: 'no crashes' };
   const calSheet = $('calSheet');
   let calMonth = null, calReturn = null;   // calMonth = first day of the month on screen
   function openCalendar() {
@@ -1918,13 +1932,13 @@ details.how[open] summary::before{content:"\2013  "}
     if (calReturn && calReturn.focus) calReturn.focus({ preventScroll: true });
   }
   function renderCalendar() {
-    const today = ymdOf(new Date()), selected = world.daily ? world.daily.ymd : today;
+    const today = ymdOf(new Date()), selected = world.daily ? world.daily.ymd : today, sets = achSets();
     const y = calMonth.getFullYear(), m = calMonth.getMonth(), first = dateOf(FIRST_DAY), now = new Date();
     let title;
     try { title = calMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); } catch (e) { title = y + '-' + (m + 1); }
     $('calMonth').textContent = title;
     $('calSub').textContent = DIFFS[diff].name + ' difficulty';
-    $('calKey').textContent = diff === 'L' ? 'You can pick days where you’ve unlocked Ludicrous. A gold mark means you’ve finished it.' : 'A gold mark means you’ve finished that day on this difficulty.';
+    $('calKey').classList.toggle('hidden', diff !== 'L');
     $('calPrev').disabled = y < first.getFullYear() || (y === first.getFullYear() && m <= first.getMonth());
     $('calNext').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
     const grid = $('calGrid');
@@ -1948,7 +1962,11 @@ details.how[open] summary::before{content:"\2013  "}
       b.setAttribute('aria-pressed', String(ymd === selected));
       let label;
       try { label = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { label = ymd; }
-      if (!b.disabled && getBest(dayInfo(ymd, diff).code)) { b.classList.add('played'); label += ', finished'; }
+      if (!b.disabled) {
+        const code = dayInfo(ymd, diff).code, has = (k) => !!(sets[code[0] + ':' + k] && sets[code[0] + ':' + k][code]);
+        const st = has('clean') || cleanDone(code) ? 'clean' : has('p1') ? 'p1' : has('p2') ? 'p2' : has('p3') ? 'p3' : getBest(code) ? 'finish' : '';
+        if (st) { b.classList.add('st-' + st); label += ', ' + CAL_STATUS[st]; }
+      }
       b.setAttribute('aria-label', label + (ymd === today ? ', today' : ''));
       grid.appendChild(b);
     }
@@ -1999,7 +2017,7 @@ details.how[open] summary::before{content:"\2013  "}
     if (type === 'top10') inner = '<use href="#i-podium"' + v(ludi ? '#f5c542' : '#9ba1aa', ludi ? '#ffe27a' : '#f5c542', '#1b1610') + '/>';
     else if (medal[type]) inner = '<use href="#i-medal"' + v(medal[type], ludi ? '#b07ae0' : '#4dabf7', ludi ? '#ffe27a' : '#e5484d') + '/>' +
       '<text x="8" y="12.4" text-anchor="middle" font-size="6.5" font-weight="700" font-family="Pixelify Sans, monospace" fill="#1b1610">' + type[1] + '</text>';
-    else if (type === 'clean') inner = ludi ? '<use href="#i-crown"' + v('#f5c542', '#7fd3ff', '#b07a14') + '/>' : '<use href="#i-drop"' + v('#4fc3f7', '#f5c542', '#fff') + '/>';
+    else if (type === 'clean') inner = ludi ? '<use href="#i-crown"' + v('#f5c542', '#7fd3ff', '#b07a14') + '/>' : '<use href="#i-trophy"' + v('#f5c542', '#4fc3f7', '#b07a14') + '/>';
     else inner = '<use href="#i-unlock"' + v('#f5c542', '#cfd6de', '#ffe27a') + '/>';
     return '<svg viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>';
   }
@@ -2014,7 +2032,10 @@ details.how[open] summary::before{content:"\2013  "}
       h.innerHTML = '<i style="background:' + DIFF_COLORS[d] + '"></i>' + DIFFS[d].name;
       sec.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'ach-grid' + (ludi ? ' l6' : '');
-      (ludi ? [['unlocked', 'Unlocked', 'unlocked']] : []).concat(ACH_TYPES).forEach((t) => {
+      // regular difficulties lead with No crashes, then 1st, 2nd, 3rd, Top 10; Ludicrous keeps its own order
+      const order = ludi ? [['unlocked', 'Unlocked', 'unlocked']].concat(ACH_TYPES)
+        : ['clean', 'p1', 'p2', 'p3', 'top10'].map((k) => ACH_TYPES.find((t) => t[0] === k));
+      order.forEach((t) => {
         const type = t[0], n = Object.keys(a[d + ':' + type] || {}).length;
         total++; if (n) earned++;
         const unit = type === 'unlocked' ? (n === 1 ? 'day' : 'days') : (n === 1 ? 'world' : 'worlds');
