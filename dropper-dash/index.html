@@ -49,6 +49,7 @@
   --ludi-lo:#3b1660;
   --ludi-hi:#8a4fc0;
   --ludi-text:#ffe27a;
+  --clean-glow:#d9f3ff;
   --font-display:"Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-body:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -66,6 +67,7 @@
     --row-hi:#3b3318;
     --divider:rgba(240,235,224,.16);
     --focus:#7fb6ff;
+    --clean-glow:#1d4152;
   }
 }
 :root[data-theme="dark"]{
@@ -81,6 +83,7 @@
   --row-hi:#3b3318;
   --divider:rgba(240,235,224,.16);
   --focus:#7fb6ff;
+  --clean-glow:#1d4152;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none}
@@ -193,6 +196,36 @@ button{font:inherit;color:inherit}
   box-shadow:inset 0 -4px 0 var(--stone-lo),inset 0 3px 0 var(--stone-hi);touch-action:manipulation}
 .sq-btn svg{width:20px;height:20px}
 .sq-btn:active{transform:translateY(2px)}
+.name-row{display:grid;grid-template-columns:1fr auto;gap:6px}
+.name-row .input{min-width:0}
+.sq-btn{position:relative}
+.ach-dot{position:absolute;top:-6px;right:-6px;width:12px;height:12px;background:var(--danger);border:2px solid var(--panel-border)}
+.ach-sec{margin-top:12px}
+.ach-sec h3{margin:0 0 6px;display:flex;align-items:center;gap:7px;font-family:var(--font-display);font-size:16px;font-weight:700}
+.ach-sec h3 i{width:12px;height:12px;border:2px solid var(--panel-border);display:block}
+.ach-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.ach-grid.l6{grid-template-columns:repeat(3,1fr)}
+.ach-tile{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:7px 2px 6px;cursor:pointer;touch-action:manipulation;
+  font-family:var(--font-display);color:var(--text);background:var(--field);border:2px solid var(--field-edge);border-radius:0}
+.ach-tile svg{width:30px;height:30px;display:block;shape-rendering:crispEdges}
+.ach-tile .n{font-size:17px;font-weight:700;line-height:1}
+.ach-tile .t{font-size:10px;line-height:1.1;color:var(--muted);text-align:center}
+.ach-tile.off svg{filter:grayscale(1);opacity:.3}
+.ach-tile.off .n{color:var(--muted)}
+.ach-tile.clean.on{border-color:#4fb3d9;background:linear-gradient(110deg,var(--field) 35%,var(--clean-glow) 50%,var(--field) 65%);background-size:300% 100%;animation:shimmer 3.2s linear infinite}
+.ach-tile.ludi{color:var(--ludi-text);background:var(--ludi);border-color:var(--ludi-edge)}
+.ach-tile.ludi .t{color:#dcc6f2}
+.ach-tile.ludi.off svg{filter:grayscale(.7);opacity:.35}
+.ach-tile.ludi.off .n{color:#b9a0d6}
+.ach-tile.ludi.on{border-color:var(--gold);background:linear-gradient(110deg,var(--ludi) 35%,var(--ludi-hi) 50%,var(--ludi) 65%);background-size:300% 100%;animation:shimmer 2.6s linear infinite}
+.ach-tile.ludi.clean.on{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(245,197,66,.55)}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.ach-pips{display:flex;gap:2px}
+.ach-pips i{width:5px;height:5px;background:var(--divider);display:block}
+.ach-pips i.on{background:var(--gold)}
+.ach-detail{margin:12px 0 0;min-height:2.7em;text-align:center;font-size:13px;line-height:1.35;color:var(--muted)}
+.res-ach{font-family:var(--font-display);font-size:14px;line-height:1.35;padding:6px 10px;margin-bottom:6px;text-align:center;color:var(--text);background:var(--field);border:2px solid var(--gold)}
+@media (prefers-reduced-motion: reduce){.ach-tile.on{animation:none!important}}
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 8px}
 .cal-month{font-family:var(--font-display);font-size:20px;font-weight:700;text-align:center}
 .cal-nav{height:40px}
@@ -281,6 +314,36 @@ details.how[open] summary::before{content:"\2013  "}
 </style>
 </head>
 <body>
+<!-- achievement icons (16x16 pixel art); colors come from --i1, --i2, --i3 on each icon -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-podium" viewBox="0 0 16 16">
+    <path fill="var(--i1)" d="M6 6h4v9H6zM1 9h5v6H1zM10 11h5v4h-5z"/>
+    <path fill="var(--i3)" opacity=".35" d="M6 6h4v1H6zM1 9h5v1H1zM10 11h5v1h-5z"/>
+    <path fill="var(--i2)" d="M7 0h2v2h2v1h-1v2H9V4H7v1H6V3H5V2h2z"/>
+  </symbol>
+  <symbol id="i-medal" viewBox="0 0 16 16">
+    <path fill="var(--i2)" d="M3 0h3v1h1v1h2V1h1V0h3v1h-1v1h-1v1h-1v1H9v1H7V4H6V3H5V2H4V1H3z"/>
+    <path fill="var(--i3)" d="M7 2h2v2H7z"/>
+    <path fill="var(--i1)" d="M5 5h6v1h1v1h1v5h-1v1h-1v1H5v-1H4v-1H3V7h1V6h1z"/>
+    <path fill="#fff" opacity=".45" d="M5 7h1v2H5z"/>
+  </symbol>
+  <symbol id="i-drop" viewBox="0 0 16 16">
+    <path fill="var(--i1)" d="M7 1h2v2h1v2h1v2h1v2h1v4h-1v1h-1v1H5v-1H4v-1H3V9h1V7h1V5h1V3h1z"/>
+    <path fill="#fff" opacity=".85" d="M5 9h1v3H5zM6 12h1v1H6z"/>
+    <path fill="var(--i2)" d="M13 1h1v1h1v1h-1v1h-1V3h-1V2h1zM1 4h1v1H1z"/>
+  </symbol>
+  <symbol id="i-crown" viewBox="0 0 16 16">
+    <path fill="var(--i1)" d="M1 3h2v3h1V5h1V2h2v3h2V2h2v3h1v1h1V3h2v9H1z"/>
+    <path fill="var(--i3)" d="M1 12h14v2H1z"/>
+    <path fill="var(--i2)" d="M7 7h2v1h1v2H9v1H7v-1H6V8h1z"/>
+    <path fill="#fff" d="M14 0h1v1h-1zM0 0h1v1H0zM7 8h1v1H7z"/>
+  </symbol>
+  <symbol id="i-unlock" viewBox="0 0 16 16">
+    <path fill="var(--i2)" d="M3 2h1V1h5v1h1v3H8V3H5v5H3z"/>
+    <path fill="var(--i1)" fill-rule="evenodd" d="M2 8h10v7H2zM6 10h2v3H6z"/>
+    <path fill="var(--i3)" d="M13 1h1v1h1v1h-1v1h-1V3h-1V2h1zM14 7h1v1h-1z"/>
+  </symbol>
+</svg>
 <div id="stage"></div>
 
 <div id="hud" class="hidden">
@@ -318,7 +381,13 @@ details.how[open] summary::before{content:"\2013  "}
     <h1 class="logo">Dropper <span class="dash">Dash</span></h1>
     <div class="panel">
       <label class="sr-only" for="nameInput">Your racer name</label>
-      <input class="input" id="nameInput" maxlength="14" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your racer name">
+      <div class="name-row">
+        <input class="input" id="nameInput" maxlength="14" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your racer name">
+        <button type="button" class="sq-btn" id="achBtn" aria-label="Achievements">
+          <svg viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h8v5h-1v1h-1v1H9v3h2v2H5v-2h2V8H6V7H5V6H4zM1 2h3v1H2v2h2v1H1zM12 2h3v4h-3V5h2V3h-2zM4 14h8v1H4z"/></svg>
+          <span class="ach-dot hidden" id="achDot"></span>
+        </button>
+      </div>
 
       <div class="block seg" id="modeSeg" role="group" aria-label="World">
         <button type="button" data-mode="daily" aria-pressed="true">Daily world</button>
@@ -393,6 +462,7 @@ details.how[open] summary::before{content:"\2013  "}
       <div class="res-world" id="resWorld"></div>
       <div class="res-pb" id="resPB"></div>
       <div class="res-unlock hidden" id="resUnlock"></div>
+      <div class="res-ach hidden" id="resAch"></div>
       <div class="res-online hidden" id="resOnline" aria-live="polite"></div>
       <div id="resList"></div>
       <div class="row-btns">
@@ -413,6 +483,18 @@ details.how[open] summary::before{content:"\2013  "}
       <button class="btn" id="shareLinkBtn">Share link</button>
       <button class="btn stone" id="shareCodeBtn">Share code</button>
       <button class="btn stone small" id="shareCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="achSheet" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="achTitle">
+  <div class="wrap">
+    <div class="panel">
+      <h2 class="p-title" id="achTitle">Achievements</h2>
+      <p class="p-sub" id="achSub"></p>
+      <div id="achBody"></div>
+      <p class="ach-detail" id="achDetail" aria-live="polite"></p>
+      <button class="btn stone" id="achClose">Close</button>
     </div>
   </div>
 </div>
@@ -1117,10 +1199,11 @@ details.how[open] summary::before{content:"\2013  "}
     M: { name: 'Medium',      d: [1.8, 2, 2, 2.2, 2.4] },
     P: { name: 'Progressive', d: [0, 1, 2, 3, 4] },
     H: { name: 'Hard',        d: [3, 3.3, 3.6, 4, 4] },
-    // Earned only: maps 2.5x longer, faster and darker, with some layers that switch layouts
+    // Earned only: maps 2.5x longer, faster and darker
     L: { name: 'Ludicrous',   d: [4.4, 4.6, 4.8, 5, 5], mult: 2.5 }
   };
   const BLINK = 1.6, BLINK_WARN = 0.45;   // Ludicrous layers switch every 1.6 s, flashing a warning first
+  const SWITCHING_LAYERS = false;          // switched off for now (too distracting)
   const PATTERNS = [
     ['hole', 'cross', 'bars2', 'multi', 'islands'],
     ['multi', 'donut', 'bars2', 'scatter', 'cross', 'islands'],
@@ -1191,12 +1274,13 @@ details.how[open] summary::before{content:"\2013  "}
       carve(grid, spot[0], spot[1], cfg.hole);
       tx = spot[0] + cfg.hole / 2; tz = spot[1] + cfg.hole / 2;
       const layer = { y: y, grid: grid, mat: layers.length % 2 };
-      // Ludicrous: some layers switch to a second layout; the hole you need stays open in both
+      // Ludicrous switching layers (off for now). The second layout is still drawn from the random
+      // numbers so every Ludicrous map keeps exactly the same layout either way.
       if (ludi && layers.length > 0 && rng() < 0.35) {
         let t2;
         do { t2 = cfg.patterns[(rng() * cfg.patterns.length) | 0]; } while (t2 === type);
-        layer.gridB = makePattern(t2, rng);
-        carve(layer.gridB, spot[0], spot[1], cfg.hole);
+        const gridB = makePattern(t2, rng);
+        if (SWITCHING_LAYERS) { carve(gridB, spot[0], spot[1], cfg.hole); layer.gridB = gridB; }
       }
       layers.push(layer);
       gap = Math.round(cfg.gapMin + rng() * (cfg.gapMax - cfg.gapMin));
@@ -1661,7 +1745,7 @@ details.how[open] summary::before{content:"\2013  "}
   function setHint(text, ok) { seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : ''); }
   function defaultHint() {
     if (ludiFallback) { ludiFallback = false; setHint('Ludicrous isn’t unlocked for that day yet, so you’re on Hard.'); return; }
-    if (world && world.hidden) { setHint('Ludicrous: maps 2.5× longer, faster and darker, and some layers switch. This seed stays secret.', true); return; }
+    if (world && world.hidden) { setHint('Ludicrous: maps 2.5× longer, faster and darker. This seed stays secret.', true); return; }
     setHint(mode === 'custom' ? 'Type or paste a seed to load a friend’s world.' : dailyPick ? 'You’re racing a past daily world. Tap the calendar to switch days.' : '');
   }
   function setDiff(d) { diff = d; store.set('dd.diff', d); }
@@ -1698,6 +1782,7 @@ details.how[open] summary::before{content:"\2013  "}
     $('shareSeedBtn').classList.toggle('hidden', !!world.hidden);
     const best = getBest(world.code);
     bestLine.innerHTML = best == null ? 'No run on this world yet' : 'Your best: <b>' + fmt(best.t) + '</b>';
+    $('achDot').classList.toggle('hidden', achTotal() <= store.get('dd.achSeen', 0));
   }
   $('modeSeg').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1880,6 +1965,110 @@ details.how[open] summary::before{content:"\2013  "}
   $('calClose').addEventListener('click', closeCalendar);
   calSheet.addEventListener('click', (e) => { if (e.target === calSheet) closeCalendar(); });
   calSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCalendar(); });
+
+  // ---------- achievements ----------
+  // Stored as sets of daily world codes per difficulty, so each daily world counts once and
+  // rolling new custom worlds can't farm them. Keys look like "H:top10", "P:p1", "L:clean", "L:unlocked".
+  const ACH_TYPES = [
+    ['top10', 'Top 10', 'finished in the top 10'],
+    ['p1', '1st', 'finished 1st'],
+    ['p2', '2nd', 'finished 2nd'],
+    ['p3', '3rd', 'finished 3rd'],
+    ['clean', 'No crashes', 'finished with no crashes']
+  ];
+  const MILESTONES = [10, 25, 50];
+  const DIFF_COLORS = { E: '#69db7c', M: '#4dabf7', P: '#ff922b', H: '#ff6b6b', L: '#8a4fc0' };
+  function achSets() { return store.get('dd.ach', {}); }
+  function achCount(key) { return Object.keys(achSets()[key] || {}).length; }
+  function achTotal() { const a = achSets(); return Object.keys(a).reduce((s, k) => s + Object.keys(a[k]).length, 0); }
+  function achAdd(key, id) {
+    const a = achSets(), s = a[key] || (a[key] = {});
+    if (s[id]) return false;
+    s[id] = 1; store.set('dd.ach', a);
+    return true;
+  }
+  function achLabel(key) {
+    const parts = key.split(':'), d = parts[0], type = parts[1];
+    if (type === 'unlocked') return 'Ludicrous unlocked';
+    return DIFFS[d].name + ' ' + (type === 'top10' ? 'top 10' : type === 'clean' ? 'no crashes' : type[1] + (type === 'p1' ? 'st' : type === 'p2' ? 'nd' : 'rd') + ' place');
+  }
+  function achIcon(type, ludi) {
+    const v = (a, b, c) => ' style="--i1:' + a + ';--i2:' + b + ';--i3:' + c + '"';
+    const medal = { p1: '#f5c542', p2: '#cfd6de', p3: '#d99057' };
+    let inner;
+    if (type === 'top10') inner = '<use href="#i-podium"' + v(ludi ? '#f5c542' : '#9ba1aa', ludi ? '#ffe27a' : '#f5c542', '#1b1610') + '/>';
+    else if (medal[type]) inner = '<use href="#i-medal"' + v(medal[type], ludi ? '#b07ae0' : '#4dabf7', ludi ? '#ffe27a' : '#e5484d') + '/>' +
+      '<text x="8" y="12.4" text-anchor="middle" font-size="6.5" font-weight="700" font-family="Pixelify Sans, monospace" fill="#1b1610">' + type[1] + '</text>';
+    else if (type === 'clean') inner = ludi ? '<use href="#i-crown"' + v('#f5c542', '#7fd3ff', '#b07a14') + '/>' : '<use href="#i-drop"' + v('#4fc3f7', '#f5c542', '#fff') + '/>';
+    else inner = '<use href="#i-unlock"' + v('#f5c542', '#cfd6de', '#ffe27a') + '/>';
+    return '<svg viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>';
+  }
+  function renderAch() {
+    const a = achSets(), box = $('achBody');
+    let earned = 0, total = 0;
+    box.innerHTML = '';
+    ['E', 'M', 'P', 'H', 'L'].forEach((d) => {
+      const ludi = d === 'L';
+      const sec = document.createElement('section'); sec.className = 'ach-sec';
+      const h = document.createElement('h3');
+      h.innerHTML = '<i style="background:' + DIFF_COLORS[d] + '"></i>' + DIFFS[d].name;
+      sec.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'ach-grid' + (ludi ? ' l6' : '');
+      (ludi ? [['unlocked', 'Unlocked', 'unlocked']] : []).concat(ACH_TYPES).forEach((t) => {
+        const type = t[0], n = Object.keys(a[d + ':' + type] || {}).length;
+        total++; if (n) earned++;
+        const unit = type === 'unlocked' ? (n === 1 ? 'day' : 'days') : (n === 1 ? 'world' : 'worlds');
+        const next = MILESTONES.find((m) => m > n);
+        const what = type === 'unlocked' ? 'Ludicrous unlocked on ' + n + ' ' + unit : DIFFS[d].name + ': ' + n + ' ' + unit + ' ' + t[2];
+        const detail = what + '. ' + (n === 0 ? 'Not earned yet.' : next ? 'Next milestone: ' + next + '.' : 'Every milestone reached!');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'ach-tile ' + (n ? 'on' : 'off') + (type === 'clean' ? ' clean' : '') + (ludi ? ' ludi' : '');
+        b.innerHTML = achIcon(type, ludi) + '<span class="n">' + n + '</span><span class="t">' + t[1] + '</span>' +
+          '<span class="ach-pips" aria-hidden="true">' + MILESTONES.map((m) => '<i' + (n >= m ? ' class="on"' : '') + '></i>').join('') + '</span>';
+        b.setAttribute('aria-label', detail);
+        b.addEventListener('click', () => { $('achDetail').textContent = detail; });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      box.appendChild(sec);
+    });
+    $('achSub').textContent = earned + ' of ' + total + ' earned';
+    $('achDetail').textContent = 'Tap an achievement for details. Daily worlds count, once each. The gold squares mark 10, 25 and 50.';
+  }
+  const achSheet = $('achSheet');
+  let achReturn = null;
+  function openAch() {
+    renderAch();
+    store.set('dd.achSeen', achTotal());
+    $('achDot').classList.add('hidden');
+    achReturn = document.activeElement;
+    achSheet.classList.remove('hidden');
+    $('achClose').focus({ preventScroll: true });
+  }
+  function closeAch() {
+    achSheet.classList.add('hidden');
+    if (achReturn && achReturn.focus) achReturn.focus({ preventScroll: true });
+  }
+  $('achBtn').addEventListener('click', openAch);
+  $('achClose').addEventListener('click', closeAch);
+  achSheet.addEventListener('click', (e) => { if (e.target === achSheet) closeAch(); });
+  achSheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAch(); });
+  // Credit clean runs and Ludicrous unlocks from before achievements existed (placements count from now on)
+  function backfillAch() {
+    const clean = store.get('dd.clean', {}), bests = store.get('dd.bests', {}), a = achSets();
+    const isClean = (code) => !!clean[code] || !!(bests[code] && typeof bests[code] === 'object' && bests[code].c === 0);
+    const add = (key, id) => { (a[key] || (a[key] = {}))[id] = 1; };
+    const today = ymdOf(new Date());
+    for (let dt = dateOf(FIRST_DAY); ymdOf(dt) <= today; dt.setDate(dt.getDate() + 1)) {
+      const body = bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymdOf(dt))));
+      let all = true;
+      ['E', 'M', 'P', 'H'].forEach((d) => { if (isClean(d + '-' + body)) add(d + ':clean', d + '-' + body); else all = false; });
+      if (all) add('L:unlocked', body);
+      if (isClean(ludiCode(body))) add('L:clean', ludiCode(body));
+    }
+    store.set('dd.ach', a);
+  }
   $('menuBoardBtn').addEventListener('click', openBoard);
 
   async function refreshBoard(code) {
@@ -1925,7 +2114,7 @@ details.how[open] summary::before{content:"\2013  "}
     resetPlayer();
     toastsEl.innerHTML = '';
     releaseJoy();
-    ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet'].forEach((id) => $(id).classList.add('hidden'));
+    ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet', 'achSheet'].forEach((id) => $(id).classList.add('hidden'));
     hud.classList.remove('hidden'); joyEl.classList.remove('hidden');
     state = 'countdown'; cd = 3; lastCount = 4;
     updateHUD();
@@ -1935,7 +2124,7 @@ details.how[open] summary::before{content:"\2013  "}
     P.lvl = 0;
     releaseJoy();
     hud.classList.add('hidden'); joyEl.classList.add('hidden');
-    ['results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet'].forEach((id) => $(id).classList.add('hidden'));
+    ['results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet', 'achSheet'].forEach((id) => $(id).classList.add('hidden'));
     $('menu').classList.remove('hidden');
     selectWorld(); defaultHint();
   }
@@ -2040,24 +2229,34 @@ details.how[open] summary::before{content:"\2013  "}
     const pool = boardFor(world, 11);   // taken before saving this run, with one spare in case your old entry drops off
     const prev = getBest(world.code);
     const isPB = !prev || t < prev.t;
+    // Clean runs count toward unlocking that day's Ludicrous world (progress is measured before this run is saved)
+    const day = world.daily && !world.hidden ? world.daily.body : null;
+    const before = day ? ludiProgress(day) : 0;
     if (isPB) setBest(world.code, t, P.fails);
-    // Clean runs count toward unlocking that day's Ludicrous world
     let unlockMsg = '';
+    const gotAch = [];
     if (P.fails === 0) {
-      const day = world.daily && !world.hidden ? world.daily.body : null;
-      const before = day ? ludiProgress(day) : 0;
       markClean(world.code);
       if (day) {
         const after = ludiProgress(day);
-        if (after === 4 && before < 4) unlockMsg = 'Ludicrous unlocked for this day! Pick it from the difficulty buttons.';
-        else if (after < 4) unlockMsg = 'Clean run! Ludicrous unlocks after clean runs on all four difficulties: ' + after + ' of 4 done.';
+        if (after === 4 && before < 4) {
+          unlockMsg = 'Ludicrous unlocked for this day! Pick it from the difficulty buttons.';
+          if (achAdd('L:unlocked', day)) gotAch.push('L:unlocked');
+        } else if (after < 4) unlockMsg = 'Clean run! Ludicrous unlocks after clean runs on all four difficulties: ' + after + ' of 4 done.';
       }
+    }
+    // Achievements: daily worlds only, once per world. Your place is measured against everyone but you.
+    if (world.daily) {
+      const d = world.diff, place = 1 + pool.filter((e) => !e.mine && e.time < t).length;
+      if (place <= 10 && achAdd(d + ':top10', world.code)) gotAch.push(d + ':top10');
+      if (place <= 3 && achAdd(d + ':p' + place, world.code)) gotAch.push(d + ':p' + place);
+      if (P.fails === 0 && achAdd(d + ':clean', world.code)) gotAch.push(d + ':clean');
     }
     const run = { name: myName(), time: t, crashes: P.fails, mine: true, run: true };
     const all = pool.filter((e) => !(e.mine && t < e.time)).concat([run]).sort((a, b) => a.time - b.time);
     all.forEach((e, i) => { e.rank = i + 1; });
     const myBest = all.find((e) => e.mine && !e.run) || null;
-    resultsData = { all: all, run: run, myBest: myBest, isPB: isPB, hadPrev: !!prev, best: isPB ? t : prev.t, unlockMsg: unlockMsg };
+    resultsData = { all: all, run: run, myBest: myBest, isPB: isPB, hadPrev: !!prev, best: isPB ? t : prev.t, unlockMsg: unlockMsg, gotAch: gotAch };
     showBig(run.rank === 1 ? 'Record!' : 'Finish!', 'gold');
     submitScore(!myBest && run.rank <= 10);
   }
@@ -2077,6 +2276,8 @@ details.how[open] summary::before{content:"\2013  "}
     $('resWorld').innerHTML = esc(worldLabel(world)) + (world.hidden ? '' : ', seed <b>' + esc(world.code) + '</b>');
     $('resUnlock').textContent = r.unlockMsg;
     $('resUnlock').classList.toggle('hidden', !r.unlockMsg);
+    $('resAch').textContent = r.gotAch.length ? 'Achievements: ' + r.gotAch.map((k) => achLabel(k) + ' (' + achCount(k) + ')').join(', ') : '';
+    $('resAch').classList.toggle('hidden', !r.gotAch.length);
     const pb = $('resPB');
     pb.className = 'res-pb' + (r.isPB ? ' new' : '');
     pb.textContent = r.isPB ? (r.hadPrev ? 'New personal best!' : 'First run on this world.') : 'Your best on this world: ' + fmt(r.best);
@@ -2241,6 +2442,7 @@ details.how[open] summary::before{content:"\2013  "}
     store.set('dd.mode', mode);
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
   }
+  backfillAch();
   resize();
   selectWorld();
   if (linked) setHint(dailyPick ? 'Loaded the ' + world.daily.label + ' ' + DIFFS[world.diff].name + ' daily world. Good luck!' : 'Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
