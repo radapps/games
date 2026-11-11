@@ -180,6 +180,7 @@ button{font:inherit;color:inherit}
 .seg button{padding:7px 4px 9px;font:600 16px var(--font-display);color:var(--text);background:var(--field);border:3px solid var(--field-edge);border-radius:0;cursor:pointer;touch-action:manipulation;
   box-shadow:inset 0 -4px 0 rgba(0,0,0,.08)}
 .seg button[aria-pressed="true"]{color:#fff;background:var(--grass);border-color:var(--grass-edge);box-shadow:inset 0 -4px 0 var(--grass-lo),inset 0 3px 0 var(--grass-hi);text-shadow:1px 1px 0 rgba(0,0,0,.3)}
+.seg.d4 button{display:flex;align-items:center;justify-content:center;gap:6px}
 .seg.d4 button[data-d="L"]{grid-column:1 / -1;display:flex;align-items:center;justify-content:center;gap:8px}
 .seg button.locked{color:var(--muted);border-style:dashed;box-shadow:none}
 .seg button[data-d="L"][aria-pressed="true"]{color:var(--ludi-text);background:var(--ludi);border-color:var(--ludi-edge);box-shadow:inset 0 -4px 0 var(--ludi-lo),inset 0 3px 0 var(--ludi-hi)}
@@ -220,9 +221,6 @@ button{font:inherit;color:inherit}
 .ach-tile.ludi.on{border-color:var(--gold);background:linear-gradient(110deg,var(--ludi) 35%,var(--ludi-hi) 50%,var(--ludi) 65%);background-size:300% 100%;animation:shimmer 2.6s linear infinite}
 .ach-tile.ludi.clean.on{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(245,197,66,.55)}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
-.ach-pips{display:flex;gap:2px}
-.ach-pips i{width:5px;height:5px;background:var(--divider);display:block}
-.ach-pips i.on{background:var(--gold)}
 .ach-detail{margin:12px 0 0;min-height:2.7em;text-align:center;font-size:13px;line-height:1.35;color:var(--muted)}
 .res-ach{font-family:var(--font-display);font-size:14px;line-height:1.35;padding:6px 10px;margin-bottom:6px;text-align:center;color:var(--text);background:var(--field);border:2px solid var(--gold)}
 @media (prefers-reduced-motion: reduce){.ach-tile.on{animation:none!important}}
@@ -347,10 +345,10 @@ details.how[open] summary::before{content:"\2013  "}
     <path fill="var(--i2)" d="M7 7h2v1h1v2H9v1H7v-1H6V8h1z"/>
     <path fill="#fff" d="M14 0h1v1h-1zM0 0h1v1H0zM7 8h1v1H7z"/>
   </symbol>
-  <symbol id="i-unlock" viewBox="0 0 16 16">
-    <path fill="var(--i2)" d="M3 2h1V1h5v1h1v3H8V3H5v5H3z"/>
-    <path fill="var(--i1)" fill-rule="evenodd" d="M2 8h10v7H2zM6 10h2v3H6z"/>
-    <path fill="var(--i3)" d="M13 1h1v1h1v1h-1v1h-1V3h-1V2h1zM14 7h1v1h-1z"/>
+  <symbol id="i-flag" viewBox="0 0 16 16">
+    <path fill="var(--i3)" d="M2 0h2v14H2zM1 14h4v2H1z"/>
+    <path fill="var(--i2)" d="M4 2h10v6H4z"/>
+    <path fill="var(--i1)" d="M4 2h2v2H4zM8 2h2v2H8zM12 2h2v2h-2zM6 4h2v2H6zM10 4h2v2h-2zM4 6h2v2H4zM8 6h2v2H8zM12 6h2v2h-2z"/>
   </symbol>
 </svg>
 <div id="stage"></div>
@@ -405,9 +403,9 @@ details.how[open] summary::before{content:"\2013  "}
 
       <div class="block seg d4" id="diffSeg" role="group" aria-label="Difficulty">
         <button type="button" data-d="E" aria-pressed="false">Easy</button>
-        <button type="button" data-d="M" aria-pressed="false">Medium</button>
-        <button type="button" data-d="P" aria-pressed="true">Progressive</button>
-        <button type="button" data-d="H" aria-pressed="false">Hard</button>
+        <button type="button" data-d="M" aria-pressed="false"><svg class="lock" style="display:none" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h6v2h1v4h2v8H2V7h2V3h1zm1 2v4h4V3zM7 9h2v3H7z" fill-rule="evenodd"/></svg><span>Medium</span></button>
+        <button type="button" data-d="P" aria-pressed="true"><svg class="lock" style="display:none" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h6v2h1v4h2v8H2V7h2V3h1zm1 2v4h4V3zM7 9h2v3H7z" fill-rule="evenodd"/></svg><span>Progressive</span></button>
+        <button type="button" data-d="H" aria-pressed="false"><svg class="lock" style="display:none" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h6v2h1v4h2v8H2V7h2V3h1zm1 2v4h4V3zM7 9h2v3H7z" fill-rule="evenodd"/></svg><span>Hard</span></button>
         <button type="button" data-d="L" aria-pressed="false" class="hidden"><svg class="lock" viewBox="0 0 16 16" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true"><path d="M5 1h6v2h1v4h2v8H2V7h2V3h1zm1 2v4h4V3zM7 9h2v3H7z" fill-rule="evenodd"/></svg><span>Ludicrous</span><span class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
       </div>
 
@@ -1347,6 +1345,13 @@ details.how[open] summary::before{content:"\2013  "}
   }
   function ludiProgress(body) { return ['E', 'M', 'P', 'H'].filter((d) => cleanDone(d + '-' + body)).length; }
   function ludiUnlocked(body) { return ludiProgress(body) === 4; }
+  // Daily difficulties open in order: Easy always, then each one once you finish the one before it that day
+  const DIFF_ORDER = ['E', 'M', 'P', 'H'];
+  function diffOpen(body, d) {
+    if (d === 'L') return ludiUnlocked(body);
+    const i = DIFF_ORDER.indexOf(d);
+    return i <= 0 || !!getBest(DIFF_ORDER[i - 1] + '-' + body);
+  }
   function genWorld(code, daily) {
     const p = parseCode(code, 'P', true);
     // Layout stream. Keep this exactly as it is: the leaderboard Worker mirrors it to check times.
@@ -1751,12 +1756,16 @@ details.how[open] summary::before{content:"\2013  "}
   if (!customCode || !parseCode(customCode, 'P')) customCode = 'P-' + bodyFromRng(Math.random);
   let diff = store.get('dd.diff', null);
   if (!DIFFS[diff] || (diff === 'L' && mode === 'custom')) diff = parseCode(customCode, 'P').diff;
-  let ludiFallback = false;
+  let lockFallback = null;   // { from, to } when a locked difficulty was swapped for an open one
   let dailyPick = null;   // date (YYYY-MM-DD) of a past daily world, or null for today
 
   function setHint(text, ok) { seedHint.textContent = text; seedHint.className = 'hint' + (ok ? ' ok' : ''); }
   function defaultHint() {
-    if (ludiFallback) { ludiFallback = false; setHint('Ludicrous isn’t unlocked for that day yet, so you’re on Hard.'); return; }
+    if (lockFallback) {
+      const f = lockFallback; lockFallback = null;
+      setHint(DIFFS[f.from].name + ' isn’t unlocked for ' + (world.daily.isToday ? 'today' : 'that day') + ' yet, so you’re on ' + DIFFS[f.to].name + '.');
+      return;
+    }
     if (world && world.hidden) { setHint('Ludicrous: maps 2.5× longer, faster and darker. This seed stays secret.', true); return; }
     setHint(mode === 'custom' ? 'Type or paste a seed to load a friend’s world.' : dailyPick ? 'You’re racing a past daily world. Tap the calendar to switch days.' : '');
   }
@@ -1765,7 +1774,12 @@ details.how[open] summary::before{content:"\2013  "}
   function selectWorld(keepInput) {
     if (mode === 'daily') {
       let t = dailyPick ? dayInfo(dailyPick, diff) : todayInfo(diff);
-      if (diff === 'L' && !ludiUnlocked(t.body)) { setDiff('H'); t = dayInfo(t.ymd, 'H'); ludiFallback = true; }
+      if (!diffOpen(t.body, diff)) {   // fall back to the hardest difficulty that's open for this day
+        const from = diff;
+        let d = from === 'L' ? 'H' : from;
+        while (d !== 'E' && !diffOpen(t.body, d)) d = DIFF_ORDER[DIFF_ORDER.indexOf(d) - 1];
+        setDiff(d); t = dayInfo(t.ymd, d); lockFallback = { from: from, to: d };
+      }
       world = genWorld(t.code, t);
     }
     else world = genWorld(customCode, null);
@@ -1786,6 +1800,13 @@ details.how[open] summary::before{content:"\2013  "}
       lb.querySelectorAll('.pips i').forEach((p, i) => p.classList.toggle('on', i < n));
       lb.setAttribute('aria-label', open ? 'Ludicrous' : 'Ludicrous, locked, ' + n + ' of 4 clean runs done');
     }
+    ['M', 'P', 'H'].forEach((d) => {
+      const btn = $('diffSeg').querySelector('[data-d="' + d + '"]');
+      const locked = mode === 'daily' && !diffOpen(world.daily.body, d);
+      btn.classList.toggle('locked', locked);
+      btn.querySelector('.lock').style.display = locked ? '' : 'none';
+      btn.setAttribute('aria-label', DIFFS[d].name + (locked ? ', locked until you finish ' + DIFFS[DIFF_ORDER[DIFF_ORDER.indexOf(d) - 1]].name : ''));
+    });
     $('diceBtn').classList.toggle('hidden', mode === 'daily');
     $('calBtn').classList.toggle('hidden', mode !== 'daily');
     $('seedLabel').textContent = mode === 'daily' ? (world.hidden ? 'Ludicrous world, ' : world.daily.isToday ? 'Today’s seed, ' : 'Daily seed, ') + world.daily.label : 'World seed';
@@ -1808,6 +1829,10 @@ details.how[open] summary::before{content:"\2013  "}
       if (mode !== 'daily') return;
       const n = ludiProgress(world.daily.body);
       if (n < 4) { setHint('Finish Easy, Medium, Progressive and Hard on this day with no crashes to unlock Ludicrous. ' + n + ' of 4 done.'); return; }
+    }
+    if (mode === 'daily' && b.dataset.d !== 'L' && !diffOpen(world.daily.body, b.dataset.d)) {
+      setHint('Finish ' + DIFFS[DIFF_ORDER[DIFF_ORDER.indexOf(b.dataset.d) - 1]].name + ' on this day to unlock ' + DIFFS[b.dataset.d].name + '.');
+      return;
     }
     setDiff(b.dataset.d);
     if (mode === 'custom') setCustom(diff + '-' + parseCode(customCode, diff).body);
@@ -1986,7 +2011,7 @@ details.how[open] summary::before{content:"\2013  "}
 
   // ---------- achievements ----------
   // Stored as sets of daily world codes per difficulty, so each daily world counts once and
-  // rolling new custom worlds can't farm them. Keys look like "H:top10", "P:p1", "L:clean", "L:unlocked".
+  // rolling new custom worlds can't farm them. Keys look like "H:top10", "P:p1", "L:clean", "L:finish".
   const ACH_TYPES = [
     ['top10', 'Top 10', 'finished in the top 10'],
     ['p1', '1st', 'finished 1st'],
@@ -1994,7 +2019,6 @@ details.how[open] summary::before{content:"\2013  "}
     ['p3', '3rd', 'finished 3rd'],
     ['clean', 'No crashes', 'finished with no crashes']
   ];
-  const MILESTONES = [10, 25, 50];
   const DIFF_COLORS = { E: '#69db7c', M: '#4dabf7', P: '#ff922b', H: '#ff6b6b', L: '#8a4fc0' };
   function achSets() { return store.get('dd.ach', {}); }
   function achCount(key) { return Object.keys(achSets()[key] || {}).length; }
@@ -2007,7 +2031,7 @@ details.how[open] summary::before{content:"\2013  "}
   }
   function achLabel(key) {
     const parts = key.split(':'), d = parts[0], type = parts[1];
-    if (type === 'unlocked') return 'Ludicrous unlocked';
+    if (type === 'finish') return DIFFS[d].name + ' finished';
     return DIFFS[d].name + ' ' + (type === 'top10' ? 'top 10' : type === 'clean' ? 'no crashes' : type[1] + (type === 'p1' ? 'st' : type === 'p2' ? 'nd' : 'rd') + ' place');
   }
   function achIcon(type, ludi) {
@@ -2018,7 +2042,7 @@ details.how[open] summary::before{content:"\2013  "}
     else if (medal[type]) inner = '<use href="#i-medal"' + v(medal[type], ludi ? '#b07ae0' : '#4dabf7', ludi ? '#ffe27a' : '#e5484d') + '/>' +
       '<text x="8" y="12.4" text-anchor="middle" font-size="6.5" font-weight="700" font-family="Pixelify Sans, monospace" fill="#1b1610">' + type[1] + '</text>';
     else if (type === 'clean') inner = ludi ? '<use href="#i-crown"' + v('#f5c542', '#7fd3ff', '#b07a14') + '/>' : '<use href="#i-trophy"' + v('#f5c542', '#4fc3f7', '#b07a14') + '/>';
-    else inner = '<use href="#i-unlock"' + v('#f5c542', '#cfd6de', '#ffe27a') + '/>';
+    else inner = '<use href="#i-flag"' + v('#1b1610', '#ffffff', '#f5c542') + '/>';
     return '<svg viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>';
   }
   function renderAch() {
@@ -2032,21 +2056,18 @@ details.how[open] summary::before{content:"\2013  "}
       h.innerHTML = '<i style="background:' + DIFF_COLORS[d] + '"></i>' + DIFFS[d].name;
       sec.appendChild(h);
       const grid = document.createElement('div'); grid.className = 'ach-grid' + (ludi ? ' l6' : '');
-      // regular difficulties lead with No crashes, then 1st, 2nd, 3rd, Top 10; Ludicrous keeps its own order
-      const order = ludi ? [['unlocked', 'Unlocked', 'unlocked']].concat(ACH_TYPES)
-        : ['clean', 'p1', 'p2', 'p3', 'top10'].map((k) => ACH_TYPES.find((t) => t[0] === k));
+      // regular difficulties: No crashes, 1st, 2nd, 3rd, Top 10. Ludicrous: Finished, Top 10, 3rd, 2nd, 1st, No crashes
+      const pick = (k) => ACH_TYPES.find((x) => x[0] === k);
+      const order = ludi ? [['finish', 'Finished', 'finished']].concat(['top10', 'p3', 'p2', 'p1', 'clean'].map(pick))
+        : ['clean', 'p1', 'p2', 'p3', 'top10'].map(pick);
       order.forEach((t) => {
         const type = t[0], n = Object.keys(a[d + ':' + type] || {}).length;
         total++; if (n) earned++;
-        const unit = type === 'unlocked' ? (n === 1 ? 'day' : 'days') : (n === 1 ? 'world' : 'worlds');
-        const next = MILESTONES.find((m) => m > n);
-        const what = type === 'unlocked' ? 'Ludicrous unlocked on ' + n + ' ' + unit : DIFFS[d].name + ': ' + n + ' ' + unit + ' ' + t[2];
-        const detail = what + '. ' + (n === 0 ? 'Not earned yet.' : next ? 'Next milestone: ' + next + '.' : 'Every milestone reached!');
+        const detail = DIFFS[d].name + ': ' + n + ' ' + (n === 1 ? 'world' : 'worlds') + ' ' + t[2] + '.' + (n === 0 ? ' Not earned yet.' : '');
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'ach-tile ' + (n ? 'on' : 'off') + (type === 'clean' ? ' clean' : '') + (ludi ? ' ludi' : '');
-        b.innerHTML = achIcon(type, ludi) + '<span class="n">' + n + '</span><span class="t">' + t[1] + '</span>' +
-          '<span class="ach-pips" aria-hidden="true">' + MILESTONES.map((m) => '<i' + (n >= m ? ' class="on"' : '') + '></i>').join('') + '</span>';
+        b.innerHTML = achIcon(type, ludi) + '<span class="n">' + n + '</span><span class="t">' + t[1] + '</span>';
         b.setAttribute('aria-label', detail);
         b.addEventListener('click', () => { $('achDetail').textContent = detail; });
         grid.appendChild(b);
@@ -2055,7 +2076,7 @@ details.how[open] summary::before{content:"\2013  "}
       box.appendChild(sec);
     });
     $('achSub').textContent = earned + ' of ' + total + ' earned';
-    $('achDetail').textContent = 'Tap an achievement for details. Daily worlds count, once each. The gold squares mark 10, 25 and 50.';
+    $('achDetail').textContent = 'Tap an achievement for details. Daily worlds count, once each.';
   }
   const achSheet = $('achSheet');
   let achReturn = null;
@@ -2083,10 +2104,10 @@ details.how[open] summary::before{content:"\2013  "}
     const today = ymdOf(new Date());
     for (let dt = dateOf(FIRST_DAY); ymdOf(dt) <= today; dt.setDate(dt.getDate() + 1)) {
       const body = bodyFromRng(mulberry32(hashStr('dropper-daily:' + ymdOf(dt))));
-      let all = true;
-      ['E', 'M', 'P', 'H'].forEach((d) => { if (isClean(d + '-' + body)) add(d + ':clean', d + '-' + body); else all = false; });
-      if (all) add('L:unlocked', body);
-      if (isClean(ludiCode(body))) add('L:clean', ludiCode(body));
+      ['E', 'M', 'P', 'H'].forEach((d) => { if (isClean(d + '-' + body)) add(d + ':clean', d + '-' + body); });
+      const lc = ludiCode(body);
+      if (bests[lc]) add('L:finish', lc);
+      if (isClean(lc)) add('L:clean', lc);
     }
     store.set('dd.ach', a);
   }
@@ -2253,22 +2274,25 @@ details.how[open] summary::before{content:"\2013  "}
     // Clean runs count toward unlocking that day's Ludicrous world (progress is measured before this run is saved)
     const day = world.daily && !world.hidden ? world.daily.body : null;
     const before = day ? ludiProgress(day) : 0;
+    const nextD = day ? DIFF_ORDER[DIFF_ORDER.indexOf(world.diff) + 1] : null;
+    const nextWasOpen = nextD ? diffOpen(day, nextD) : true;
     if (isPB) setBest(world.code, t, P.fails);
-    let unlockMsg = '';
+    const msgs = [];
     const gotAch = [];
+    if (!nextWasOpen) msgs.push(DIFFS[nextD].name + ' unlocked for this day!');
     if (P.fails === 0) {
       markClean(world.code);
       if (day) {
         const after = ludiProgress(day);
-        if (after === 4 && before < 4) {
-          unlockMsg = 'Ludicrous unlocked for this day! Pick it from the difficulty buttons.';
-          if (achAdd('L:unlocked', day)) gotAch.push('L:unlocked');
-        } else if (after < 4) unlockMsg = 'Clean run! Ludicrous unlocks after clean runs on all four difficulties: ' + after + ' of 4 done.';
+        if (after === 4 && before < 4) msgs.push('Ludicrous unlocked for this day! Pick it from the difficulty buttons.');
+        else if (after < 4) msgs.push('Clean run! Ludicrous unlocks after clean runs on all four difficulties: ' + after + ' of 4 done.');
       }
     }
+    const unlockMsg = msgs.join(' ');
     // Achievements: daily worlds only, once per world. Your place is measured against everyone but you.
     if (world.daily) {
       const d = world.diff, place = 1 + pool.filter((e) => !e.mine && e.time < t).length;
+      if (world.hidden && achAdd('L:finish', world.code)) gotAch.push('L:finish');
       if (place <= 10 && achAdd(d + ':top10', world.code)) gotAch.push(d + ':top10');
       if (place <= 3 && achAdd(d + ':p' + place, world.code)) gotAch.push(d + ':p' + place);
       if (P.fails === 0 && achAdd(d + ':clean', world.code)) gotAch.push(d + ':clean');
@@ -2453,6 +2477,7 @@ details.how[open] summary::before{content:"\2013  "}
       return p;
     } catch (e) { return null; }
   }
+  let linkedLocked = false;
   const linked = seedFromUrl();
   if (linked) {
     setDiff(linked.diff);
@@ -2460,13 +2485,15 @@ details.how[open] summary::before{content:"\2013  "}
     if (linked.body === todayInfo(linked.diff).body) mode = 'daily';
     else if (isDay) { mode = 'daily'; dailyPick = day; }
     else { mode = 'custom'; setCustom(linked.code); }
+    // a shared daily link for a difficulty you haven't unlocked that day opens as a custom world (same map and top 10)
+    if (mode === 'daily' && !diffOpen(linked.body, linked.diff)) { mode = 'custom'; dailyPick = null; setCustom(linked.code); linkedLocked = true; }
     store.set('dd.mode', mode);
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
   }
   backfillAch();
   resize();
   selectWorld();
-  if (linked) setHint(dailyPick ? 'Loaded the ' + world.daily.label + ' ' + DIFFS[world.diff].name + ' daily world. Good luck!' : 'Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
+  if (linked) setHint(linkedLocked ? 'Loaded ' + linked.code + ' as a custom world, since ' + DIFFS[linked.diff].name + ' isn’t unlocked for that day yet. Good luck!' : dailyPick ? 'Loaded the ' + world.daily.label + ' ' + DIFFS[world.diff].name + ' daily world. Good luck!' : 'Loaded a shared world, seed ' + linked.code + '. Good luck!', true);
   else defaultHint();
   requestAnimationFrame(loop);
 })();
