@@ -847,7 +847,7 @@
                 <p>Enter connection details and credentials</p>
                 <div class="form-group">
                     <label for="wsUrl">WebSocket URL</label>
-                    <input type="text" id="wsUrl" placeholder="wss://server.com/host/port" value="wss://unabruptly-multiplated-kory.ngrok-free.dev:443/192.168.40.69/23">
+                    <input type="text" id="wsUrl" placeholder="Loading latest server address..." value="">
                 </div>
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -1198,15 +1198,53 @@
                 password: localStorage.getItem('bbs_password')
             };
             
-            if (saved.wsUrl) document.getElementById('wsUrl').value = saved.wsUrl;
+            // wsUrl is no longer restored from localStorage - it always comes from connection.json
             if (saved.username) document.getElementById('username').value = saved.username;
             if (saved.password) document.getElementById('password').value = saved.password;
             
             // Load settings
             loadSettings();
+
+            // Grab the current tunnel address as soon as the page loads
+            refreshWsUrl();
         });
 
-        function connect() {
+        // ── Auto-updating server address ────────────────────────────────────────
+        // connection.json (in the GitHub repo) holds the current "proxy_hostname".
+        // The final URL is that hostname + the fixed telnet target below.
+        const CONNECTION_JSON_URL = 'https://raw.githubusercontent.com/Ryanradio/my-telnet-site/main/connection.json';
+        const WS_PORT = 443;
+        const WS_TARGET = '/192.168.40.69/23';   // BBS host/port that the proxy forwards to
+
+        // Fetches connection.json, updates the input box, and returns the URL
+        // (or null if the lookup failed, in which case the box is left alone).
+        async function refreshWsUrl() {
+            const input = document.getElementById('wsUrl');
+            try {
+                // ?t= and no-store keep the browser/CDN from handing back a stale copy
+                const res = await fetch(CONNECTION_JSON_URL + '?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const host = (data.proxy_hostname || '').trim();
+                if (!host) throw new Error('proxy_hostname missing');
+                const url = 'wss://' + host + ':' + WS_PORT + WS_TARGET;
+                input.value = url;
+                return url;
+            } catch (e) {
+                console.warn('Could not refresh server address:', e);
+                return null;
+            }
+        }
+
+        async function connect(isRetry = false) {
+            // Always check for the newest address before connecting
+            if (!isRetry) {
+                const btn = document.querySelector('.connect-btn');
+                if (btn) { btn.disabled = true; btn.textContent = 'Checking server address...'; }
+                await refreshWsUrl();
+                if (btn) { btn.disabled = false; btn.textContent = 'Connect'; }
+            }
+
             const wsUrl = document.getElementById('wsUrl').value.trim();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -1218,7 +1256,6 @@
             }
 
             // Save credentials and username
-            localStorage.setItem('bbs_ws_url', wsUrl);
             localStorage.setItem('bbs_username', username);
             localStorage.setItem('bbs_password', password);
             currentUsername = username; // Store for self-targeting spells
@@ -1227,18 +1264,39 @@
             document.getElementById('loginPanel').classList.add('hidden');
             document.getElementById('mainContent').classList.add('active');
 
-            // Clear terminal
-            document.getElementById('terminal').innerHTML = '';
-            currentTerminalText = '';
-            recentTerminalText = '';
+            // Clear terminal (keep the retry message visible on an auto-retry)
+            if (!isRetry) {
+                document.getElementById('terminal').innerHTML = '';
+                currentTerminalText = '';
+                recentTerminalText = '';
+            }
 
             appendToTerminal('Connecting to ' + wsUrl + '...\n');
+
+            let everOpened = false;
+            let failureHandled = false;
+
+            // If the connection dies before it ever opened, re-check connection.json.
+            // If the address changed, retry once with the new one.
+            async function handleFailedAttempt() {
+                if (everOpened || failureHandled || isRetry) return;
+                failureHandled = true;
+                appendToTerminal('Checking for an updated server address...\n');
+                const latest = await refreshWsUrl();
+                if (latest && latest !== wsUrl) {
+                    appendToTerminal('Address changed - retrying with the new one.\n');
+                    connect(true);
+                } else {
+                    appendToTerminal('Server address is unchanged. The server may be offline.\n');
+                }
+            }
 
             try {
                 ws = new WebSocket(wsUrl);
                 ws.binaryType = 'arraybuffer';  // Important for binary telnet data!
 
                 ws.onopen = function() {
+                    everOpened = true;
                     isConnected = true;
                     appendToTerminal('✓ Connected!\n\n');
                     
@@ -1397,6 +1455,7 @@
                     isConnected = false;
                     currentRoomId = null;
                     appendToTerminal('\n✗ Connection error\n');
+                    handleFailedAttempt();
                 };
 
                 ws.onclose = function(event) {
@@ -1404,9 +1463,11 @@
                     isConnected = false;
                     currentRoomId = null;
                     appendToTerminal('\n[Connection closed]\n');
+                    handleFailedAttempt();
                 };
             } catch (e) {
                 appendToTerminal('\n✗ Error: ' + e.message + '\n');
+                handleFailedAttempt();
             }
         }
 
