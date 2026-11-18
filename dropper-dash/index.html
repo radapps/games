@@ -106,6 +106,7 @@ button{font:inherit;color:inherit}
 .chip small{display:block;font-size:11px;font-weight:500;color:var(--hud-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud-center{display:flex;flex-direction:column;align-items:center;gap:5px}
 .timer{min-width:142px;text-align:center;padding:2px 12px 4px;font-size:28px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.timer.held{opacity:.5}
 .place{padding:2px 9px 3px;font-size:13px;font-weight:500;white-space:nowrap}
 .place b{color:var(--gold);font-weight:700}
 .hud-btns{justify-self:end;display:flex;gap:6px}
@@ -733,12 +734,12 @@ details.how[open] summary::before{content:"\2013  "}
     hay:         { t: 'bands', c: [212, 172, 58], v: 26, every: 3, dark: 34 },
     mossy:       { t: 'noise', c: [112, 118, 108], v: 34, s: [[[66, 108, 48], 0.24]] },
     leaves:      { t: 'noise', c: [62, 128, 44], v: 42, s: [[[28, 64, 22], 0.2]] },
-    log:         { t: 'log', c: [112, 86, 54] },
+    log:         { t: 'log', c: [142, 110, 70] },
     darklog:     { t: 'log', c: [72, 52, 36] },
     autumn:      { t: 'noise', c: [214, 108, 38], v: 50, s: [[[244, 184, 62], 0.15], [[160, 48, 30], 0.12]] },
     cherrywood:  { t: 'planks', c: [228, 176, 166] },
     blossom:     { t: 'noise', c: [242, 166, 198], v: 34, s: [[[255, 216, 232], 0.16], [[206, 110, 150], 0.08]] },
-    cherrylog:   { t: 'log', c: [80, 42, 48] },
+    cherrylog:   { t: 'log', c: [164, 98, 112] },
     sand:        { t: 'noise', c: [219, 207, 163], v: 22, s: [[[196, 182, 136], 0.12]] },
     sandstone:   { t: 'bands', c: [216, 200, 150], v: 16, every: 4, dark: 22 },
     cactus:      { t: 'log', c: [76, 140, 52], s: [[[206, 232, 166], 0.05]] },
@@ -767,13 +768,13 @@ details.how[open] summary::before{content:"\2013  "}
     bone:        { t: 'bands', c: [228, 224, 204], v: 12, every: 4, dark: 18 },
     candy:       { t: 'stripes', cs: [[250, 250, 250], [232, 74, 128]], w: 4 },
     frosting:    { t: 'noise', c: [250, 190, 214], v: 18, s: [[[255, 255, 255], 0.12], [[110, 196, 240], 0.03], [[250, 226, 80], 0.03], [[120, 220, 120], 0.03]] },
-    choco:       { t: 'tiles', c: [100, 60, 38], l: [60, 34, 20] },
+    choco:       { t: 'tiles', c: [154, 96, 60], l: [98, 58, 34] },
     iron:        { t: 'tiles', c: [200, 202, 206], l: [150, 152, 158] },
     redstone:    { t: 'noise', c: [172, 28, 18], v: 40, s: [[[236, 64, 40], 0.15]] },
     copper:      { t: 'noise', c: [192, 108, 80], v: 30, s: [[[96, 170, 140], 0.12]] },
     metal:       { t: 'tiles', c: [150, 156, 166], l: [96, 102, 112] },
     netherrack:  { t: 'noise', c: [112, 50, 48], v: 46, s: [[[78, 26, 26], 0.15]] },
-    netherbrick: { t: 'bricks', c: [74, 34, 40], m: [30, 12, 16], v: 16, bw: 8, bh: 4 },
+    netherbrick: { t: 'bricks', c: [180, 72, 70], m: [86, 26, 30], v: 16, bw: 8, bh: 4 },
     magma:       { t: 'noise', c: [112, 42, 16], v: 30, s: [[[255, 128, 30], 0.13], [[255, 204, 80], 0.04]] },
     neonwall:    { t: 'grid', c: [18, 10, 38], l: [0, 210, 255], cell: 8 },
     neonfloor:   { t: 'grid', c: [24, 8, 40], l: [255, 60, 190], cell: 4 },
@@ -791,10 +792,10 @@ details.how[open] summary::before{content:"\2013  "}
     moss:        { t: 'noise', c: [72, 122, 52], v: 30, s: [[[50, 90, 36], 0.18]] },
     acacia:      { t: 'planks', c: [188, 102, 60] },
     drygrass:    { t: 'noise', c: [192, 172, 92], v: 34, s: [[[160, 140, 70], 0.15]] },
-    acacialog:   { t: 'log', c: [112, 102, 92] },
+    acacialog:   { t: 'log', c: [156, 144, 130] },
     mud:         { t: 'noise', c: [86, 70, 52], v: 30, s: [[[60, 48, 36], 0.2]] },
     lilypad:     { t: 'dots', c: [62, 132, 52], d: [120, 186, 84] },
-    mangrove:    { t: 'log', c: [112, 58, 50] },
+    mangrove:    { t: 'log', c: [158, 82, 70] },
     redsand:     { t: 'noise', c: [190, 102, 52], v: 26, s: [[[160, 80, 40], 0.12]] },
     canyon:      { t: 'layers', cs: [[176, 84, 50], [206, 140, 90], [150, 70, 50], [220, 170, 120], [168, 96, 70]], v: 12 },
     orangeterra: { t: 'noise', c: [204, 122, 60], v: 18, s: [[[180, 100, 48], 0.1]] },
@@ -813,18 +814,18 @@ details.how[open] summary::before{content:"\2013  "}
     cake:        { t: 'layers', cs: [[250, 242, 232], [242, 152, 182], [250, 242, 232], [122, 72, 42]], v: 10 },
     waffle:      { t: 'grid', c: [216, 162, 84], l: [160, 108, 50], cell: 4 },
     bookshelf:   { t: 'books' },
-    darkplanks:  { t: 'planks', c: [96, 66, 42] },
+    darkplanks:  { t: 'planks', c: [142, 100, 62] },
     parchment:   { t: 'noise', c: [232, 216, 172], v: 16, s: [[[200, 180, 130], 0.08]] },
     carpet:      { t: 'noise', c: [170, 38, 42], v: 16, s: [[[200, 160, 60], 0.03]] },
     brass:       { t: 'tiles', c: [204, 164, 72], l: [130, 96, 30] },
     gear:        { t: 'dots', c: [122, 126, 134], d: [70, 72, 80] },
     wetstone:    { t: 'noise', c: [80, 92, 96], v: 30, s: [[[60, 112, 112], 0.1]] },
-    shipwood:    { t: 'planks', c: [102, 74, 50] },
+    shipwood:    { t: 'planks', c: [146, 108, 72] },
     honeycomb:   { t: 'bricks', c: [230, 160, 40], m: [170, 100, 20], v: 16, bw: 4, bh: 4 },
     honey:       { t: 'noise', c: [242, 172, 40], v: 20, s: [[[255, 212, 92], 0.12]] },
     bee:         { t: 'stripes', cs: [[248, 200, 40], [34, 28, 22]], w: 4 },
     darkstone:   { t: 'noise', c: [30, 34, 48], v: 18, s: [[[46, 52, 70], 0.12]] },
-    glowshroom:  { t: 'dots', c: [22, 42, 96], d: [84, 232, 255] },
+    glowshroom:  { t: 'dots', c: [44, 92, 196], d: [120, 240, 255] },
     arcadewall:  { t: 'noise', c: [12, 10, 18], v: 6, s: [[[255, 70, 70], 0.02], [[70, 255, 130], 0.02], [[70, 150, 255], 0.02], [[255, 230, 70], 0.02]] },
     brickred:    { t: 'bricks', c: [192, 82, 42], m: [92, 40, 20], v: 18, bw: 8, bh: 4 },
     goldtile:    { t: 'tiles', c: [242, 182, 40], l: [150, 92, 12] },
@@ -849,24 +850,24 @@ details.how[open] summary::before{content:"\2013  "}
     bb_red:       { t: 'bricks', c: [232, 64, 64], m: [60, 10, 10], v: 10, bw: 16, bh: 8 },
     bb_yellow:    { t: 'bricks', c: [244, 210, 60], m: [80, 60, 10], v: 10, bw: 16, bh: 8 },
     pm_wall:      { t: 'frame', c: [0, 0, 8], l: [40, 70, 255], bw: 2 },
-    pm_block:     { t: 'frame', c: [16, 24, 120], l: [90, 130, 255], bw: 2 },
-    pm_pellet:    { t: 'dots', c: [0, 0, 16], d: [255, 200, 160] },
+    pm_block:     { t: 'frame', c: [40, 58, 196], l: [120, 156, 255], bw: 2 },
+    pm_pellet:    { t: 'dots', c: [58, 78, 226], d: [255, 214, 170] },
     pm_floor:     { t: 'noise', c: [0, 0, 10], v: 4, s: [[[255, 200, 160], 0.02]] },
     vv_wall:      { t: 'frame', c: [0, 0, 0], l: [60, 255, 120], bw: 1, v: 2 },
-    vv_white:     { t: 'frame', c: [10, 10, 10], l: [255, 255, 255], bw: 1, v: 2 },
-    vv_green:     { t: 'frame', c: [0, 30, 12], l: [60, 255, 120], bw: 1, v: 2 },
+    vv_white:     { t: 'frame', c: [40, 44, 56], l: [255, 255, 255], bw: 2, v: 2 },
+    vv_green:     { t: 'frame', c: [16, 52, 28], l: [60, 255, 120], bw: 2, v: 2 },
     dungeonwall:  { t: 'bricks', c: [86, 86, 92], m: [40, 40, 46], v: 22, bw: 8, bh: 8 },
     dungeonfloor: { t: 'bricks', c: [70, 66, 62], m: [34, 30, 28], v: 18, bw: 8, bh: 8 },
     pg_wall:      { t: 'bricks', c: [48, 98, 48], m: [15, 56, 15], v: 4, bw: 8, bh: 4 },
     pg_light:     { t: 'tiles', c: [139, 172, 15], l: [48, 98, 48] },
-    pg_dark:      { t: 'tiles', c: [48, 98, 48], l: [15, 56, 15] },
+    pg_dark:      { t: 'tiles', c: [155, 188, 15], l: [48, 98, 48] },
     pg_floor:     { t: 'dither', c: [139, 172, 15], l: [155, 188, 15], p: 0.3 },
     cga_wall:     { t: 'grid', c: [0, 0, 0], l: [255, 85, 255], cell: 4 },
     cga_cyan:     { t: 'frame', c: [85, 255, 255], l: [255, 255, 255], bw: 2, v: 0 },
-    cga_magenta:  { t: 'frame', c: [255, 85, 255], l: [0, 0, 0], bw: 2, v: 0 },
+    cga_magenta:  { t: 'frame', c: [255, 85, 255], l: [255, 255, 255], bw: 2, v: 0 },
     cga_floor:    { t: 'checker', cs: [[0, 0, 0], [85, 255, 255]], size: 2 },
     cabinetwood:  { t: 'planks', c: [124, 78, 44] },
-    arcadebutton: { t: 'dots', c: [28, 28, 34], d: [232, 44, 44] },
+    arcadebutton: { t: 'dots', c: [236, 196, 60], d: [222, 40, 40] },
     marquee:      { t: 'layers', cs: [[255, 220, 60], [255, 130, 40], [232, 44, 96], [120, 60, 200]], v: 10 },
     pinwall:      { t: 'layers', cs: [[40, 20, 110], [90, 30, 150], [200, 40, 120], [250, 120, 40]], v: 12 },
     bumper:       { t: 'dots', c: [232, 40, 64], d: [255, 240, 200] },
@@ -878,10 +879,10 @@ details.how[open] summary::before{content:"\2013  "}
     asphalt:      { t: 'noise', c: [62, 62, 66], v: 22, s: [[[90, 90, 94], 0.08]] },
     shoji:        { t: 'grid', c: [236, 228, 200], l: [84, 52, 30], cell: 8 },
     lacquer:      { t: 'tiles', c: [184, 32, 32], l: [60, 14, 14] },
-    rooftile:     { t: 'bricks', c: [60, 70, 90], m: [30, 34, 46], v: 12, bw: 4, bh: 4 },
+    rooftile:     { t: 'bricks', c: [108, 120, 146], m: [62, 68, 88], v: 12, bw: 4, bh: 4 },
     tatami:       { t: 'bands', c: [186, 180, 112], v: 14, every: 8, dark: 40 },
     hullpanel:    { t: 'tiles', c: [72, 62, 104], l: [40, 30, 62] },
-    techglow:     { t: 'grid', c: [20, 20, 40], l: [255, 124, 40], cell: 8 },
+    techglow:     { t: 'grid', c: [86, 78, 132], l: [255, 140, 50], cell: 8 },
     biomass:      { t: 'noise', c: [126, 44, 126], v: 30, s: [[[200, 90, 200], 0.1]] },
     castlegray:   { t: 'bricks', c: [100, 100, 108], m: [50, 50, 56], v: 16, bw: 8, bh: 8 },
     waterbrick:   { t: 'bricks', c: [40, 92, 172], m: [20, 52, 112], v: 14, bw: 8, bh: 4 },
@@ -892,13 +893,13 @@ details.how[open] summary::before{content:"\2013  "}
     synthcyan:    { t: 'tiles', c: [44, 222, 255], l: [20, 80, 160] },
     onebit_wall:  { t: 'dither', c: [0, 0, 0], l: [255, 255, 255], p: 0.22 },
     onebit_white: { t: 'frame', c: [255, 255, 255], l: [0, 0, 0], bw: 1, v: 0 },
-    onebit_black: { t: 'frame', c: [16, 16, 16], l: [255, 255, 255], bw: 1, v: 0 },
+    onebit_black: { t: 'dither', c: [0, 0, 0], l: [255, 255, 255], p: 0.62 },
     onebit_floor: { t: 'dither', c: [0, 0, 0], l: [255, 255, 255], p: 0.5 },
     terminal:     { t: 'bands', c: [8, 26, 12], v: 6, every: 2, dark: 6, s: [[[60, 255, 90], 0.05]] },
-    term_block:   { t: 'frame', c: [10, 44, 16], l: [60, 255, 90], bw: 1, v: 4 },
+    term_block:   { t: 'frame', c: [26, 104, 44], l: [90, 255, 120], bw: 1, v: 4 },
     term_bright:  { t: 'noise', c: [52, 220, 84], v: 20, s: [[[180, 255, 190], 0.08]] },
     gothic:       { t: 'bricks', c: [72, 52, 72], m: [30, 20, 34], v: 16, bw: 8, bh: 8 },
-    bloodstone:   { t: 'noise', c: [130, 14, 24], v: 22, s: [[[80, 6, 12], 0.15]] },
+    bloodstone:   { t: 'noise', c: [190, 34, 50], v: 22, s: [[[130, 14, 26], 0.15]] },
     candle:       { t: 'tiles', c: [240, 230, 196], l: [180, 160, 110] },
     danmaku:      { t: 'noise', c: [10, 10, 30], v: 8, s: [[[255, 80, 180], 0.03], [[60, 200, 255], 0.03]] },
     orbpink:      { t: 'dots', c: [255, 84, 180], d: [255, 232, 250] },
@@ -917,7 +918,7 @@ details.how[open] summary::before{content:"\2013  "}
     saltrock:     { t: 'noise', c: [222, 214, 204], v: 18, s: [[[196, 188, 178], 0.1]] },
     pinksalt:     { t: 'noise', c: [240, 172, 172], v: 22, s: [[[255, 214, 214], 0.12]] },
     granite:      { t: 'noise', c: [112, 112, 118], v: 40, s: [[[172, 172, 178], 0.08], [[62, 62, 68], 0.1]] },
-    pine:         { t: 'noise', c: [32, 72, 52], v: 24, s: [[[20, 46, 34], 0.2]] },
+    pine:         { t: 'noise', c: [62, 124, 88], v: 24, s: [[[40, 86, 60], 0.2]] },
     windows:      { t: 'windows', c: [62, 66, 84], lit: [250, 214, 110], dark: [30, 34, 50] },
     acunit:       { t: 'tiles', c: [192, 196, 202], l: [122, 126, 132] },
     tarroof:      { t: 'noise', c: [50, 50, 54], v: 14, s: [[[70, 70, 74], 0.08]] },
@@ -948,6 +949,10 @@ details.how[open] summary::before{content:"\2013  "}
     moonstone:    { t: 'noise', c: [202, 212, 232], v: 14, s: [[[232, 240, 255], 0.1]] },
     petrified:    { t: 'layers', cs: [[152, 112, 92], [182, 142, 112], [122, 92, 82], [202, 162, 132]], v: 14 },
     stonelog:     { t: 'log', c: [142, 122, 112] },
+    // brighter obstacle blocks for themes that were too dark to see at speed
+    barrier:      { t: 'vstripes', cs: [[250, 120, 30], [245, 245, 240]], w: 4 },
+    endbrick:     { t: 'bricks', c: [232, 232, 176], m: [176, 176, 118], v: 12, bw: 8, bh: 4 },
+    tuff:         { t: 'noise', c: [158, 152, 140], v: 24, s: [[[120, 114, 104], 0.15]] },
     agate:        { t: 'layers', cs: [[202, 82, 62], [232, 162, 92], [152, 62, 92], [232, 162, 92]], v: 10 }
   };
   const BOOK_COLORS = [[150, 40, 40], [40, 80, 150], [50, 120, 60], [160, 120, 40], [100, 50, 110], [70, 70, 70]];
@@ -1127,14 +1132,14 @@ details.how[open] summary::before{content:"\2013  "}
     { name: 'Lava Core',        fog: 0x2c0d0a, wall: 'netherrack', ore: [[236, 226, 214], 0.25], blocks: ['netherbrick', 'magma'],      floor: 'netherrack' },
     { name: 'Neon Grid',        fog: 0x070414, wall: 'neonwall',   ore: null,                    blocks: ['neonpink', 'neoncyan'],      floor: 'neonfloor', glow: true },
     { name: 'Moon Base',        fog: 0x05060f, wall: 'starfield',  ore: null,                    blocks: ['moonrock', 'metal'],         floor: 'moonrock' },
-    { name: 'End Void',         fog: 0x130a20, wall: 'endstone',   ore: [[150, 100, 190], 0.25], blocks: ['obsidian', 'purpur'],        floor: 'endstone' },
+    { name: 'End Void',         fog: 0x130a20, wall: 'endstone',   ore: [[150, 100, 190], 0.25], blocks: ['endbrick', 'purpur'],        floor: 'endstone' },
     { name: 'Bamboo Forest',    fog: 0x10241a, wall: 'bamboo',     ore: null,                    blocks: ['lantern', 'darkplanks'],     floor: 'moss' },
     { name: 'Savanna Sunset',   fog: 0x3a1c0e, wall: 'acacia',     ore: null,                    blocks: ['drygrass', 'acacialog'],     floor: 'drygrass' },
     { name: 'Swamp Bog',        fog: 0x161e0e, wall: 'mud',        ore: [[60, 90, 40], 0.3],     blocks: ['lilypad', 'mangrove'],       floor: 'mud' },
     { name: 'Badlands Canyon',  fog: 0x3a160c, wall: 'canyon',     ore: null,                    blocks: ['drygrass', 'orangeterra'],   floor: 'redsand' },
     { name: 'Polar Night',      fog: 0x050e1c, wall: 'frostbrick', ore: null,                    blocks: ['aurora', 'snow'],            floor: 'snow' },
     { name: 'Deep Sea Trench',  fog: 0x041420, wall: 'darkprism',  ore: [[120, 220, 200], 0.15], blocks: ['sealantern', 'sponge'],      floor: 'gravel' },
-    { name: 'Basalt Volcano',   fog: 0x1a0c08, wall: 'basalt',     ore: [[255, 120, 30], 0.25],  blocks: ['blackstone', 'magma'],       floor: 'blackstone' },
+    { name: 'Basalt Volcano',   fog: 0x1a0c08, wall: 'basalt',     ore: [[255, 120, 30], 0.25],  blocks: ['tuff', 'magma'],       floor: 'blackstone' },
     { name: 'Toy Box',          fog: 0x1a1430, wall: 'toywall',    ore: null,                    blocks: ['toyred', 'toyblue'],         floor: 'toyyellow' },
     { name: 'Cookie Crumble',   fog: 0x2a1a10, wall: 'cookie',     ore: null,                    blocks: ['cake', 'waffle'],            floor: 'cookie' },
     { name: 'Grand Library',    fog: 0x1c120c, wall: 'bookshelf',  ore: null,                    blocks: ['parchment', 'darkplanks'],   floor: 'carpet' },
@@ -1158,12 +1163,12 @@ details.how[open] summary::before{content:"\2013  "}
     { name: 'CGA Cyber',         fog: 0x000000, wall: 'cga_wall',    ore: null,                    blocks: ['cga_cyan', 'cga_magenta'],     floor: 'cga_floor', glow: true },
     { name: 'Coin-Op Cabinet',   fog: 0x0c0a12, wall: 'cabinetwood', ore: null,                    blocks: ['arcadebutton', 'marquee'],     floor: 'arcadewall' },
     { name: 'Pinball Plunge',    fog: 0x120a2a, wall: 'pinwall',     ore: null,                    blocks: ['bumper', 'chrome'],            floor: 'playfield', glow: true },
-    { name: 'Checkered Flag',    fog: 0x202428, wall: 'checkflag',   ore: null,                    blocks: ['tire', 'curb'],                floor: 'asphalt' },
+    { name: 'Checkered Flag',    fog: 0x202428, wall: 'checkflag',   ore: null,                    blocks: ['barrier', 'curb'],                floor: 'asphalt' },
     { name: 'Ninja Fortress',    fog: 0x1a1410, wall: 'shoji',       ore: null,                    blocks: ['lacquer', 'rooftile'],         floor: 'tatami' },
     { name: 'Alien Station',     fog: 0x0a0814, wall: 'hullpanel',   ore: null,                    blocks: ['techglow', 'biomass'],         floor: 'metal' },
-    { name: 'Boss Castle',       fog: 0x2a0606, wall: 'castlegray',  ore: [[255, 110, 30], 0.2],   blocks: ['magma', 'obsidian'],           floor: 'magma' },
+    { name: 'Boss Castle',       fog: 0x2a0606, wall: 'castlegray',  ore: [[255, 110, 30], 0.2],   blocks: ['magma', 'goldtile'],           floor: 'magma' },
     { name: 'Water Level',       fog: 0x0a3060, wall: 'waterbrick',  ore: null,                    blocks: ['coralpink', 'seaweed'],        floor: 'sand' },
-    { name: 'Airship Armada',    fog: 0x88b8e8, wall: 'hullwood',    ore: null,                    blocks: ['metal', 'brass'],              floor: 'shipwood' },
+    { name: 'Airship Armada',    fog: 0x3a6fb5, wall: 'hullwood',    ore: null,                    blocks: ['metal', 'brass'],              floor: 'shipwood' },
     { name: 'Synthwave Sunset',  fog: 0x1a0630, wall: 'synthgrid',   ore: null,                    blocks: ['sunset', 'synthcyan'],         floor: 'neonfloor', glow: true },
     { name: '1-Bit Monochrome',  fog: 0x101010, wall: 'onebit_wall', ore: null,                    blocks: ['onebit_white', 'onebit_black'], floor: 'onebit_floor', glow: true },
     { name: 'Terminal Green',    fog: 0x020a04, wall: 'terminal',    ore: null,                    blocks: ['term_block', 'term_bright'],   floor: 'terminal', glow: true },
@@ -1174,7 +1179,7 @@ details.how[open] summary::before{content:"\2013  "}
     { name: 'Tulip Fields',      fog: 0x1c2a14, wall: 'tulipwall',   ore: null,                    blocks: ['tulipred', 'tulipyellow'],     floor: 'grass' },
     { name: 'Lavender Hills',    fog: 0x241a30, wall: 'lavender',    ore: null,                    blocks: ['lavbush', 'calcite'],          floor: 'grass' },
     { name: 'Sunflower Farm',    fog: 0x2a2010, wall: 'barnred',     ore: null,                    blocks: ['sunflower', 'hay'],            floor: 'tilled' },
-    { name: 'Salt Flats',        fog: 0xbcd8ee, wall: 'saltcrust',   ore: null,                    blocks: ['pinksalt', 'saltrock'],        floor: 'saltcrust' },
+    { name: 'Salt Flats',        fog: 0x4a86c8, wall: 'saltcrust',   ore: null,                    blocks: ['pinksalt', 'saltrock'],        floor: 'saltcrust' },
     { name: 'Northern Fjord',    fog: 0x10202a, wall: 'granite',     ore: null,                    blocks: ['snow', 'pine'],                floor: 'granite' },
     { name: 'Downtown Rooftops', fog: 0x14182a, wall: 'windows',     ore: null,                    blocks: ['acunit', 'neonpink'],          floor: 'tarroof' },
     { name: 'Subway Tunnel',     fog: 0x101214, wall: 'subwaytile',  ore: null,                    blocks: ['graffiti', 'metal'],           floor: 'gravel' },
@@ -1187,7 +1192,7 @@ details.how[open] summary::before{content:"\2013  "}
     { name: 'Emerald Cavern',    fog: 0x061810, wall: 'deepslate',   ore: [[40, 202, 112], 0.35],  blocks: ['emerald', 'calcite'],          floor: 'deepslate' },
     { name: 'Copper Ruins',      fog: 0x0c2420, wall: 'patina',      ore: null,                    blocks: ['cutcopper', 'copper'],         floor: 'patina' },
     { name: 'Winter Cabin',      fog: 0x101a26, wall: 'logcabin',    ore: null,                    blocks: ['snow', 'log'],                 floor: 'snow' },
-    { name: 'Dawn Clouds',       fog: 0xf0b8c8, wall: 'dawncloud',   ore: null,                    blocks: ['cloud', 'sunrise'],            floor: 'cloud' },
+    { name: 'Dawn Clouds',       fog: 0x6a5a9a, wall: 'dawncloud',   ore: null,                    blocks: ['cloud', 'sunrise'],            floor: 'cloud' },
     { name: 'Moonlit Lake',      fog: 0x060a1c, wall: 'nightrock',   ore: null,                    blocks: ['moonstone', 'lilypad'],        floor: 'nightrock' },
     { name: 'Petrified Forest',  fog: 0x2a1c14, wall: 'petrified',   ore: null,                    blocks: ['stonelog', 'agate'],           floor: 'redsand' }
   ];
@@ -1622,7 +1627,7 @@ details.how[open] summary::before{content:"\2013  "}
     if (state === 'finished') return NUM;
     if (state === 'transition') return P.lvl + 1;
     if (state === 'crashed') return P.crashProg;
-    if (state === 'countdown') return 0;
+    if (state === 'countdown') return P.lvl;
     const L = world.levels[P.lvl];
     return P.lvl + clamp((L.depth - P.y) / L.depth, 0, 1);
   }
@@ -1726,6 +1731,7 @@ details.how[open] summary::before{content:"\2013  "}
   }
   function updateHUD() {
     timerEl.textContent = fmt(raceTime);
+    timerEl.classList.toggle('held', state === 'countdown' && raceTime > 0);
     const pp = playerProgress();
     let place = 1;
     ghosts.forEach((g, i) => {
@@ -2130,7 +2136,7 @@ details.how[open] summary::before{content:"\2013  "}
   function onBoardUpdate(code) {
     if (!world || world.code !== code) return;
     if (!boardSheet.classList.contains('hidden')) renderRows(boardList, boardFor(world), 'board');
-    if (state === 'countdown') startGhosts();   // fresh scores arrived before GO
+    if (state === 'countdown' && raceTime === 0) startGhosts();   // fresh scores arrived before the first GO
   }
 
   // ---------- flow ----------
@@ -2370,7 +2376,7 @@ details.how[open] summary::before{content:"\2013  "}
         cd -= dt;
         const n = Math.ceil(cd);
         if (n !== lastCount && n > 0) { lastCount = n; showBig(String(n)); sfx.beep(); }
-        if (cd <= 0) { state = 'falling'; raceTime = 0; showBig('Go!', 'gold'); sfx.go(); showBanner(P.lvl); }
+        if (cd <= 0) { state = 'falling'; if (P.lvl === 0) { raceTime = 0; showBanner(0); } showBig('Go!', 'gold'); sfx.go(); }
         break;
       }
       case 'falling': raceTime += dt; stepPlayer(dt, L); break;
@@ -2380,7 +2386,8 @@ details.how[open] summary::before{content:"\2013  "}
         break;
       case 'transition':
         raceTime += dt; stateT -= dt;
-        if (stateT <= 0) { P.lvl++; ensureLevel(P.lvl); resetPlayer(); state = 'falling'; showBanner(P.lvl); }
+        // next map: 3, 2, 1 countdown with the clock stopped (the countdown case never adds to raceTime)
+        if (stateT <= 0) { P.lvl++; ensureLevel(P.lvl); resetPlayer(); state = 'countdown'; cd = 3; lastCount = 4; showBanner(P.lvl); }
         break;
       case 'finished':
         if (stateT > 0) { stateT -= dt; if (stateT <= 0) showResults(); }
