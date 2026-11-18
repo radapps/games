@@ -6,7 +6,7 @@
 <title>Dropper Dash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Pixelify+Sans:wght@700&display=swap">
 <style>
 :root{
   box-sizing:border-box;
@@ -50,7 +50,8 @@
   --ludi-hi:#8a4fc0;
   --ludi-text:#ffe27a;
   --clean-glow:#d9f3ff;
-  --font-display:"Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display:"Jersey 10", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-logo:"Pixelify Sans", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-body:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark){
@@ -85,7 +86,10 @@
   --focus:#7fb6ff;
   --clean-glow:#1d4152;
 }
-html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;
+  /* Jersey 10 is drawn small for its size: scale every font to the same x-height so text keeps its size,
+     and never fake a bold (Jersey has one weight). Digits are tabular so times don't jiggle. */
+  font-size-adjust:0.53;font-synthesis:none;font-variant-numeric:tabular-nums}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none}
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font-body);color:var(--text);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -165,7 +169,7 @@ button{font:inherit;color:inherit}
 .overlay{position:fixed;inset:0;z-index:20;display:flex;overflow-y:auto;background:var(--scrim);
   padding:calc(env(safe-area-inset-top,0px) + 14px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px)}
 .wrap{margin:auto;width:min(440px,100%)}
-.logo{margin:0 0 12px;text-align:center;font-family:var(--font-display);font-weight:700;line-height:1;font-size:clamp(38px,11.5vw,64px);color:var(--hud-fg);white-space:nowrap;
+.logo{font-size-adjust:none;margin:0 0 12px;text-align:center;font-family:var(--font-logo);font-weight:700;line-height:1;font-size:clamp(38px,11.5vw,64px);color:var(--hud-fg);white-space:nowrap;
   text-shadow:0 4px 0 #3a3f46,0 7px 0 rgba(0,0,0,.5)}
 .logo .dash{color:var(--gold);text-shadow:0 4px 0 var(--gold-shadow),0 7px 0 rgba(0,0,0,.5)}
 .panel{background:var(--panel);color:var(--text);border:4px solid var(--panel-border);box-shadow:inset 0 0 0 3px var(--panel-edge),0 8px 0 rgba(0,0,0,.4);padding:14px 14px 16px}
@@ -2046,7 +2050,7 @@ details.how[open] summary::before{content:"\2013  "}
     let inner;
     if (type === 'top10') inner = '<use href="#i-podium"' + v(ludi ? '#f5c542' : '#9ba1aa', ludi ? '#ffe27a' : '#f5c542', '#1b1610') + '/>';
     else if (medal[type]) inner = '<use href="#i-medal"' + v(medal[type], ludi ? '#b07ae0' : '#4dabf7', ludi ? '#ffe27a' : '#e5484d') + '/>' +
-      '<text x="8" y="12.4" text-anchor="middle" font-size="6.5" font-weight="700" font-family="Pixelify Sans, monospace" fill="#1b1610">' + type[1] + '</text>';
+      '<text x="8" y="12.4" text-anchor="middle" font-size="6.5" font-family="Jersey 10, monospace" fill="#1b1610">' + type[1] + '</text>';
     else if (type === 'clean') inner = ludi ? '<use href="#i-crown"' + v('#f5c542', '#7fd3ff', '#b07a14') + '/>' : '<use href="#i-trophy"' + v('#f5c542', '#4fc3f7', '#b07a14') + '/>';
     else inner = '<use href="#i-flag"' + v('#1b1610', '#ffffff', '#f5c542') + '/>';
     return '<svg viewBox="0 0 16 16" aria-hidden="true">' + inner + '</svg>';
