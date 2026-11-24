@@ -100,6 +100,7 @@ button{font:inherit;color:inherit}
 
 #stage{position:fixed;inset:0;touch-action:none;background:var(--bg)}
 #stage canvas{display:block;width:100%;height:100%}
+#stage,#stage canvas,#hud,#joy{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
 
 /* ---------- HUD ---------- */
 #hud{position:fixed;inset:0;pointer-events:none;color:var(--hud-fg);font-family:var(--font-display);z-index:5}
@@ -1669,6 +1670,17 @@ details.how[open] summary::before{content:"\2013  "}
   stage.addEventListener('pointerup', endJoy);
   stage.addEventListener('pointercancel', endJoy);
   stage.addEventListener('contextmenu', (e) => e.preventDefault());
+  // iPhone browsers (Firefox especially) still pop up a save-image/select menu or magnifier on
+  // press-and-hold, even with the CSS above. Cancelling the touch on the play area stops that.
+  // Only the play area: menus and buttons keep normal touches, so they still scroll and tap.
+  const stopTouch = (e) => { if (e.cancelable) e.preventDefault(); };
+  ['touchstart', 'touchmove', 'touchend'].forEach((t) => stage.addEventListener(t, stopTouch, { passive: false }));
+  stage.addEventListener('dragstart', (e) => e.preventDefault());
+  // no text selection during a race (seed and hint text in the menus can still be selected)
+  document.addEventListener('selectstart', (e) => {
+    const el = e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
+    if (state !== 'menu' && !(el && el.closest && el.closest('input, .hint'))) e.preventDefault();
+  });
 
   window.addEventListener('keydown', (e) => {
     const tag = e.target && e.target.tagName;
@@ -2166,6 +2178,7 @@ details.how[open] summary::before{content:"\2013  "}
     resetPlayer();
     toastsEl.innerHTML = '';
     releaseJoy();
+    try { const sel = window.getSelection(); if (sel) sel.removeAllRanges(); } catch (e) { /* ignore */ }
     ['menu', 'results', 'pauseMenu', 'boardSheet', 'shareSheet', 'calSheet', 'achSheet'].forEach((id) => $(id).classList.add('hidden'));
     hud.classList.remove('hidden'); joyEl.classList.remove('hidden');
     state = 'countdown'; cd = 3; lastCount = 4;
